@@ -48,7 +48,7 @@
             <td class="px-6 py-3">{{ area.descripcion }}</td>
             <td class="px-6 py-3 text-center">
               <button
-                class="text-yellow-400 hover:text-yellow-300 mr-3 transition"
+                class="text-green-400 hover:text-yellow-300 mr-3 transition"
                 title="Editar"
               >
                 <i class="fas fa-edit"></i>
@@ -102,12 +102,22 @@ import { ref, computed } from 'vue'
 const busqueda = ref('')
 
 const areas = ref([
-  { id: 1, nombre: 'Recursos Humanos', descripcion: 'Gestión del personal y nóminas' },
-  { id: 2, nombre: 'Contabilidad', descripcion: 'Manejo de finanzas y presupuestos' },
-  { id: 3, nombre: 'Sistemas', descripcion: 'Infraestructura tecnológica y soporte' },
-  { id: 4, nombre: 'Logística', descripcion: 'Distribución y almacenamiento' },
-  { id: 5, nombre: 'Marketing', descripcion: 'Estrategias y campañas publicitarias' }
+  { id: 1, nombre: 'Dirección', descripcion: 'Supervisión general y gestión institucional del colegio' },
+  { id: 2, nombre: 'Administración', descripcion: 'Gestión administrativa, contable y de recursos del colegio' },
+  { id: 3, nombre: 'Docentes de Primaria', descripcion: 'Profesores encargados del nivel de educación primaria' },
+  { id: 4, nombre: 'Docentes de Secundaria', descripcion: 'Profesores encargados del nivel de educación secundaria' },
+  { id: 5, nombre: 'Alumnos de Inicial', descripcion: 'Estudiantes pertenecientes al nivel inicial' },
+  { id: 6, nombre: 'Alumnos de Primaria', descripcion: 'Estudiantes pertenecientes al nivel primaria' },
+  { id: 7, nombre: 'Alumnos de Secundaria', descripcion: 'Estudiantes pertenecientes al nivel secundaria' },
+  { id: 8, nombre: 'Tutoría y Psicología', descripcion: 'Área de orientación y apoyo emocional y académico' },
+  { id: 9, nombre: 'Mantenimiento y Limpieza', descripcion: 'Personal encargado del mantenimiento y limpieza de las instalaciones' },
+  { id: 10, nombre: 'Seguridad', descripcion: 'Personal de vigilancia y control de accesos del colegio' },
+  { id: 11, nombre: 'Biblioteca', descripcion: 'Gestión de recursos bibliográficos y apoyo académico' },
+  { id: 12, nombre: 'Laboratorio', descripcion: 'Gestión de prácticas científicas y tecnológicas' },
+  { id: 13, nombre: 'Coordinación Académica', descripcion: 'Supervisión y coordinación de las áreas educativas' },
+  { id: 14, nombre: 'Servicio Médico', descripcion: 'Atención médica y primeros auxilios dentro del colegio' }
 ])
+
 
 const areasFiltradas = computed(() =>
   areas.value.filter(a =>

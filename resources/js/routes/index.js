@@ -8,6 +8,7 @@ import Horarios from '../pages/Horarios.vue';
 import Asistencias from '../pages/Asistencias.vue';
 import Usuarios from '../pages/Usuarios.vue';
 import Empleados from '../pages/Empleados.vue';
+import areas from '../pages/Areas.vue';
 
 const routes = [
   // Login sin layout
@@ -48,6 +49,11 @@ const routes = [
     path: '/empleados', 
     name: 'empleados', 
     component: Empleados 
+  },
+  { 
+    path: '/areas', 
+    name: 'areas', 
+    component: areas 
   },
 ];
 

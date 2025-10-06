@@ -26,7 +26,7 @@
         <input
           v-model="busqueda"
           type="text"
-          placeholder="Buscar por área o turno..."
+          placeholder="Buscar por área, día o turno..."
           class="bg-transparent text-white placeholder-gray-400 outline-none flex-1 text-sm"
         />
       </div>
@@ -40,6 +40,7 @@
             <tr class="bg-white/10 border-b border-white/20">
               <th class="text-left p-4 text-gray-200 font-bold text-sm">ID</th>
               <th class="text-left p-4 text-gray-200 font-bold text-sm">Área / Nivel</th>
+              <th class="text-left p-4 text-gray-200 font-bold text-sm">Día</th>
               <th class="text-left p-4 text-gray-200 font-bold text-sm">Entrada</th>
               <th class="text-left p-4 text-gray-200 font-bold text-sm">Salida</th>
               <th class="text-left p-4 text-gray-200 font-bold text-sm">Turno</th>
@@ -48,7 +49,7 @@
           </thead>
           <tbody>
             <tr v-if="horariosFiltrados.length === 0">
-              <td colspan="6" class="text-center p-8 text-gray-400">
+              <td colspan="7" class="text-center p-8 text-gray-400">
                 <i class="fas fa-calendar text-5xl mb-3 opacity-50"></i>
                 <p>No se encontraron horarios</p>
               </td>
@@ -80,6 +81,13 @@
                     </span>
                   </div>
                   <span class="text-white font-semibold">{{ horario.area }}</span>
+                </div>
+              </td>
+              
+              <td class="p-4">
+                <div class="flex items-center gap-2">
+                  <i class="fas fa-calendar text-gray-400 text-sm"></i>
+                  <span class="text-gray-300">{{ horario.dia }}</span>
                 </div>
               </td>
               
@@ -156,14 +164,14 @@ const props = defineProps({
   horarios: {
     type: Array,
     default: () => [
-      { id: 1, area: 'Primaria', entrada: '07:30', salida: '13:30', turno: 'Mañana', color: 'from-blue-400 to-blue-600' },
-      { id: 2, area: 'Secundaria', entrada: '07:30', salida: '14:00', turno: 'Mañana', color: 'from-green-400 to-emerald-600' },
-      { id: 3, area: 'Administración', entrada: '08:00', salida: '16:00', turno: 'Completo', color: 'from-purple-400 to-purple-600' },
-      { id: 4, area: 'Docentes', entrada: '07:00', salida: '13:00', turno: 'Mañana', color: 'from-pink-400 to-pink-600' },
-      { id: 5, area: 'Inicial', entrada: '08:00', salida: '12:30', turno: 'Mañana', color: 'from-orange-400 to-orange-600' },
-      { id: 6, area: 'Secundaria Tarde', entrada: '13:00', salida: '18:00', turno: 'Tarde', color: 'from-indigo-400 to-indigo-600' },
-      { id: 7, area: 'Limpieza', entrada: '06:00', salida: '14:00', turno: 'Completo', color: 'from-cyan-400 to-cyan-600' },
-      { id: 8, area: 'Seguridad', entrada: '18:00', salida: '06:00', turno: 'Noche', color: 'from-slate-400 to-slate-600' },
+      { id: 1, area: 'Primaria', dia: 'Lunes', entrada: '07:30', salida: '13:30', turno: 'Mañana', color: 'from-blue-400 to-blue-600' },
+      { id: 2, area: 'Secundaria', dia: 'Lunes', entrada: '07:30', salida: '14:00', turno: 'Mañana', color: 'from-green-400 to-emerald-600' },
+      { id: 3, area: 'Administración', dia: 'Lunes', entrada: '08:00', salida: '16:00', turno: 'Completo', color: 'from-purple-400 to-purple-600' },
+      { id: 4, area: 'Primaria', dia: 'Martes', entrada: '07:30', salida: '13:30', turno: 'Mañana', color: 'from-blue-400 to-blue-600' },
+      { id: 5, area: 'Docentes', dia: 'Lunes', entrada: '07:00', salida: '13:00', turno: 'Mañana', color: 'from-pink-400 to-pink-600' },
+      { id: 6, area: 'Inicial', dia: 'Lunes', entrada: '08:00', salida: '12:30', turno: 'Mañana', color: 'from-orange-400 to-orange-600' },
+      { id: 7, area: 'Secundaria', dia: 'Martes', entrada: '13:00', salida: '18:00', turno: 'Tarde', color: 'from-green-400 to-emerald-600' },
+      { id: 8, area: 'Limpieza', dia: 'Lunes', entrada: '06:00', salida: '14:00', turno: 'Completo', color: 'from-cyan-400 to-cyan-600' },
     ]
   }
 })
@@ -177,6 +185,7 @@ const horariosFiltrados = computed(() => {
   
   return props.horarios.filter(h => 
     h.area.toLowerCase().includes(busqueda.value.toLowerCase()) ||
+    h.dia.toLowerCase().includes(busqueda.value.toLowerCase()) ||
     h.turno.toLowerCase().includes(busqueda.value.toLowerCase())
   )
 })
@@ -184,7 +193,6 @@ const horariosFiltrados = computed(() => {
 const getTurnoIcon = (turno) => {
   if (turno === 'Mañana') return 'fas fa-sun text-yellow-300'
   if (turno === 'Tarde') return 'fas fa-moon text-blue-300'
-  if (turno === 'Noche') return 'fas fa-star text-indigo-300'
   return 'fas fa-clock text-purple-300'
 }
 </script>

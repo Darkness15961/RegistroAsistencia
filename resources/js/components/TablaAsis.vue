@@ -23,8 +23,22 @@ const chartData = {
   datasets: [
     {
       label: 'Asistencias',
-      backgroundColor: '#3b82f6', // azul estilo Tailwind
-      borderRadius: 6,
+      backgroundColor: [
+        'rgba(59, 130, 246, 0.8)',   // Azul
+        'rgba(16, 185, 129, 0.8)',   // Verde
+        'rgba(139, 92, 246, 0.8)',   // Morado
+        'rgba(236, 72, 153, 0.8)',   // Rosa
+        'rgba(251, 146, 60, 0.8)'    // Naranja
+      ],
+      borderColor: [
+        'rgb(59, 130, 246)',
+        'rgb(16, 185, 129)',
+        'rgb(139, 92, 246)',
+        'rgb(236, 72, 153)',
+        'rgb(251, 146, 60)'
+      ],
+      borderWidth: 2,
+      borderRadius: 8,
       data: [18, 22, 21, 25, 20]
     }
   ]
@@ -32,22 +46,58 @@ const chartData = {
 
 const options = {
   responsive: true,
-  maintainAspectRatio: false, // responsividad
+  maintainAspectRatio: false,
   plugins: {
     legend: {
       position: 'bottom',
-      labels: { color: '#374151' } // gris oscuro para mejor contraste
+      labels: { 
+        color: '#e5e7eb',
+        font: {
+          size: 13,
+          weight: '500'
+        },
+        padding: 15
+      }
+    },
+    title: {
+      display: true,
+      text: 'Asistencias Semanales',
+      color: '#f3f4f6',
+      font: {
+        size: 16,
+        weight: 'bold'
+      },
+      padding: {
+        bottom: 20
+      }
     }
   },
   scales: {
     x: {
-      ticks: { color: '#6b7280' }, // gris Tailwind
-      grid: { color: 'rgba(0,0,0,0.05)' }
+      ticks: { 
+        color: '#d1d5db',
+        font: {
+          size: 12,
+          weight: '500'
+        }
+      },
+      grid: { 
+        color: 'rgba(255, 255, 255, 0.05)',
+        drawBorder: false
+      }
     },
     y: {
       beginAtZero: true,
-      ticks: { color: '#6b7280' },
-      grid: { color: 'rgba(0,0,0,0.05)' }
+      ticks: { 
+        color: '#d1d5db',
+        font: {
+          size: 12
+        }
+      },
+      grid: { 
+        color: 'rgba(255, 255, 255, 0.05)',
+        drawBorder: false
+      }
     }
   }
 }
