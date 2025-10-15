@@ -48,11 +48,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router'
 import Sidebar from './components/Sidebar.vue'
 import Header from './components/Header.vue'
-<<<<<<< HEAD
-import Footer from './components/Footer.vue'
-=======
 import { useTheme } from './composables/useTheme'
->>>>>>> origin/main
 
 const route = useRoute()
 
@@ -89,28 +85,4 @@ onMounted(() => {
 onUnmounted(() => {
   window.removeEventListener('resize', handleResize)
 })
-<<<<<<< HEAD
 </script>
-
-<style>
-/* Scrollbar personalizado */
-::-webkit-scrollbar {
-  width: 8px;
-}
-
-::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.05);
-}
-
-::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.3);
-}
-</style>
-=======
-</script>
->>>>>>> origin/main
