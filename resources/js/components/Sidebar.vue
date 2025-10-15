@@ -1,6 +1,6 @@
 <!-- resources/js/components/Sidebar.vue -->
 <template>
-  <aside 
+  <aside
     :class="[
       'fixed top-0 h-screen bg-white/5 backdrop-blur-xl border border-white/10 text-white flex flex-col overflow-hidden z-40 transition-all duration-300',
       // Desktop: con margen y bordes redondeados
@@ -12,7 +12,7 @@
       isCollapsed ? 'max-md:-translate-x-full' : 'max-md:translate-x-0'
     ]"
   >
-    
+
     <!-- Logo / Header -->
     <div class="flex items-center justify-between p-6 border-b border-white/10">
       <div class="flex items-center gap-3">
@@ -39,7 +39,7 @@
           </svg>
         </div>
         <span v-show="!isCollapsed" class="font-medium">Home</span>
-        
+
         <!-- Tooltip para cuando está colapsado -->
         <div v-show="isCollapsed" class="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-sm rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap">
           Home
@@ -58,7 +58,7 @@
           </svg>
         </div>
         <span v-show="!isCollapsed" class="font-medium">Usuarios</span>
-        
+
         <div v-show="isCollapsed" class="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-sm rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap">
           Usuarios
         </div>
@@ -76,7 +76,7 @@
           </svg>
         </div>
         <span v-show="!isCollapsed" class="font-medium">Areas</span>
-        
+
         <div v-show="isCollapsed" class="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-sm rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap">
           Areas
         </div>
@@ -94,7 +94,7 @@
           </svg>
         </div>
         <span v-show="!isCollapsed" class="font-medium">Horarios</span>
-        
+
         <div v-show="isCollapsed" class="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-sm rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap">
           Horarios
         </div>
@@ -112,7 +112,7 @@
           </svg>
         </div>
         <span v-show="!isCollapsed" class="font-medium">Empleados</span>
-        
+
         <div v-show="isCollapsed" class="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-sm rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap">
           Empleados
         </div>
@@ -130,7 +130,7 @@
           </svg>
         </div>
         <span v-show="!isCollapsed" class="font-medium">Asistencias</span>
-        
+
         <div v-show="isCollapsed" class="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-sm rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap">
           Asistencias
         </div>
