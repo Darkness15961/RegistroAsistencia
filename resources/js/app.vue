@@ -1,11 +1,8 @@
-<!-- resources/js/app.vue -->
 <template>
-  <div class="min-h-screen" style="background: 
-    radial-gradient(circle at 35% 30%, #59144E 0%, rgba(89, 20, 78, 0.4) 20%, transparent 50%),
-    radial-gradient(circle at 60% 55%, #0A0140 0%, rgba(10, 1, 64, 0.5) 20%, transparent 35%),
-    radial-gradient(circle at 70% 70%, #060273 0%, rgba(6, 2, 115, 0.4) 15%, transparent 30%),
-    radial-gradient(circle at 75% 85%, #050259 0%, rgba(5, 2, 89, 0.3) 10%, transparent 25%),
-    linear-gradient(to bottom right, #190426 0%, #000000 100%)">
+  <div 
+    class="min-h-screen transition-colors duration-300"
+    :class="isDark ? 'bg-dark-gradient' : 'bg-light-gradient'"
+  >
     
     <!-- Si está en login, mostrar solo la vista -->
     <div v-if="isLoginPage" class="min-h-screen">
@@ -49,8 +46,12 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router'
 import Sidebar from './components/Sidebar.vue'
 import Header from './components/Header.vue'
+import { useTheme } from './composables/useTheme'
 
 const route = useRoute()
+
+// Inicializar tema
+const { isDark } = useTheme()
 
 // Estado para colapsar/expandir sidebar
 const sidebarCollapsed = ref(false)
@@ -83,23 +84,3 @@ onUnmounted(() => {
   window.removeEventListener('resize', handleResize)
 })
 </script>
-
-<style>
-/* Scrollbar personalizado */
-::-webkit-scrollbar {
-  width: 8px;
-}
-
-::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.05);
-}
-
-::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.3);
-}
-</style>

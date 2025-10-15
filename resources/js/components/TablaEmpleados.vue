@@ -1,26 +1,30 @@
 <template>
   <div class="w-full">
-    <!-- Header con título del área y botones -->
+    <!-- Header personalizado -->
     <div class="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
       <div>
-        <h2 class="text-2xl font-bold text-white mb-1">
+        <h2 class="text-2xl font-bold mb-1" :class="theme('cardTitle').value">
           <i :class="`fas fa-${iconoArea} mr-2`"></i>
           {{ nombreArea }}
         </h2>
-        <p class="text-gray-300 text-sm">{{ empleados.length }} personas registradas</p>
+        <p class="text-sm" :class="theme('cardSubtitle').value">
+          {{ empleados.length }} personas registradas
+        </p>
       </div>
       
       <div class="flex gap-3">
         <button 
           @click="$emit('volver')"
-          class="bg-white/10 hover:bg-white/20 border border-white/20 text-white px-4 py-2 rounded-xl font-medium transition-all"
+          class="px-4 py-2 rounded-xl font-medium transition-all border"
+          :class="theme('buttonSecondary').value"
         >
           <i class="fas fa-arrow-left mr-2"></i>
           Volver
         </button>
         <button 
           @click="$emit('nuevoEmpleado')"
-          class="bg-gradient-to-r from-cyan-400 to-blue-500 hover:from-cyan-500 hover:to-blue-600 text-white px-5 py-2.5 rounded-xl font-medium transition-all transform hover:scale-105 shadow-lg"
+          class="px-5 py-2.5 rounded-xl font-medium transition-all transform hover:scale-105 shadow-lg"
+          :class="theme('buttonPrimary').value"
         >
           <i class="fas fa-plus mr-2"></i>
           Nuevo Empleado
@@ -28,149 +32,176 @@
       </div>
     </div>
 
-    <!-- Barra de búsqueda -->
-    <div class="bg-white/10 backdrop-blur-xl border border-white/15 rounded-2xl p-3 flex items-center gap-3 mb-6">
-      <i class="fas fa-search text-gray-400"></i>
-      <input
-        v-model="busqueda"
-        type="text"
-        placeholder="Buscar por nombre, cargo o correo..."
-        class="bg-transparent text-white placeholder-gray-400 outline-none flex-1 text-sm"
-      />
-    </div>
+    <!-- Tabla Responsive -->
+    <ResponsiveTable
+      :columns="columns"
+      :data="empleados"
+      :search-keys="['nombre', 'cargo', 'correo']"
+      search-placeholder="Buscar por nombre, cargo o correo..."
+      :show-header="true"
+      :show-action-button="false"
+      empty-message="No se encontraron empleados"
+    >
+      <!-- Columna: Nombre -->
+      <template #cell-nombre="{ row }">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-full bg-gradient-to-br from-purple-400 to-pink-500 flex items-center justify-center shadow-lg">
+            <span class="text-white font-bold text-sm">
+              {{ row.nombre.split(' ').map(n => n[0]).join('').substring(0, 2) }}
+            </span>
+          </div>
+          <span class="font-semibold" :class="theme('cardTitle').value">
+            {{ row.nombre }}
+          </span>
+        </div>
+      </template>
 
-    <!-- Tabla -->
-    <div class="bg-white/10 backdrop-blur-xl border border-white/15 rounded-3xl overflow-hidden shadow-2xl">
-      <div class="overflow-x-auto">
-        <table class="w-full">
-          <thead>
-            <tr class="bg-white/10 border-b border-white/20">
-              <th class="text-left p-4 text-gray-200 font-bold text-sm">ID</th>
-              <th class="text-left p-4 text-gray-200 font-bold text-sm">Nombre Completo</th>
-              <th class="text-left p-4 text-gray-200 font-bold text-sm">Cargo</th>
-              <th class="text-left p-4 text-gray-200 font-bold text-sm">Correo</th>
-              <th class="text-left p-4 text-gray-200 font-bold text-sm">Teléfono</th>
-              <th class="text-left p-4 text-gray-200 font-bold text-sm">Estado</th>
-              <th class="text-center p-4 text-gray-200 font-bold text-sm">Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-if="empleadosFiltrados.length === 0">
-              <td colspan="7" class="text-center p-8 text-gray-400">
-                <i class="fas fa-users text-5xl mb-3 opacity-50"></i>
-                <p>No se encontraron empleados</p>
-              </td>
-            </tr>
-            
-            <tr 
-              v-for="(empleado, index) in empleadosFiltrados" 
-              :key="empleado.id"
+      <!-- Columna: Cargo -->
+      <template #cell-cargo="{ value }">
+        <div class="bg-blue-500/20 border border-blue-500/30 px-3 py-1 rounded-lg inline-block">
+          <span class="text-blue-200 text-sm font-medium">{{ value }}</span>
+        </div>
+      </template>
+
+      <!-- Columna: Correo -->
+      <template #cell-correo="{ value }">
+        <div class="flex items-center gap-2">
+          <i class="fas fa-envelope text-sm" :class="theme('cardSubtitle').value"></i>
+          <span class="text-sm" :class="theme('cardSubtitle').value">{{ value }}</span>
+        </div>
+      </template>
+
+      <!-- Columna: Teléfono -->
+      <template #cell-telefono="{ value }">
+        <div class="flex items-center gap-2">
+          <i class="fas fa-phone text-sm" :class="theme('cardSubtitle').value"></i>
+          <span class="text-sm" :class="theme('cardSubtitle').value">{{ value }}</span>
+        </div>
+      </template>
+
+      <!-- Columna: Estado -->
+      <template #cell-estado="{ value }">
+        <div 
+          :class="[
+            'px-3 py-1 rounded-full inline-flex items-center gap-2 text-xs font-medium border',
+            value === 'Activo' 
+              ? 'bg-green-500/20 border-green-500/30 text-green-200' 
+              : 'bg-red-500/20 border-red-500/30 text-red-200'
+          ]"
+        >
+          <div 
+            :class="[
+              'w-2 h-2 rounded-full',
+              value === 'Activo' ? 'bg-green-400' : 'bg-red-400'
+            ]"
+          ></div>
+          {{ value }}
+        </div>
+      </template>
+
+      <!-- Columna: Acciones -->
+      <template #cell-acciones="{ row }">
+        <div class="flex justify-center gap-2">
+          <button 
+            @click="$emit('editar', row)"
+            class="bg-blue-500/20 hover:bg-blue-500/30 border border-blue-500/30 p-2 rounded-xl transition-all hover:scale-110 group"
+          >
+            <i class="fas fa-edit text-blue-300 group-hover:text-blue-200"></i>
+          </button>
+          <button 
+            @click="$emit('eliminar', row.id)"
+            class="bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 p-2 rounded-xl transition-all hover:scale-110 group"
+          >
+            <i class="fas fa-trash text-red-300 group-hover:text-red-200"></i>
+          </button>
+        </div>
+      </template>
+
+      <!-- Card Mobile personalizado -->
+      <template #mobile-card="{ row }">
+        <div class="space-y-4">
+          <!-- Header del card -->
+          <div class="flex items-start justify-between pb-3 border-b" :class="isDark ? 'border-white/10' : 'border-gray-200'">
+            <div class="flex items-center gap-3">
+              <div class="w-12 h-12 rounded-full bg-gradient-to-br from-purple-400 to-pink-500 flex items-center justify-center shadow-lg">
+                <span class="text-white font-bold">
+                  {{ row.nombre.split(' ').map(n => n[0]).join('').substring(0, 2) }}
+                </span>
+              </div>
+              <div>
+                <h3 class="font-bold" :class="theme('cardTitle').value">
+                  {{ row.nombre }}
+                </h3>
+                <p class="text-xs" :class="theme('cardSubtitle').value">
+                  ID: {{ row.id }}
+                </p>
+              </div>
+            </div>
+            <div 
               :class="[
-                'border-b border-white/5 hover:bg-white/10 transition-all',
-                index % 2 === 0 ? 'bg-white/[0.03]' : ''
+                'px-2 py-1 rounded-full inline-flex items-center gap-1 text-xs font-medium border',
+                row.estado === 'Activo' 
+                  ? 'bg-green-500/20 border-green-500/30 text-green-200' 
+                  : 'bg-red-500/20 border-red-500/30 text-red-200'
               ]"
             >
-              <td class="p-4">
-                <span class="text-gray-300 font-mono text-sm">{{ empleado.id }}</span>
-              </td>
-              
-              <td class="p-4">
-                <div class="flex items-center gap-3">
-                  <div class="w-10 h-10 rounded-full bg-gradient-to-br from-purple-400 to-pink-500 flex items-center justify-center shadow-lg">
-                    <span class="text-white font-bold text-sm">
-                      {{ empleado.nombre.split(' ').map(n => n[0]).join('').substring(0, 2) }}
-                    </span>
-                  </div>
-                  <span class="text-white font-semibold">{{ empleado.nombre }}</span>
-                </div>
-              </td>
-              
-              <td class="p-4">
-                <div class="bg-blue-500/20 border border-blue-500/30 px-3 py-1 rounded-lg inline-block">
-                  <span class="text-blue-200 text-sm font-medium">{{ empleado.cargo }}</span>
-                </div>
-              </td>
-              
-              <td class="p-4">
-                <div class="flex items-center gap-2">
-                  <i class="fas fa-envelope text-gray-400 text-sm"></i>
-                  <span class="text-gray-300 text-sm">{{ empleado.correo }}</span>
-                </div>
-              </td>
-              
-              <td class="p-4">
-                <div class="flex items-center gap-2">
-                  <i class="fas fa-phone text-gray-400 text-sm"></i>
-                  <span class="text-gray-300 text-sm">{{ empleado.telefono }}</span>
-                </div>
-              </td>
-              
-              <td class="p-4">
-                <div 
-                  :class="[
-                    'px-3 py-1 rounded-full inline-flex items-center gap-2 text-xs font-medium',
-                    empleado.estado === 'Activo' 
-                      ? 'bg-green-500/20 border border-green-500/30 text-green-200' 
-                      : 'bg-red-500/20 border border-red-500/30 text-red-200'
-                  ]"
-                >
-                  <div 
-                    :class="[
-                      'w-2 h-2 rounded-full',
-                      empleado.estado === 'Activo' ? 'bg-green-400' : 'bg-red-400'
-                    ]"
-                  ></div>
-                  {{ empleado.estado }}
-                </div>
-              </td>
-              
-              <td class="p-4">
-                <div class="flex justify-center gap-2">
-                  <button 
-                    @click="$emit('editar', empleado)"
-                    class="bg-blue-500/20 hover:bg-blue-500/30 border border-blue-500/30 p-2 rounded-xl transition-all hover:scale-110 group"
-                  >
-                    <i class="fas fa-edit text-blue-300 group-hover:text-blue-200"></i>
-                  </button>
-                  <button 
-                    @click="$emit('eliminar', empleado.id)"
-                    class="bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 p-2 rounded-xl transition-all hover:scale-110 group"
-                  >
-                    <i class="fas fa-trash text-red-300 group-hover:text-red-200"></i>
-                  </button>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+              <div 
+                :class="[
+                  'w-2 h-2 rounded-full',
+                  row.estado === 'Activo' ? 'bg-green-400' : 'bg-red-400'
+                ]"
+              ></div>
+              {{ row.estado }}
+            </div>
+          </div>
 
-      <!-- Footer con paginación -->
-      <div class="bg-white/5 border-t border-white/10 px-6 py-4 flex flex-wrap items-center justify-between gap-4">
-        <div class="text-gray-300 text-sm">
-          Mostrando <span class="text-white font-semibold">{{ empleadosFiltrados.length }}</span> de <span class="text-white font-semibold">{{ empleados.length }}</span> empleados
+          <!-- Info -->
+          <div class="space-y-3">
+            <div class="bg-blue-500/20 border border-blue-500/30 px-3 py-2 rounded-lg">
+              <p class="text-xs text-blue-300 mb-1">Cargo</p>
+              <p class="text-blue-200 font-medium">{{ row.cargo }}</p>
+            </div>
+
+            <div class="grid grid-cols-1 gap-2">
+              <div class="flex items-center gap-2">
+                <i class="fas fa-envelope text-sm" :class="theme('cardSubtitle').value"></i>
+                <span class="text-sm" :class="theme('cardSubtitle').value">{{ row.correo }}</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <i class="fas fa-phone text-sm" :class="theme('cardSubtitle').value"></i>
+                <span class="text-sm" :class="theme('cardSubtitle').value">{{ row.telefono }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Acciones -->
+          <div class="flex gap-2 pt-2">
+            <button 
+              @click="$emit('editar', row)"
+              class="flex-1 bg-blue-500/20 hover:bg-blue-500/30 border border-blue-500/30 py-2 rounded-xl transition-all flex items-center justify-center gap-2"
+            >
+              <i class="fas fa-edit text-blue-300"></i>
+              <span class="text-blue-300 font-medium text-sm">Editar</span>
+            </button>
+            <button 
+              @click="$emit('eliminar', row.id)"
+              class="flex-1 bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 py-2 rounded-xl transition-all flex items-center justify-center gap-2"
+            >
+              <i class="fas fa-trash text-red-300"></i>
+              <span class="text-red-300 font-medium text-sm">Eliminar</span>
+            </button>
+          </div>
         </div>
-        <div class="flex gap-2">
-          <button class="bg-white/5 hover:bg-white/10 border border-white/10 px-3 py-1.5 rounded-lg text-gray-300 text-sm transition-all">
-            Anterior
-          </button>
-          <button class="bg-white/10 border border-white/20 px-3 py-1.5 rounded-lg text-white font-medium text-sm">
-            1
-          </button>
-          <button class="bg-white/5 hover:bg-white/10 border border-white/10 px-3 py-1.5 rounded-lg text-gray-300 text-sm transition-all">
-            2
-          </button>
-          <button class="bg-white/5 hover:bg-white/10 border border-white/10 px-3 py-1.5 rounded-lg text-gray-300 text-sm transition-all">
-            Siguiente
-          </button>
-        </div>
-      </div>
-    </div>
+      </template>
+    </ResponsiveTable>
   </div>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import ResponsiveTable from './ResponsiveTable.vue'
+import { useTheme } from '../composables/useTheme'
+
+const { theme, isDark } = useTheme()
 
 const props = defineProps({
   empleados: {
@@ -189,15 +220,13 @@ const props = defineProps({
 
 defineEmits(['nuevoEmpleado', 'editar', 'eliminar', 'volver'])
 
-const busqueda = ref('')
-
-const empleadosFiltrados = computed(() => {
-  if (!busqueda.value) return props.empleados
-  
-  return props.empleados.filter(e => 
-    e.nombre.toLowerCase().includes(busqueda.value.toLowerCase()) ||
-    e.cargo.toLowerCase().includes(busqueda.value.toLowerCase()) ||
-    e.correo.toLowerCase().includes(busqueda.value.toLowerCase())
-  )
-})
+const columns = [
+  { key: 'id', label: 'ID' },
+  { key: 'nombre', label: 'Nombre Completo' },
+  { key: 'cargo', label: 'Cargo' },
+  { key: 'correo', label: 'Correo' },
+  { key: 'telefono', label: 'Teléfono' },
+  { key: 'estado', label: 'Estado' },
+  { key: 'acciones', label: 'Acciones' }
+]
 </script>

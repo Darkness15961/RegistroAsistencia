@@ -1,96 +1,209 @@
 <template>
   <div class="flex-1 p-6 overflow-x-hidden">
-    <!-- Título -->
-    <h1 class="text-3xl font-bold text-white mb-6">Lista de Áreas</h1>
-
-    <!-- Encabezado con botón y búsqueda -->
-    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-      <!-- Botón de nuevo -->
-      <button
-        class="flex items-center bg-gradient-to-r from-cyan-400 to-blue-500 text-white font-semibold px-5 py-2 rounded-xl shadow-md hover:scale-105 transition-transform"
-      >
-        <i class="fas fa-plus mr-2"></i> Nuevo
-      </button>
-
-      <!-- Barra de búsqueda -->
-      <div class="relative w-full sm:w-64">
-        <input
-          type="text"
-          placeholder="Buscar área..."
-          v-model="busqueda"
-          class="w-full bg-white/10 text-white placeholder-gray-400 rounded-xl pl-10 pr-4 py-2 outline-none focus:ring-2 focus:ring-cyan-400 transition"
-        />
-        <i class="fas fa-search absolute left-3 top-2.5 text-gray-400"></i>
+    <!-- Header con título y botón -->
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+      <div>
+        <h1 class="text-3xl font-bold mb-2" :class="theme('cardTitle').value">
+          Lista de Áreas
+        </h1>
+        <p class="text-sm" :class="theme('cardSubtitle').value">
+          Gestiona las áreas y departamentos del colegio
+        </p>
       </div>
+
+      <button
+        class="flex items-center gap-2 px-6 py-3 rounded-xl font-semibold shadow-lg hover:scale-105 transition-all duration-200 whitespace-nowrap"
+        :class="theme('buttonPrimary').value"
+      >
+        <i class="fas fa-plus"></i>
+        Nuevo Área
+      </button>
     </div>
 
-    <!-- Tabla principal (solo visible en pantallas medianas o mayores) -->
+    <!-- Barra de búsqueda -->
+    <div class="relative w-full sm:max-w-md mb-6">
+      <input
+        v-model="busqueda"
+        type="text"
+        placeholder="Buscar área..."
+        class="w-full rounded-xl pl-10 pr-4 py-3 outline-none border transition-colors"
+        :class="theme('input').value"
+      />
+      <i
+        class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2"
+        :class="theme('cardSubtitle').value"
+      ></i>
+    </div>
+
+    <!-- Tabla (desktop) -->
     <div
-      class="hidden md:block bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl shadow-md overflow-hidden"
+      class="hidden md:block backdrop-blur-xl border rounded-3xl shadow-2xl overflow-hidden"
+      :class="theme('card').value"
     >
-      <table class="w-full text-left text-white">
-        <thead class="bg-white/10 text-sm uppercase tracking-wide text-gray-300">
-          <tr>
-            <th class="px-6 py-3">ID</th>
-            <th class="px-6 py-3">Nombre</th>
-            <th class="px-6 py-3">Descripción</th>
-            <th class="px-6 py-3 text-center">Acción</th>
+      <table class="w-full text-left">
+        <thead :class="theme('tableHeader').value">
+          <tr class="border-b" :class="isDark ? 'border-white/20' : 'border-gray-200'">
+            <th class="px-6 py-4 text-sm font-bold uppercase tracking-wide" :class="theme('cardSubtitle').value">ID</th>
+            <th class="px-6 py-4 text-sm font-bold uppercase tracking-wide" :class="theme('cardSubtitle').value">Nombre</th>
+            <th class="px-6 py-4 text-sm font-bold uppercase tracking-wide" :class="theme('cardSubtitle').value">Descripción</th>
+            <th class="px-6 py-4 text-center text-sm font-bold uppercase tracking-wide" :class="theme('cardSubtitle').value">Acción</th>
           </tr>
         </thead>
         <tbody>
           <tr
-            v-for="area in areasFiltradas"
+            v-for="(area, index) in areasFiltradas"
             :key="area.id"
-            class="border-t border-white/10 hover:bg-white/10 transition"
+            class="border-b transition-all"
+            :class="[
+              theme('tableRow').value,
+              isDark ? 'border-white/5' : 'border-gray-100',
+              index % 2 === 0 ? (isDark ? 'bg-white/[0.03]' : 'bg-gray-50/50') : ''
+            ]"
           >
-            <td class="px-6 py-3">{{ area.id }}</td>
-            <td class="px-6 py-3">{{ area.nombre }}</td>
-            <td class="px-6 py-3">{{ area.descripcion }}</td>
-            <td class="px-6 py-3 text-center">
-              <button
-                class="text-green-400 hover:text-yellow-300 mr-3 transition"
-                title="Editar"
-              >
-                <i class="fas fa-edit"></i>
-              </button>
-              <button
-                class="text-red-500 hover:text-red-400 transition"
-                title="Eliminar"
-              >
-                <i class="fas fa-trash-alt"></i>
-              </button>
+            <td class="px-6 py-4">
+              <span class="font-mono text-sm" :class="theme('cardSubtitle').value">
+                {{ area.id }}
+              </span>
+            </td>
+            <td class="px-6 py-4">
+              <div class="flex items-center gap-3">
+                <div
+                  :class="[
+                    'w-10 h-10 rounded-xl flex items-center justify-center shadow-lg bg-gradient-to-br text-white',
+                    getAreaStyle(area.nombre).gradient
+                  ]"
+                >
+                  <i :class="['text-lg', getAreaStyle(area.nombre).icon]"></i>
+                </div>
+                <span class="font-semibold" :class="theme('cardTitle').value">
+                  {{ area.nombre }}
+                </span>
+              </div>
+            </td>
+            <td class="px-6 py-4" :class="theme('cardSubtitle').value">
+              {{ area.descripcion }}
+            </td>
+            <td class="px-6 py-4">
+              <div class="flex justify-center gap-2">
+                <button
+                  class="p-2 rounded-xl transition-all hover:scale-110 group"
+                  :class="isDark
+                    ? 'bg-blue-500/20 hover:bg-blue-500/30 border border-blue-500/30'
+                    : 'bg-blue-50 hover:bg-blue-100 border border-blue-200'"
+                  title="Editar"
+                >
+                  <i
+                    class="fas fa-edit"
+                    :class="isDark ? 'text-blue-300 group-hover:text-blue-200' : 'text-blue-600 group-hover:text-blue-700'"
+                  ></i>
+                </button>
+                <button
+                  class="p-2 rounded-xl transition-all hover:scale-110 group"
+                  :class="isDark
+                    ? 'bg-red-500/20 hover:bg-red-500/30 border border-red-500/30'
+                    : 'bg-red-50 hover:bg-red-100 border border-red-200'"
+                  title="Eliminar"
+                >
+                  <i
+                    class="fas fa-trash"
+                    :class="isDark ? 'text-red-300 group-hover:text-red-200' : 'text-red-600 group-hover:text-red-700'"
+                  ></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+
+          <tr v-if="areasFiltradas.length === 0">
+            <td colspan="4" class="text-center py-10" :class="theme('cardSubtitle').value">
+              <i class="fas fa-search text-4xl mb-3 opacity-60"></i>
+              <p>No se encontraron áreas</p>
             </td>
           </tr>
         </tbody>
       </table>
+
+      <div
+        class="border-t px-6 py-4"
+        :class="isDark ? 'bg-white/5 border-white/10' : 'bg-gray-50 border-gray-200'"
+      >
+        <p class="text-sm" :class="theme('cardSubtitle').value">
+          Mostrando
+          <span class="font-semibold" :class="theme('cardTitle').value">{{ areasFiltradas.length }}</span>
+          de
+          <span class="font-semibold" :class="theme('cardTitle').value">{{ areas.length }}</span>
+          áreas
+        </p>
+      </div>
     </div>
 
-    <!-- Versión móvil (tarjetas) -->
+    <!-- Versión móvil -->
     <div class="grid gap-4 md:hidden">
       <div
         v-for="area in areasFiltradas"
         :key="area.id"
-        class="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl shadow-md p-4 text-white"
+        class="backdrop-blur-xl border rounded-3xl shadow-lg p-5"
+        :class="theme('card').value"
       >
-        <div class="flex justify-between items-center mb-2">
-          <h2 class="text-lg font-semibold">{{ area.nombre }}</h2>
-          <div class="flex space-x-3">
+        <div class="flex items-start justify-between gap-3 mb-3">
+          <div class="flex items-center gap-3">
+            <div
+              :class="[
+                'w-12 h-12 rounded-2xl flex items-center justify-center shadow-lg bg-gradient-to-br text-white',
+                getAreaStyle(area.nombre).gradient
+              ]"
+            >
+              <i :class="['text-lg', getAreaStyle(area.nombre).icon]"></i>
+            </div>
+            <div>
+              <h2 class="text-lg font-semibold" :class="theme('cardTitle').value">
+                {{ area.nombre }}
+              </h2>
+              <span class="text-xs px-2 py-1 rounded-full" :class="isDark ? 'bg-white/10 text-gray-300' : 'bg-gray-100 text-gray-600'">
+                ID: {{ area.id }}
+              </span>
+            </div>
+          </div>
+
+          <div class="flex gap-2">
             <button
-              class="text-yellow-400 hover:text-yellow-300 transition"
+              class="p-2 rounded-xl transition-all hover:scale-110 group"
+              :class="isDark
+                ? 'bg-blue-500/20 hover:bg-blue-500/30 border border-blue-500/30'
+                : 'bg-blue-50 hover:bg-blue-100 border border-blue-200'"
               title="Editar"
             >
-              <i class="fas fa-edit"></i>
+              <i
+                class="fas fa-edit"
+                :class="isDark ? 'text-blue-300 group-hover:text-blue-200' : 'text-blue-600 group-hover:text-blue-700'"
+              ></i>
             </button>
             <button
-              class="text-red-500 hover:text-red-400 transition"
+              class="p-2 rounded-xl transition-all hover:scale-110 group"
+              :class="isDark
+                ? 'bg-red-500/20 hover:bg-red-500/30 border border-red-500/30'
+                : 'bg-red-50 hover:bg-red-100 border border-red-200'"
               title="Eliminar"
             >
-              <i class="fas fa-trash-alt"></i>
+              <i
+                class="fas fa-trash"
+                :class="isDark ? 'text-red-300 group-hover:text-red-200' : 'text-red-600 group-hover:text-red-700'"
+              ></i>
             </button>
           </div>
         </div>
-        <p class="text-sm text-gray-300">{{ area.descripcion }}</p>
-        <span class="text-xs text-gray-400 mt-2 block">ID: {{ area.id }}</span>
+
+        <p class="text-sm" :class="theme('cardSubtitle').value">
+          {{ area.descripcion }}
+        </p>
+      </div>
+
+      <div
+        v-if="areasFiltradas.length === 0"
+        class="text-center py-12 rounded-xl border"
+        :class="[theme('card').value, theme('cardSubtitle').value]"
+      >
+        <i class="fas fa-search text-5xl mb-4 opacity-50"></i>
+        <p class="text-lg">No se encontraron áreas</p>
       </div>
     </div>
   </div>
@@ -98,6 +211,9 @@
 
 <script setup>
 import { ref, computed } from 'vue'
+import { useTheme } from '../composables/useTheme'
+
+const { theme, isDark } = useTheme()
 
 const busqueda = ref('')
 
@@ -118,6 +234,26 @@ const areas = ref([
   { id: 14, nombre: 'Servicio Médico', descripcion: 'Atención médica y primeros auxilios dentro del colegio' }
 ])
 
+const styleCatalog = {
+  'Dirección':            { gradient: 'from-indigo-400 to-indigo-600', icon: 'fas fa-building' },
+  'Administración':       { gradient: 'from-cyan-400 to-blue-500',    icon: 'fas fa-briefcase' },
+  'Docentes de Primaria': { gradient: 'from-amber-400 to-orange-500', icon: 'fas fa-chalkboard-teacher' },
+  'Docentes de Secundaria': { gradient: 'from-pink-400 to-rose-500',  icon: 'fas fa-user-graduate' },
+  'Alumnos de Inicial':   { gradient: 'from-emerald-400 to-green-500', icon: 'fas fa-child' },
+  'Alumnos de Primaria':  { gradient: 'from-blue-400 to-sky-500',     icon: 'fas fa-book-reader' },
+  'Alumnos de Secundaria':{ gradient: 'from-purple-400 to-fuchsia-500', icon: 'fas fa-users' },
+  'Tutoría y Psicología': { gradient: 'from-teal-400 to-green-500',   icon: 'fas fa-hands-helping' },
+  'Mantenimiento y Limpieza': { gradient: 'from-slate-400 to-slate-600', icon: 'fas fa-broom' },
+  'Seguridad':            { gradient: 'from-red-400 to-rose-500',     icon: 'fas fa-shield-alt' },
+  'Biblioteca':           { gradient: 'from-yellow-400 to-amber-500', icon: 'fas fa-book' },
+  'Laboratorio':          { gradient: 'from-lime-400 to-green-500',   icon: 'fas fa-flask' },
+  'Coordinación Académica': { gradient: 'from-sky-400 to-blue-500',   icon: 'fas fa-sitemap' },
+  'Servicio Médico':      { gradient: 'from-rose-400 to-red-500',     icon: 'fas fa-heartbeat' }
+}
+
+const defaultStyle = { gradient: 'from-slate-400 to-slate-600', icon: 'fas fa-building' }
+
+const getAreaStyle = (nombre) => styleCatalog[nombre] ?? defaultStyle
 
 const areasFiltradas = computed(() =>
   areas.value.filter(a =>

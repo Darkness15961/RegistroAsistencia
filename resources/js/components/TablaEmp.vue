@@ -5,6 +5,7 @@
 </template>
 
 <script setup>
+import { computed } from 'vue'
 import { Line } from 'vue-chartjs'
 import {
   Chart as ChartJS,
@@ -17,6 +18,7 @@ import {
   LinearScale,
   Filler
 } from 'chart.js'
+import { useTheme } from '../composables/useTheme'
 
 ChartJS.register(
   Title,
@@ -28,6 +30,8 @@ ChartJS.register(
   LinearScale,
   Filler
 )
+
+const { isDark } = useTheme()
 
 // Función para crear gradiente
 const createGradient = (ctx, chartArea) => {
@@ -66,7 +70,7 @@ const chartData = {
   ]
 }
 
-const chartOptions = {
+const chartOptions = computed(() => ({
   responsive: true,
   maintainAspectRatio: false,
   interaction: {
@@ -78,7 +82,7 @@ const chartOptions = {
       display: true,
       position: 'bottom',
       labels: {
-        color: '#e5e7eb',
+        color: isDark.value ? '#e5e7eb' : '#374151',
         font: {
           size: 13,
           weight: '500'
@@ -89,7 +93,7 @@ const chartOptions = {
     title: {
       display: true,
       text: 'Empleados Registrados por Mes',
-      color: '#f3f4f6',
+      color: isDark.value ? '#f3f4f6' : '#111827',
       font: {
         size: 16,
         weight: 'bold'
@@ -111,31 +115,31 @@ const chartOptions = {
   scales: {
     x: { 
       ticks: { 
-        color: '#d1d5db',
+        color: isDark.value ? '#d1d5db' : '#6b7280',
         font: { 
           size: 11,
           weight: '500'
         }
       },
       grid: {
-        color: 'rgba(255, 255, 255, 0.05)',
+        color: isDark.value ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)',
         drawBorder: false
       }
     },
     y: { 
       beginAtZero: true,
       ticks: { 
-        color: '#d1d5db',
+        color: isDark.value ? '#d1d5db' : '#6b7280',
         font: { 
           size: 11
         },
         stepSize: 2
       },
       grid: {
-        color: 'rgba(255, 255, 255, 0.05)',
+        color: isDark.value ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)',
         drawBorder: false
       }
     }
   }
-}
+}))
 </script>

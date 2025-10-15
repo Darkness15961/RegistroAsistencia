@@ -1,6 +1,7 @@
 <template>
   <div
-    class="flex items-center bg-white/10 backdrop-blur-xl border border-white/15 rounded-3xl shadow-md p-4 sm:p-5 transition-transform transform hover:scale-[1.02] w-full"
+    class="flex items-center backdrop-blur-xl border rounded-3xl shadow-md p-4 sm:p-5 transition-transform transform hover:scale-[1.02] w-full"
+    :class="theme('card').value"
   >
     <!-- Ícono con color dinámico -->
     <div
@@ -12,8 +13,18 @@
 
     <!-- Texto -->
     <div class="flex flex-col flex-1">
-      <h3 class="text-gray-200 text-xs sm:text-sm font-medium">{{ title }}</h3>
-      <p class="text-xl sm:text-2xl font-bold text-white mt-1">{{ value }}</p>
+      <h3 
+        class="text-xs sm:text-sm font-medium"
+        :class="theme('cardSubtitle').value"
+      >
+        {{ title }}
+      </h3>
+      <p 
+        class="text-xl sm:text-2xl font-bold mt-1"
+        :class="theme('cardTitle').value"
+      >
+        {{ value }}
+      </p>
       <span
         v-if="subtitle"
         class="bg-green-500 text-white text-[10px] sm:text-xs px-2 py-0.5 rounded-full mt-2 w-fit"
@@ -25,6 +36,10 @@
 </template>
 
 <script setup>
+import { useTheme } from '../composables/useTheme'
+
+const { theme } = useTheme()
+
 defineProps({
   title: String,
   value: [String, Number],
