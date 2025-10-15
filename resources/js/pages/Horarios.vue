@@ -4,51 +4,61 @@
     <div class="mb-6">
       <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <div>
-          <h1 class="text-2xl sm:text-3xl font-bold text-white mb-2">
+          <h1 class="text-2xl sm:text-3xl font-bold mb-2" :class="theme('cardTitle').value">
             <i class="fas fa-clock mr-2"></i>
             Horarios
           </h1>
-          <p class="text-gray-300 text-sm">Gestiona horarios de entrada y salida por área</p>
+          <p class="text-sm" :class="theme('cardSubtitle').value">
+            Gestiona horarios de entrada y salida por área
+          </p>
         </div>
         
         <button 
           @click="$emit('nuevoHorario')"
-          class="bg-gradient-to-r from-cyan-400 to-blue-500 hover:from-cyan-500 hover:to-blue-600 text-white px-5 py-2.5 rounded-xl font-medium transition-all transform hover:scale-105 shadow-lg"
+          class="flex items-center gap-2 px-6 py-3 rounded-xl font-semibold shadow-lg hover:scale-105 transition-all duration-200"
+          :class="theme('buttonPrimary').value"
         >
-          <i class="fas fa-plus mr-2"></i>
+          <i class="fas fa-plus"></i>
           Nuevo Horario
         </button>
       </div>
 
       <!-- Barra de búsqueda -->
-      <div class="bg-white/10 backdrop-blur-xl border border-white/15 rounded-2xl p-3 flex items-center gap-3">
-        <i class="fas fa-search text-gray-400"></i>
+      <div class="relative w-full sm:max-w-md mb-6">
         <input
           v-model="busqueda"
           type="text"
           placeholder="Buscar por área o turno..."
-          class="bg-transparent text-white placeholder-gray-400 outline-none flex-1 text-sm"
+          class="w-full rounded-xl pl-10 pr-4 py-3 outline-none border transition-colors"
+          :class="theme('input').value"
         />
+        <i 
+          class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2"
+          :class="theme('cardSubtitle').value"
+        ></i>
       </div>
     </div>
 
     <!-- Tabla -->
-    <div class="bg-white/10 backdrop-blur-xl border border-white/15 rounded-3xl overflow-hidden shadow-2xl">
+    <div 
+      class="backdrop-blur-xl border rounded-3xl overflow-hidden shadow-2xl"
+      :class="theme('card').value"
+    >
       <div class="overflow-x-auto">
         <table class="w-full">
-          <thead>
-            <tr class="bg-white/10 border-b border-white/20">
-              <th class="text-left p-4 text-gray-200 font-bold text-sm">ID</th>
-              <th class="text-left p-4 text-gray-200 font-bold text-sm">Área / Nivel</th>
-              <th class="text-left p-4 text-gray-200 font-bold text-sm">Entrada</th>
-              <th class="text-left p-4 text-gray-200 font-bold text-sm">Salida</th>
-              <th class="text-left p-4 text-gray-200 font-bold text-sm">Turno</th>
-              <th class="text-center p-4 text-gray-200 font-bold text-sm">Acciones</th>
+          <thead :class="theme('tableHeader').value">
+            <tr class="border-b" :class="isDark ? 'border-white/20' : 'border-gray-200'">
+              <th class="text-left p-4 font-bold text-sm" :class="theme('cardSubtitle').value">ID</th>
+              <th class="text-left p-4 font-bold text-sm" :class="theme('cardSubtitle').value">Área / Nivel</th>
+              <th class="text-left p-4 font-bold text-sm" :class="theme('cardSubtitle').value">Entrada</th>
+              <th class="text-left p-4 font-bold text-sm" :class="theme('cardSubtitle').value">Salida</th>
+              <th class="text-left p-4 font-bold text-sm" :class="theme('cardSubtitle').value">Turno</th>
+              <th class="text-center p-4 font-bold text-sm" :class="theme('cardSubtitle').value">Acciones</th>
             </tr>
           </thead>
           <tbody>
             <tr v-if="horariosFiltrados.length === 0">
-              <td colspan="6" class="text-center p-8 text-gray-400">
+              <td colspan="6" class="text-center p-8" :class="theme('cardSubtitle').value">
                 <i class="fas fa-calendar text-5xl mb-3 opacity-50"></i>
                 <p>No se encontraron horarios</p>
               </td>
@@ -57,13 +67,15 @@
             <tr 
               v-for="(horario, index) in horariosFiltrados" 
               :key="horario.id"
+              class="border-b transition-all"
               :class="[
-                'border-b border-white/5 hover:bg-white/10 transition-all',
-                index % 2 === 0 ? 'bg-white/[0.03]' : ''
+                theme('tableRow').value,
+                isDark ? 'border-white/5' : 'border-gray-100',
+                index % 2 === 0 ? (isDark ? 'bg-white/[0.03]' : 'bg-gray-50/50') : ''
               ]"
             >
               <td class="p-4">
-                <span class="text-gray-300 font-mono text-sm">{{ horario.id }}</span>
+                <span class="font-mono text-sm" :class="theme('cardSubtitle').value">{{ horario.id }}</span>
               </td>
               
               <td class="p-4">
@@ -79,28 +91,57 @@
                       {{ horario.area.substring(0, 2).toUpperCase() }}
                     </span>
                   </div>
-                  <span class="text-white font-semibold">{{ horario.area }}</span>
+                  <span class="font-semibold" :class="theme('cardTitle').value">{{ horario.area }}</span>
                 </div>
               </td>
               
               <td class="p-4">
-                <div class="bg-green-500/20 border border-green-500/30 px-3 py-1.5 rounded-lg inline-flex items-center gap-2">
-                  <i class="fas fa-clock text-green-300 text-sm"></i>
-                  <span class="text-green-200 font-mono font-semibold">{{ horario.entrada }}</span>
+                <div 
+                  class="border px-3 py-1.5 rounded-lg inline-flex items-center gap-2"
+                  :class="isDark 
+                    ? 'bg-green-500/20 border-green-500/30' 
+                    : 'bg-green-50 border-green-200'"
+                >
+                  <i 
+                    class="fas fa-clock text-sm"
+                    :class="isDark ? 'text-green-300' : 'text-green-600'"
+                  ></i>
+                  <span 
+                    class="font-mono font-semibold text-sm"
+                    :class="isDark ? 'text-green-200' : 'text-green-700'"
+                  >
+                    {{ horario.entrada }}
+                  </span>
                 </div>
               </td>
               
               <td class="p-4">
-                <div class="bg-red-500/20 border border-red-500/30 px-3 py-1.5 rounded-lg inline-flex items-center gap-2">
-                  <i class="fas fa-clock text-red-300 text-sm"></i>
-                  <span class="text-red-200 font-mono font-semibold">{{ horario.salida }}</span>
+                <div 
+                  class="border px-3 py-1.5 rounded-lg inline-flex items-center gap-2"
+                  :class="isDark 
+                    ? 'bg-red-500/20 border-red-500/30' 
+                    : 'bg-red-50 border-red-200'"
+                >
+                  <i 
+                    class="fas fa-clock text-sm"
+                    :class="isDark ? 'text-red-300' : 'text-red-600'"
+                  ></i>
+                  <span 
+                    class="font-mono font-semibold text-sm"
+                    :class="isDark ? 'text-red-200' : 'text-red-700'"
+                  >
+                    {{ horario.salida }}
+                  </span>
                 </div>
               </td>
               
               <td class="p-4">
-                <div class="bg-white/10 backdrop-blur-sm border border-white/20 px-3 py-1.5 rounded-xl inline-flex items-center gap-2">
+                <div 
+                  class="backdrop-blur-sm border px-3 py-1.5 rounded-xl inline-flex items-center gap-2"
+                  :class="isDark ? 'bg-white/10 border-white/20' : 'bg-gray-100 border-gray-200'"
+                >
                   <i :class="getTurnoIcon(horario.turno)"></i>
-                  <span class="text-white font-medium text-sm">{{ horario.turno }}</span>
+                  <span class="font-medium text-sm" :class="theme('cardTitle').value">{{ horario.turno }}</span>
                 </div>
               </td>
               
@@ -108,15 +149,27 @@
                 <div class="flex justify-center gap-2">
                   <button 
                     @click="$emit('editar', horario)"
-                    class="bg-blue-500/20 hover:bg-blue-500/30 border border-blue-500/30 p-2 rounded-xl transition-all hover:scale-110 group"
+                    class="p-2 rounded-xl transition-all hover:scale-110 group"
+                    :class="isDark 
+                      ? 'bg-blue-500/20 hover:bg-blue-500/30 border border-blue-500/30' 
+                      : 'bg-blue-50 hover:bg-blue-100 border border-blue-200'"
                   >
-                    <i class="fas fa-edit text-blue-300 group-hover:text-blue-200"></i>
+                    <i 
+                      class="fas fa-edit"
+                      :class="isDark ? 'text-blue-300 group-hover:text-blue-200' : 'text-blue-600 group-hover:text-blue-700'"
+                    ></i>
                   </button>
                   <button 
                     @click="$emit('eliminar', horario.id)"
-                    class="bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 p-2 rounded-xl transition-all hover:scale-110 group"
+                    class="p-2 rounded-xl transition-all hover:scale-110 group"
+                    :class="isDark 
+                      ? 'bg-red-500/20 hover:bg-red-500/30 border border-red-500/30' 
+                      : 'bg-red-50 hover:bg-red-100 border border-red-200'"
                   >
-                    <i class="fas fa-trash text-red-300 group-hover:text-red-200"></i>
+                    <i 
+                      class="fas fa-trash"
+                      :class="isDark ? 'text-red-300 group-hover:text-red-200' : 'text-red-600 group-hover:text-red-700'"
+                    ></i>
                   </button>
                 </div>
               </td>
@@ -126,21 +179,45 @@
       </div>
 
       <!-- Footer con estadísticas -->
-      <div class="bg-white/5 border-t border-white/10 px-6 py-4 flex flex-wrap items-center justify-between gap-4">
-        <div class="text-gray-300 text-sm">
-          Mostrando <span class="text-white font-semibold">{{ horariosFiltrados.length }}</span> de <span class="text-white font-semibold">{{ horarios.length }}</span> horarios
+      <div 
+        class="border-t px-6 py-4 flex flex-wrap items-center justify-between gap-4"
+        :class="isDark ? 'bg-white/5 border-white/10' : 'bg-gray-50 border-gray-200'"
+      >
+        <div class="text-sm" :class="theme('cardSubtitle').value">
+          Mostrando <span class="font-semibold" :class="theme('cardTitle').value">{{ horariosFiltrados.length }}</span> 
+          de <span class="font-semibold" :class="theme('cardTitle').value">{{ horarios.length }}</span> horarios
         </div>
         <div class="flex gap-2">
-          <button class="bg-white/5 hover:bg-white/10 border border-white/10 px-3 py-1.5 rounded-lg text-gray-300 text-sm transition-all">
+          <button 
+            class="px-3 py-1.5 rounded-lg text-sm transition-all border"
+            :class="isDark 
+              ? 'bg-white/5 hover:bg-white/10 border-white/10 text-gray-300' 
+              : 'bg-gray-100 hover:bg-gray-200 border-gray-200 text-gray-600'"
+          >
             Anterior
           </button>
-          <button class="bg-white/10 border border-white/20 px-3 py-1.5 rounded-lg text-white font-medium text-sm">
+          <button 
+            class="px-3 py-1.5 rounded-lg font-medium text-sm border"
+            :class="isDark 
+              ? 'bg-white/10 border-white/20 text-white' 
+              : 'bg-blue-500 border-blue-500 text-white'"
+          >
             1
           </button>
-          <button class="bg-white/5 hover:bg-white/10 border border-white/10 px-3 py-1.5 rounded-lg text-gray-300 text-sm transition-all">
+          <button 
+            class="px-3 py-1.5 rounded-lg text-sm transition-all border"
+            :class="isDark 
+              ? 'bg-white/5 hover:bg-white/10 border-white/10 text-gray-300' 
+              : 'bg-gray-100 hover:bg-gray-200 border-gray-200 text-gray-600'"
+          >
             2
           </button>
-          <button class="bg-white/5 hover:bg-white/10 border border-white/10 px-3 py-1.5 rounded-lg text-gray-300 text-sm transition-all">
+          <button 
+            class="px-3 py-1.5 rounded-lg text-sm transition-all border"
+            :class="isDark 
+              ? 'bg-white/5 hover:bg-white/10 border-white/10 text-gray-300' 
+              : 'bg-gray-100 hover:bg-gray-200 border-gray-200 text-gray-600'"
+          >
             Siguiente
           </button>
         </div>
@@ -151,6 +228,9 @@
 
 <script setup>
 import { ref, computed } from 'vue'
+import { useTheme } from '../composables/useTheme'
+
+const { theme, isDark } = useTheme()
 
 const props = defineProps({
   horarios: {
@@ -182,9 +262,23 @@ const horariosFiltrados = computed(() => {
 })
 
 const getTurnoIcon = (turno) => {
-  if (turno === 'Mañana') return 'fas fa-sun text-yellow-300'
-  if (turno === 'Tarde') return 'fas fa-moon text-blue-300'
-  if (turno === 'Noche') return 'fas fa-star text-indigo-300'
-  return 'fas fa-clock text-purple-300'
-}
+  const base = 'text-sm';
+
+  if (turno === 'Mañana') {
+    // fa-cloud-sun con nube blanca y “borde celeste” vía drop-shadow
+    return [
+      base,
+      'fas fa-cloud-sun',
+      isDark ? 'text-white drop-shadow-[0_0_0.5px_rgba(125,211,252,0.9)]'
+             : 'text-white drop-shadow-[0_0_0.5px_rgba(59,130,246,0.9)]'
+    ].join(' ');
+  }
+  if (turno === 'Tarde') {
+    return `${base} fas fa-sun ${isDark ? 'text-amber-300' : 'text-amber-600'}`;
+  }
+  if (turno === 'Noche') {
+    return `${base} fas fa-moon ${isDark ? 'text-indigo-300' : 'text-indigo-600'}`;
+  }
+  return `${base} fas fa-clock ${isDark ? 'text-purple-300' : 'text-purple-600'}`;
+};
 </script>

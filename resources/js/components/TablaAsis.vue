@@ -1,10 +1,11 @@
 <template>
   <div class="w-full h-[300px] md:h-[400px] relative">
-    <Bar :data="chartData" :options="options" />
+    <Bar :data="chartData" :options="chartOptions" />
   </div>
 </template>
 
 <script setup>
+import { computed } from 'vue'
 import { Bar } from 'vue-chartjs'
 import {
   Chart as ChartJS,
@@ -15,8 +16,11 @@ import {
   CategoryScale,
   LinearScale
 } from 'chart.js'
+import { useTheme } from '../composables/useTheme'
 
 ChartJS.register(Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale)
+
+const { isDark } = useTheme()
 
 const chartData = {
   labels: ['Lun', 'Mar', 'Mié', 'Jue', 'Vie'],
@@ -44,14 +48,14 @@ const chartData = {
   ]
 }
 
-const options = {
+const chartOptions = computed(() => ({
   responsive: true,
   maintainAspectRatio: false,
   plugins: {
     legend: {
       position: 'bottom',
       labels: { 
-        color: '#e5e7eb',
+        color: isDark.value ? '#e5e7eb' : '#374151',
         font: {
           size: 13,
           weight: '500'
@@ -62,7 +66,7 @@ const options = {
     title: {
       display: true,
       text: 'Asistencias Semanales',
-      color: '#f3f4f6',
+      color: isDark.value ? '#f3f4f6' : '#111827',
       font: {
         size: 16,
         weight: 'bold'
@@ -75,30 +79,30 @@ const options = {
   scales: {
     x: {
       ticks: { 
-        color: '#d1d5db',
+        color: isDark.value ? '#d1d5db' : '#6b7280',
         font: {
           size: 12,
           weight: '500'
         }
       },
       grid: { 
-        color: 'rgba(255, 255, 255, 0.05)',
+        color: isDark.value ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)',
         drawBorder: false
       }
     },
     y: {
       beginAtZero: true,
       ticks: { 
-        color: '#d1d5db',
+        color: isDark.value ? '#d1d5db' : '#6b7280',
         font: {
           size: 12
         }
       },
       grid: { 
-        color: 'rgba(255, 255, 255, 0.05)',
+        color: isDark.value ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)',
         drawBorder: false
       }
     }
   }
-}
+}))
 </script>

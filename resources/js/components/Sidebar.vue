@@ -1,20 +1,20 @@
-<!-- resources/js/components/Sidebar.vue -->
 <template>
   <aside
     :class="[
-      'fixed top-0 h-screen bg-white/5 backdrop-blur-xl border border-white/10 text-white flex flex-col overflow-hidden z-40 transition-all duration-300',
-      // Desktop: con margen y bordes redondeados
+      'fixed top-0 h-screen flex flex-col overflow-hidden z-40 transition-all duration-300',
+      theme('sidebar').value,
       'md:left-3 md:top-3 md:rounded-3xl md:h-[calc(100vh-24px)]',
-      // Desktop: cambiar SOLO el ancho (siempre visible)
       isCollapsed ? 'md:w-20' : 'md:w-64',
-      // Mobile: sin margen, desde el borde
       'left-0 w-64',
       isCollapsed ? 'max-md:-translate-x-full' : 'max-md:translate-x-0'
     ]"
   >
 
     <!-- Logo / Header -->
-    <div class="flex items-center justify-between p-6 border-b border-white/10">
+    <div
+      class="flex items-center justify-between p-6 transition-colors"
+      :class="theme('sidebarBorder').value"
+    >
       <div class="flex items-center gap-3">
         <div class="w-10 h-10 bg-gradient-to-br from-blue-400 to-cyan-400 rounded-full flex items-center justify-center flex-shrink-0">
           <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -30,8 +30,8 @@
       <!-- Home -->
       <router-link
         to="/home"
-        class="flex items-center gap-3 px-3 py-3 rounded-2xl hover:bg-white/10 transition-all duration-200 group relative"
-        :class="isActive('/home') ? 'bg-white/10' : ''"
+        class="flex items-center gap-3 px-3 py-3 rounded-2xl transition-all duration-200 group relative"
+        :class="isActive('/home') ? theme('sidebarItemActive').value : theme('sidebarItem').value"
       >
         <div class="w-10 h-10 flex items-center justify-center flex-shrink-0">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -49,8 +49,8 @@
       <!-- Usuarios -->
       <router-link
         to="/usuarios"
-        class="flex items-center gap-3 px-3 py-3 rounded-2xl hover:bg-white/10 transition-all duration-200 group relative"
-        :class="isActive('/usuarios') ? 'bg-white/10' : ''"
+        class="flex items-center gap-3 px-3 py-3 rounded-2xl transition-all duration-200 group relative"
+        :class="isActive('/usuarios') ? theme('sidebarItemActive').value : theme('sidebarItem').value"
       >
         <div class="w-10 h-10 flex items-center justify-center flex-shrink-0">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -67,8 +67,8 @@
       <!-- Areas -->
       <router-link
         to="/areas"
-        class="flex items-center gap-3 px-3 py-3 rounded-2xl hover:bg-white/10 transition-all duration-200 group relative"
-        :class="isActive('/areas') ? 'bg-white/10' : ''"
+        class="flex items-center gap-3 px-3 py-3 rounded-2xl transition-all duration-200 group relative"
+        :class="isActive('/areas') ? theme('sidebarItemActive').value : theme('sidebarItem').value"
       >
         <div class="w-10 h-10 flex items-center justify-center flex-shrink-0">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -85,8 +85,8 @@
       <!-- Horarios -->
       <router-link
         to="/horarios"
-        class="flex items-center gap-3 px-3 py-3 rounded-2xl hover:bg-white/10 transition-all duration-200 group relative"
-        :class="isActive('/horarios') ? 'bg-white/10' : ''"
+        class="flex items-center gap-3 px-3 py-3 rounded-2xl transition-all duration-200 group relative"
+        :class="isActive('/horarios') ? theme('sidebarItemActive').value : theme('sidebarItem').value"
       >
         <div class="w-10 h-10 flex items-center justify-center flex-shrink-0">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -103,8 +103,8 @@
       <!-- Empleados -->
       <router-link
         to="/empleados"
-        class="flex items-center gap-3 px-3 py-3 rounded-2xl hover:bg-white/10 transition-all duration-200 group relative"
-        :class="isActive('/empleados') ? 'bg-white/10' : ''"
+        class="flex items-center gap-3 px-3 py-3 rounded-2xl transition-all duration-200 group relative"
+        :class="isActive('/empleados') ? theme('sidebarItemActive').value : theme('sidebarItem').value"
       >
         <div class="w-10 h-10 flex items-center justify-center flex-shrink-0">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -121,8 +121,8 @@
       <!-- Asistencias -->
       <router-link
         to="/asistencias"
-        class="flex items-center gap-3 px-3 py-3 rounded-2xl hover:bg-white/10 transition-all duration-200 group relative"
-        :class="isActive('/asistencias') ? 'bg-white/10' : ''"
+        class="flex items-center gap-3 px-3 py-3 rounded-2xl transition-all duration-200 group relative"
+        :class="isActive('/asistencias') ? theme('sidebarItemActive').value : theme('sidebarItem').value"
       >
         <div class="w-10 h-10 flex items-center justify-center flex-shrink-0">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -140,8 +140,8 @@
 </template>
 
 <script setup>
-import { defineProps } from 'vue'
 import { useRoute } from 'vue-router'
+import { useTheme } from '../composables/useTheme'
 
 defineProps({
   isCollapsed: {
@@ -150,9 +150,8 @@ defineProps({
   }
 })
 
+const { theme } = useTheme()
 const route = useRoute()
 
-const isActive = (path) => {
-  return route.path === path
-}
+const isActive = (path) => route.path === path
 </script>
