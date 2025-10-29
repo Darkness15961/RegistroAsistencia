@@ -1,161 +1,86 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import AreaCard from '@/components/AreaCard.vue'
 import TablaAsistencia from '@/components/TablaAsistencia.vue'
 
-// ----------------------
-// 📘 CONFIGURACIÓN BASE
-// ----------------------
+// Colores gradiente para cada área (idéntico a empleados)
+const iconGradients = {
+  'Dirección': 'bg-gradient-to-br from-blue-400 to-blue-600 text-white',
+  'Administración': 'bg-gradient-to-br from-pink-400 to-pink-600 text-white',
+  'Docentes de Primaria': 'bg-gradient-to-br from-orange-400 to-orange-600 text-white',
+  'Docentes de Secundaria': 'bg-gradient-to-br from-violet-400 to-indigo-500 text-white',
+  'Tutoría y Psicología': 'bg-gradient-to-br from-red-400 to-pink-500 text-white',
+  'Mantenimiento y Limpieza': 'bg-gradient-to-br from-gray-400 to-gray-700 text-white',
+  'Seguridad': 'bg-gradient-to-br from-cyan-400 to-cyan-600 text-white'
+}
 
-const categorias = ref([
-  { id: 1, nombre: 'Asistencia Empleados', descripcion: 'Registro de asistencia por área laboral', icon: 'user-tie', color: 'from-purple-400 to-purple-600' },
-  { id: 2, nombre: 'Asistencia Alumnos Inicial', descripcion: 'Control de asistencia de estudiantes de inicial', icon: 'child', color: 'from-pink-400 to-pink-600' },
-  { id: 3, nombre: 'Asistencia Alumnos Primaria', descripcion: 'Control de asistencia de primaria', icon: 'chalkboard-teacher', color: 'from-cyan-400 to-blue-500' },
-  { id: 4, nombre: 'Asistencia Alumnos Secundaria', descripcion: 'Control de asistencia de secundaria', icon: 'user-graduate', color: 'from-orange-400 to-red-500' }
+const areas = ref([
+  { id: 1, nombre: 'Dirección', icon: 'user-tie' },
+  { id: 2, nombre: 'Administración', icon: 'briefcase' },
+  { id: 3, nombre: 'Docentes de Primaria', icon: 'chalkboard-teacher' },
+  { id: 4, nombre: 'Docentes de Secundaria', icon: 'graduation-cap' },
+  { id: 5, nombre: 'Tutoría y Psicología', icon: 'heart' },
+  { id: 6, nombre: 'Mantenimiento y Limpieza', icon: 'broom' },
+  { id: 7, nombre: 'Seguridad', icon: 'shield-alt' }
 ])
 
-const categoriaSeleccionada = ref(null)
-const filtroSeleccionado = ref(null)
-const filtros = ref([])
-const registros = ref([])
+const empleados = ref([
+  { id: 1, nombre: 'Carlos Ramírez López', cargo: 'Coordinador', areaId: 1, asistencia: { Lun: 'P', Mar: 'T', Mié: 'F', Jue: 'P', Vie: 'P' } },
+  { id: 2, nombre: 'Ana García Torres', cargo: 'Secretaria', areaId: 2, asistencia: { Lun: 'P', Mar: 'P', Mié: 'P', Jue: 'P', Vie: 'T' } },
+  { id: 3, nombre: 'María López Quispe', cargo: 'Docente Matemáticas', areaId: 4, asistencia: { Lun: 'P', Mar: 'P', Mié: 'F', Jue: 'T', Vie: 'P' } },
+  { id: 4, nombre: 'Juan Pérez Silva', cargo: 'Docente Primaria', areaId: 3, asistencia: { Lun: 'F', Mar: 'P', Mié: 'P', Jue: 'P', Vie: 'P' } },
+  { id: 5, nombre: 'Lucía Mendoza', cargo: 'Psicóloga', areaId: 5, asistencia: { Lun: 'P', Mar: 'P', Mié: 'P', Jue: 'T', Vie: 'F' } },
+  { id: 6, nombre: 'Marco Ruiz', cargo: 'Mantenimiento', areaId: 6, asistencia: { Lun: 'P', Mar: 'P', Mié: 'P', Jue: 'P', Vie: 'P' } },
+  { id: 7, nombre: 'Sofía Vargas', cargo: 'Vigilante', areaId: 7, asistencia: { Lun: 'P', Mar: 'P', Mié: 'T', Jue: 'P', Vie: 'P' } }
+])
 
-// ----------------------
-// 🏢 LISTAS BASE
-// ----------------------
+const areaSeleccionada = ref(null)
 
-const areasEmpleados = [
-  'Dirección',
-  'Administración',
-  'Docentes de Primaria',
-  'Docentes de Secundaria',
-  'Tutoría y Psicología',
-  'Mantenimiento y Limpieza',
-  'Seguridad',
-  'Biblioteca',
-  'Laboratorio',
-  'Coordinación Académica',
-  'Servicio Médico'
-]
+const cardsAsistencia = computed(() =>
+  areas.value.map(area => ({
+    ...area,
+    nombre: `Asistencia ${area.nombre}`,
+    descripcion: `Empleados del área de ${area.nombre.toLowerCase()}`,
+    cantidadPersonas: empleados.value.filter(e => e.areaId === area.id).length,
+    iconClass: iconGradients[area.nombre]
+  }))
+)
 
-const aulasInicial = ['Aula Arcoiris', 'Aula Sol', 'Aula Mariposa']
-const gradosPrimaria = ['1°', '2°', '3°', '4°', '5°', '6°']
-const gradosSecundaria = ['1°', '2°', '3°', '4°', '5°']
+const empleadosDelArea = computed(() =>
+  areaSeleccionada.value
+    ? empleados.value.filter(e => e.areaId === areaSeleccionada.value.id)
+    : []
+)
 
-const nombres = [
-  'Carlos', 'Ana', 'Lucía', 'María', 'José', 'Diego', 'Camila', 'Sofía', 'Pedro', 'Julieta',
-  'Javier', 'Andrea', 'Sebastián', 'Natalia', 'Luis', 'Valeria', 'Gabriel', 'Daniela',
-  'Rodrigo', 'Marta', 'Cristian', 'Bianca', 'Renzo', 'Claudia', 'Tomás', 'Rocío', 'Ángel', 'Karla'
-]
-
-const apellidos = [
-  'Ramírez', 'Torres', 'Quispe', 'López', 'Gutiérrez', 'Campos', 'Ramos', 'Cárdenas', 'Soto', 'Pérez',
-  'Castro', 'Salazar', 'Mendoza', 'Huamán', 'Vilca', 'Ticona', 'Condori', 'Flores', 'Vargas', 'Ortega'
-]
-
-// ----------------------
-// ⚙️ FUNCIONES AUXILIARES
-// ----------------------
-
-function generarAsistenciaAleatoria() {
-  const estados = ['P', 'F', 'T'] // Presente, Falta, Tarde
-  const aleatorio = () => estados[Math.floor(Math.random() * estados.length)]
-  return {
-    Lun: aleatorio(),
-    Mar: aleatorio(),
-    Mié: aleatorio(),
-    Jue: aleatorio(),
-    Vie: aleatorio()
-  }
+function seleccionarArea(area) {
+  areaSeleccionada.value = area
 }
-
-function generarNombreCompleto() {
-  const nombre = nombres[Math.floor(Math.random() * nombres.length)]
-  const apellido1 = apellidos[Math.floor(Math.random() * apellidos.length)]
-  const apellido2 = apellidos[Math.floor(Math.random() * apellidos.length)]
-  return `${nombre} ${apellido1} ${apellido2}`
-}
-
-// ----------------------
-// 🧩 FUNCIÓN PRINCIPAL
-// ----------------------
-
-const seleccionarCategoria = (categoria) => {
-  categoriaSeleccionada.value = categoria
-  filtroSeleccionado.value = null
-  registros.value = []
-  filtros.value = []
-
-  if (categoria.id === 1) {
-    // EMPLEADOS
-    filtros.value = areasEmpleados.map((a, i) => ({ id: i + 1, nombre: a, icono: 'building' }))
-    for (let i = 1; i <= 25; i++) {
-      registros.value.push({
-        id: i,
-        nombre: generarNombreCompleto(),
-        seccion: areasEmpleados[Math.floor(Math.random() * areasEmpleados.length)],
-        asistencia: generarAsistenciaAleatoria()
-      })
-    }
-  } else if (categoria.id === 2) {
-    // INICIAL
-    filtros.value = aulasInicial.map((a, i) => ({ id: i + 1, nombre: a, icono: 'school' }))
-    for (let i = 26; i <= 50; i++) {
-      registros.value.push({
-        id: i,
-        nombre: generarNombreCompleto(),
-        seccion: aulasInicial[Math.floor(Math.random() * aulasInicial.length)],
-        asistencia: generarAsistenciaAleatoria()
-      })
-    }
-  } else if (categoria.id === 3) {
-    // PRIMARIA
-    filtros.value = gradosPrimaria.map((g, i) => ({ id: i + 1, nombre: `${g} Primaria`, icono: 'chalkboard' }))
-    for (let i = 51; i <= 75; i++) {
-      registros.value.push({
-        id: i,
-        nombre: generarNombreCompleto(),
-        seccion: `${gradosPrimaria[Math.floor(Math.random() * gradosPrimaria.length)]} Primaria`,
-        asistencia: generarAsistenciaAleatoria()
-      })
-    }
-  } else if (categoria.id === 4) {
-    // SECUNDARIA
-    filtros.value = gradosSecundaria.map((g, i) => ({ id: i + 1, nombre: `${g} Secundaria`, icono: 'chalkboard' }))
-    for (let i = 76; i <= 100; i++) {
-      registros.value.push({
-        id: i,
-        nombre: generarNombreCompleto(),
-        seccion: `${gradosSecundaria[Math.floor(Math.random() * gradosSecundaria.length)]} Secundaria`,
-        asistencia: generarAsistenciaAleatoria()
-      })
-    }
-  }
+function volver() {
+  areaSeleccionada.value = null
 }
 </script>
 
 <template>
-  <div>
-    <div v-if="!categoriaSeleccionada" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+  <div class="flex-1 p-6 overflow-x-hidden">
+    <div v-if="!areaSeleccionada" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
       <AreaCard
-        v-for="categoria in categorias"
-        :key="categoria.id"
-        :nombre="categoria.nombre"
-        :descripcion="categoria.descripcion"
-        :icon="categoria.icon"
-        :gradientClass="categoria.color"
-        @click="seleccionarCategoria(categoria)"
+        v-for="area in cardsAsistencia"
+        :key="area.id"
+        :nombre="area.nombre"
+        :descripcion="area.descripcion"
+        :icon="area.icon"
+        :iconClass="area.iconClass"
+        :cantidadPersonas="area.cantidadPersonas"
+        @click="seleccionarArea(area)"
       />
     </div>
 
     <TablaAsistencia
       v-else
-      :registros="registros"
-      :nombreArea="categoriaSeleccionada.nombre"
-      :iconoArea="categoriaSeleccionada.icon"
-      :filtros="filtros"
-      :filtroSeleccionado="filtroSeleccionado"
-      @volver="categoriaSeleccionada = null"
-      @seleccionarFiltro="filtroSeleccionado = $event"
+      :registros="empleadosDelArea"
+      :nombreArea="areaSeleccionada.nombre.replace(/^Asistencia /, '')"
+      :iconoArea="areaSeleccionada.icon"
+      @volver="volver"
     />
   </div>
 </template>
