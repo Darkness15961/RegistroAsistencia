@@ -47,7 +47,7 @@ const sidebarCollapsed = ref(false)
 
 // --- CORRECCIÓN AQUÍ ---
 // Cambiamos 'route.path' por 'route.name'. Es una comprobación más robusta.
-const isLoginPage = computed(() => route.name === 'login')
+const isLoginPage = computed(() => route.path === '/login' || route.path === '/registro')
 // --- FIN DE LA CORRECCIÓN ---
 
 const toggleSidebar = () => {
