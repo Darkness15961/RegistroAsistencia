@@ -17,17 +17,48 @@
       :empleados="empleadosDelArea"
       :nombreArea="areaSeleccionada.nombre"
       :iconoArea="areaSeleccionada.icon"
-      @volver="areaSeleccionada = null"
+      @volver="areaSeleccionada = null" 
       @nuevoEmpleado="abrirModalNuevo"
       @editar="editarEmpleado"
       @eliminar="eliminarEmpleado"
     />
+
+    <FormularioEmpleadoModal
+      v-if="mostrarModal"
+      @close="mostrarModal = false"
+      @save="handleSaveEmpleado"
+    />
   </div>
 </template>
+
 <script setup>
 import { ref, computed } from 'vue'
 import AreaCard from '@/components/AreaCard.vue'
 import TablaEmpleados from '@/components/TablaEmpleados.vue'
+import FormularioEmpleadoModal from '@/components/FormularioEmpleadoModal.vue'
+import { useTheme } from '../composables/useTheme' 
+
+// No necesitamos 'theme' aquí si no lo usamos directamente en este template
+// const { theme } = useTheme() 
+const mostrarModal = ref(false)
+
+// --- Lógica del Modal ---
+const abrirModalNuevo = () => {
+  console.log('Abrir modal nuevo empleado')
+  mostrarModal.value = true
+}
+
+const handleSaveEmpleado = (nuevoEmpleado) => {
+  console.log('Guardando nuevo empleado:', nuevoEmpleado)
+  const nuevaId = Math.max(...empleados.value.map(e => e.id)) + 1
+  empleados.value.push({
+    ...nuevoEmpleado,
+    id: nuevaId,
+    areaId: areaSeleccionada.value.id
+  })
+  mostrarModal.value = false
+}
+// --- Fin Lógica del Modal ---
 
 const iconGradients = {
   'Dirección': 'bg-gradient-to-br from-green-400 to-emerald-600 text-white',
@@ -70,9 +101,7 @@ const empleadosDelArea = computed(() => {
 const seleccionarArea = (area) => {
   areaSeleccionada.value = area
 }
-const abrirModalNuevo = () => {
-  console.log('Abrir modal nuevo empleado')
-}
+
 const editarEmpleado = (empleado) => {
   console.log('Editar', empleado)
 }

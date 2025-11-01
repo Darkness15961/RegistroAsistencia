@@ -1,6 +1,5 @@
 <template>
   <div class="flex-1 p-4 sm:p-6 overflow-x-hidden">
-    <!-- Header -->
     <PageHeader
       title="Usuarios del Sistema"
       subtitle="Gestiona los usuarios con acceso al sistema de asistencias"
@@ -9,7 +8,6 @@
       @button-click="handleNewUser"
     />
 
-    <!-- Grid de Cards de Usuarios -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
       <UserCard
         v-for="user in users"
@@ -20,7 +18,6 @@
       />
     </div>
 
-    <!-- Estado vacío (opcional) -->
     <div 
       v-if="users.length === 0" 
       class="text-center py-12"
@@ -31,6 +28,12 @@
       </svg>
       <p class="text-lg">No hay usuarios registrados</p>
     </div>
+
+    <FormularioUsuarioModal
+      v-if="mostrarModal"
+      @close="mostrarModal = false"
+      @save="handleSaveUser"
+    />
   </div>
 </template>
 
@@ -38,11 +41,15 @@
 import { ref } from 'vue'
 import UserCard from '../components/UserCard.vue'
 import PageHeader from '../components/PageHeader.vue'
+import FormularioUsuarioModal from '../components/FormularioUsuarioModal.vue' // <-- 1. Importar el modal
 import { useTheme } from '../composables/useTheme'
 
 const { theme } = useTheme()
 
-// Datos de usuarios (puedes reemplazar esto con una llamada a API)
+// --- 2. Lógica del Modal ---
+const mostrarModal = ref(false) // Estado para controlar la visibilidad
+
+// Datos de usuarios
 const users = ref([
   {
     id: 1,
@@ -137,7 +144,25 @@ const users = ref([
 // Handlers
 const handleNewUser = () => {
   console.log('Crear nuevo usuario')
-  // Aquí puedes abrir un modal o navegar a un formulario
+  mostrarModal.value = true // <-- 3. Abrir el modal
+}
+
+const handleSaveUser = (nuevoUsuario) => {
+  console.log('Guardando nuevo usuario:', nuevoUsuario)
+  
+  // Lógica para añadir el usuario (simulado)
+  const newUserWithId = {
+    ...nuevoUsuario,
+    id: users.value.length + 1,
+    initials: nuevoUsuario.name.match(/\b\w/g).join('').substring(0, 2).toUpperCase(),
+    position: nuevoUsuario.role, // Asignamos el rol como posición
+    lastAccess: 'Recién creado',
+    status: 'online',
+    avatarGradient: 'bg-gradient-to-br from-gray-400 to-gray-600'
+  }
+  users.value.push(newUserWithId)
+  
+  mostrarModal.value = false // Cerrar el modal
 }
 
 const handleViewProfile = (user) => {

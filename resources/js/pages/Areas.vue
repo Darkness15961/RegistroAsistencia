@@ -1,6 +1,5 @@
 <template>
   <div class="flex-1 p-6 overflow-x-hidden">
-    <!-- Header con título y botón -->
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
       <div>
         <h1 class="text-3xl font-bold mb-2" :class="theme('cardTitle').value">
@@ -12,6 +11,7 @@
       </div>
 
       <button
+        @click="mostrarModal = true"
         class="flex items-center gap-2 px-6 py-3 rounded-xl font-semibold shadow-lg hover:scale-105 transition-all duration-200 whitespace-nowrap"
         :class="theme('buttonPrimary').value"
       >
@@ -20,7 +20,6 @@
       </button>
     </div>
 
-    <!-- Barra de búsqueda -->
     <div class="relative w-full sm:max-w-md mb-6">
       <input
         v-model="busqueda"
@@ -35,7 +34,6 @@
       ></i>
     </div>
 
-    <!-- Tabla (desktop) -->
     <div
       class="hidden md:block backdrop-blur-xl border rounded-3xl shadow-2xl overflow-hidden"
       :class="theme('card').value"
@@ -136,7 +134,6 @@
       </div>
     </div>
 
-    <!-- Versión móvil -->
     <div class="grid gap-4 md:hidden">
       <div
         v-for="area in areasFiltradas"
@@ -206,14 +203,37 @@
         <p class="text-lg">No se encontraron áreas</p>
       </div>
     </div>
+
+    <FormularioAreaModal 
+      v-if="mostrarModal"
+      @close="mostrarModal = false"
+      @save="handleSaveArea"
+    />
+
   </div>
 </template>
 
 <script setup>
 import { ref, computed } from 'vue'
 import { useTheme } from '../composables/useTheme'
+import FormularioAreaModal from '../components/FormularioAreaModal.vue' // <-- 1. Importar modal
 
 const { theme, isDark } = useTheme()
+
+// --- 2. Lógica del Modal ---
+const mostrarModal = ref(false)
+
+const handleSaveArea = (nuevaArea) => {
+  console.log('Guardando nueva área:', nuevaArea)
+  // Lógica simulada para añadir la nueva área
+  const nuevaId = Math.max(...areas.value.map(a => a.id)) + 1
+  areas.value.push({
+    id: nuevaId,
+    ...nuevaArea
+  })
+  mostrarModal.value = false // Cerrar el modal
+}
+// --- Fin Lógica del Modal ---
 
 const busqueda = ref('')
 
