@@ -7,20 +7,29 @@ use Illuminate\Support\Facades\DB;
 
 return new class extends Migration
 {
-    public function up(): void
-    {
-        Schema::create('asistencias', function (Blueprint $table) {
-            $table->id('id_asistencia');
-            $table->foreignId('id_persona')->constrained('personas', 'id_persona')->cascadeOnDelete();
-            $table->date('fecha')->default(DB::raw('CURRENT_DATE')); // CURRENT_DATE es SQL estándar
-            $table->time('hora_entrada')->nullable();
-            $table->time('hora_salida')->nullable();
-            $table->string('estado_asistencia', 10)->nullable(); // Presente, Tarde, Falta
-            $table->string('metodo_registro', 10)->default('IA'); // IA, Manual
-            $table->timestamps();
-        });
-    }
+public function up(): void
+{
+    Schema::create('asistencias', function (Blueprint $table) {
+        $table->id('id_asistencia');
 
+        // CLAVE FORÁNEA CORREGIDA: Solo una línea y usando la sintaxis moderna
+        $table->foreignId('id_persona') 
+              ->constrained('personas', 'id_persona') 
+              ->cascadeOnDelete(); // Equivalente a ->onDelete('cascade')
+
+        // Uso de useCurrent() para valor por defecto de la fecha
+        $table->date('fecha')->useCurrent(); 
+        
+        $table->time('hora_entrada')->nullable();
+        $table->time('hora_salida')->nullable();
+        $table->string('estado_asistencia', 10)->nullable(); 
+        $table->string('metodo_registro', 10)->default('IA'); 
+        
+        // ¡Se eliminó la línea duplicada que causaba el fallo!
+        
+        $table->timestamps();
+    });
+}
     public function down(): void
     {
         Schema::dropIfExists('asistencias');
