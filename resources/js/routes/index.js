@@ -9,6 +9,7 @@ import Asistencias from '../pages/Asistencias.vue';
 import Usuarios from '../pages/Usuarios.vue';
 import Empleados from '../pages/Empleados.vue';
 import areas from '../pages/Areas.vue';
+import RegistroAsistencia from '../pages/RegistroAsistencia.vue';
 
 const routes = [
   // Login sin layout
@@ -21,7 +22,7 @@ const routes = [
   // Ruta raíz redirige a home
   { 
     path: '/', 
-    redirect: '/home' 
+    redirect: '/login' 
   },
   
   // Páginas con layout (sidebar + header)
@@ -54,6 +55,11 @@ const routes = [
     path: '/areas', 
     name: 'areas', 
     component: areas 
+  },
+  { 
+  path: '/registro', 
+  name: 'registro', 
+  component: RegistroAsistencia 
   },
 ];
 

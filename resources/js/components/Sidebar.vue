@@ -10,7 +10,6 @@
     ]"
   >
 
-    <!-- Logo / Header -->
     <div
       class="flex items-center justify-between p-6 transition-colors"
       :class="theme('sidebarBorder').value"
@@ -21,13 +20,17 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
           </svg>
         </div>
-        <span v-show="!isCollapsed" class="text-2xl font-bold transition-opacity">4scan</span>
+        <span
+          v-show="!isCollapsed"
+          class="text-2xl font-bold transition-opacity"
+          :class="theme('cardTitle').value"
+        >
+          4scan
+        </span>
       </div>
     </div>
 
-    <!-- Menu Items -->
     <nav class="flex-1 p-4 space-y-2 overflow-y-auto">
-      <!-- Home -->
       <router-link
         to="/home"
         class="flex items-center gap-3 px-3 py-3 rounded-2xl transition-all duration-200 group relative"
@@ -40,13 +43,11 @@
         </div>
         <span v-show="!isCollapsed" class="font-medium">Home</span>
 
-        <!-- Tooltip para cuando está colapsado -->
         <div v-show="isCollapsed" class="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-sm rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap">
           Home
         </div>
       </router-link>
 
-      <!-- Usuarios -->
       <router-link
         to="/usuarios"
         class="flex items-center gap-3 px-3 py-3 rounded-2xl transition-all duration-200 group relative"
@@ -64,7 +65,6 @@
         </div>
       </router-link>
 
-      <!-- Areas -->
       <router-link
         to="/areas"
         class="flex items-center gap-3 px-3 py-3 rounded-2xl transition-all duration-200 group relative"
@@ -82,7 +82,6 @@
         </div>
       </router-link>
 
-      <!-- Horarios -->
       <router-link
         to="/horarios"
         class="flex items-center gap-3 px-3 py-3 rounded-2xl transition-all duration-200 group relative"
@@ -100,7 +99,6 @@
         </div>
       </router-link>
 
-      <!-- Empleados -->
       <router-link
         to="/empleados"
         class="flex items-center gap-3 px-3 py-3 rounded-2xl transition-all duration-200 group relative"
@@ -118,7 +116,6 @@
         </div>
       </router-link>
 
-      <!-- Asistencias -->
       <router-link
         to="/asistencias"
         class="flex items-center gap-3 px-3 py-3 rounded-2xl transition-all duration-200 group relative"
