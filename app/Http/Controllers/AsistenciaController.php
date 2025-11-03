@@ -23,7 +23,7 @@ class AsistenciaController extends Controller
         return $query->latest()->paginate(50);
     }
 
-    // ESTA ES LA LÓGICA DEL KIOSKO
+    // ESTA ES LA LÓGICA 
     public function store(Request $request)
     {
         $request->validate([
