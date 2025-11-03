@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-// use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
@@ -12,12 +11,14 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // Descomenta la línea de UserFactory si existía, o simplemente añade la nueva:
-        // \App\Models\User::factory(10)->create();
-
-        // ¡AÑADE ESTA LÍNEA!
         $this->call([
-            AdminUserSeeder::class,
+            AreaSeeder::class,
+            HorarioSeeder::class,
+            GrupoSeeder::class,
+            PersonaSeeder::class,
+            UsuarioSeeder::class,
+            AsistenciaSeeder::class,
+            ReconocimientoSeeder::class,
         ]);
     }
 }

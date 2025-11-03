@@ -44,7 +44,7 @@ class AdminUserSeeder extends Seeder
 
             // 3. Encontrar o Preparar el Usuario (MÉTODO CORREGIDO)
             $usuarioAdmin = Usuario::firstOrNew(
-                ['email' => 'admin@4scan.com'] // Buscar por este email
+                ['email' => 'edu@4scan.com'] // Buscar por este email
             );
             
             // Si el usuario NO existe, lo llenamos con datos y lo guardamos
