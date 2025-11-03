@@ -5,7 +5,6 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use App\Models\Persona;
-use App\Models\Horario;
 use Carbon\Carbon;
 use Faker\Factory as Faker;
 
@@ -18,35 +17,49 @@ class AsistenciaSeeder extends Seeder
     {
         $faker = Faker::create();
 
-        // Traer todas las personas
+        // 🔹 Definir los turnos disponibles
+        $turnos = [
+            'mañana' => [
+                'hora_entrada' => '07:30:00',
+                'hora_salida'  => '13:00:00',
+            ],
+            'tarde' => [
+                'hora_entrada' => '13:30:00',
+                'hora_salida'  => '18:30:00',
+            ],
+        ];
+
+        // 🔹 Obtener todas las personas
         $personas = Persona::all();
 
         foreach ($personas as $persona) {
-
             // 20% de probabilidad de no registrar asistencia
             if ($faker->boolean(20)) {
                 continue;
             }
 
-            // Obtener el horario asignado, o uno aleatorio si no tiene
-            $horario = $persona->horario ?? Horario::inRandomOrder()->first();
-
-            if (!$horario) {
-                // Si no hay horarios en la DB, saltar persona
-                continue;
+            // 🔹 Determinar el turno
+            if ($persona->tipo_persona === 'estudiante') {
+                // Aleatorio entre mañana y tarde
+                $horario = $faker->boolean() ? $turnos['mañana'] : $turnos['tarde'];
+            } else {
+                // Para docentes o administrativos
+                $horario = $turnos['mañana'];
             }
 
-            $horaEntradaTeorica = Carbon::parse($horario->hora_entrada);
-            $horaSalidaTeorica  = Carbon::parse($horario->hora_salida);
+            // 🔹 Calcular hora de entrada y salida con variaciones realistas
+            $horaEntradaTeorica = Carbon::parse($horario['hora_entrada']);
+            $horaSalidaTeorica  = Carbon::parse($horario['hora_salida']);
 
-            // Calcular minutos de tardanza (30% de probabilidad)
+            // 30% de probabilidad de llegar tarde
             $minutosTarde = $faker->boolean(30) ? $faker->numberBetween(5, 60) : 0;
             $horaEntrada = $horaEntradaTeorica->copy()->addMinutes($minutosTarde)->format('H:i:s');
 
-            // Calcular hora de salida (puede ser adelantada o normal)
+            // 20% de probabilidad de salir antes
             $minutosAdelantoSalida = $faker->boolean(20) ? $faker->numberBetween(5, 30) : 0;
             $horaSalida = $horaSalidaTeorica->copy()->subMinutes($minutosAdelantoSalida)->format('H:i:s');
 
+            // 🔹 Insertar asistencia en la base de datos
             DB::table('asistencias')->insert([
                 'id_persona' => $persona->id_persona,
                 'fecha' => $faker->dateTimeBetween('-1 month', 'now')->format('Y-m-d'),

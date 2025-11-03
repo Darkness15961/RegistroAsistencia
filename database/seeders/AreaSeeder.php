@@ -10,21 +10,27 @@ class AreaSeeder extends Seeder
     /**
      * Run the database seeders.
      */
-    public function run(): void
-    {
-        // Ahora proporcionamos ambos campos: nombre_area y descripcion
-        $areas = [
-            ['nombre_area' => 'Recursos Humanos', 'descripcion' => 'Departamento de gestión de personal y contratación.'],
-            ['nombre_area' => 'Desarrollo de Software', 'descripcion' => 'Equipo de ingeniería y desarrollo de aplicaciones.'],
-            ['nombre_area' => 'Diseño Gráfico', 'descripcion' => 'Departamento de creatividad, branding e identidad visual.'],
-            ['nombre_area' => 'Marketing Digital', 'descripcion' => 'Equipo de promoción, redes sociales y SEO.'],
-            ['nombre_area' => 'Contabilidad', 'descripcion' => 'Departamento financiero y de administración.'],
-            ['nombre_area' => 'Soporte Técnico', 'descripcion' => 'Equipo de ayuda al usuario y mantenimiento de TI.'],
-            ['nombre_area' => 'Ventas', 'descripcion' => 'Equipo comercial y de relaciones con clientes.'],
-        ];
+        public function run(): void
+        {
+            $areas = [
+                ['nombre_area' => 'Dirección', 'descripcion' => 'Supervisión general y gestión institucional del colegio'],
+                ['nombre_area' => 'Administración', 'descripcion' => 'Gestión administrativa, contable y de recursos del colegio'],
+                ['nombre_area' => 'Docentes de Primaria', 'descripcion' => 'Profesores encargados del nivel de educación primaria'],
+                ['nombre_area' => 'Docentes de Secundaria', 'descripcion' => 'Profesores encargados del nivel de educación secundaria'],
+                ['nombre_area' => 'Alumnos de Inicial', 'descripcion' => 'Estudiantes pertenecientes al nivel inicial'],
+                ['nombre_area' => 'Alumnos de Primaria', 'descripcion' => 'Estudiantes pertenecientes al nivel primaria'],
+                ['nombre_area' => 'Alumnos de Secundaria', 'descripcion' => 'Estudiantes pertenecientes al nivel secundaria'],
+                ['nombre_area' => 'Tutoría y Psicología', 'descripcion' => 'Área de orientación y apoyo emocional y académico'],
+                ['nombre_area' => 'Mantenimiento y Limpieza', 'descripcion' => 'Personal encargado del mantenimiento y limpieza de las instalaciones'],
+                ['nombre_area' => 'Seguridad', 'descripcion' => 'Personal de vigilancia y control de accesos del colegio'],
+                ['nombre_area' => 'Biblioteca', 'descripcion' => 'Gestión de recursos bibliográficos y apoyo académico'],
+                ['nombre_area' => 'Laboratorio', 'descripcion' => 'Gestión de prácticas científicas y tecnológicas'],
+                ['nombre_area' => 'Coordinación Académica', 'descripcion' => 'Supervisión y coordinación de las áreas educativas'],
+                ['nombre_area' => 'Servicio Médico', 'descripcion' => 'Atención médica y primeros auxilios dentro del colegio'],
+            ];
 
-        foreach ($areas as $area) {
-            DB::table('areas')->insert($area);
+            foreach ($areas as $area) {
+                DB::table('areas')->insert($area);
+            }
         }
-    }
 }
