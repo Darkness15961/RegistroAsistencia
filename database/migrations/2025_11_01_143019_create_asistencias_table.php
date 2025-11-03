@@ -25,8 +25,6 @@ public function up(): void
         $table->string('estado_asistencia', 10)->nullable(); 
         $table->string('metodo_registro', 10)->default('IA'); 
         
-        // ¡Se eliminó la línea duplicada que causaba el fallo!
-        
         $table->timestamps();
     });
 }

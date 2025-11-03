@@ -15,12 +15,8 @@
         :class="theme('headerButton').value"
         title="Cambiar tema"
       >
-        <svg v-if="isDark" class="w-6 h-6 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
-          <path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clip-rule="evenodd" />
-        </svg>
-        <svg v-else class="w-6 h-6 text-gray-700" fill="currentColor" viewBox="0 0 20 20">
-          <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" />
-        </svg>
+        <svg v-if="isDark" class="w-6 h-6 text-yellow-400" fill="currentColor" viewBox="0 0 20 20"><path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clip-rule="evenodd" /></svg>
+        <svg v-else class="w-6 h-6 text-gray-700" fill="currentColor" viewBox="0 0 20 20"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" /></svg>
       </button>
 
       <div
@@ -29,13 +25,17 @@
           ? 'bg-gray-800'
           : 'bg-gradient-to-br from-blue-500 to-purple-600'"
       >
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/main
         <div class="w-20 h-20 bg-gradient-to-br from-blue-400 to-cyan-400 rounded-full flex items-center justify-center mb-6 shadow-lg">
-          <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-          </svg>
+          <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
         </div>
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/main
         <h1 class="text-4xl font-bold mb-3" :class="isDark ? 'text-white' : 'text-white'">
           Bienvenido a 4scan
         </h1>
@@ -78,13 +78,27 @@
             >
           </div>
 
+<<<<<<< HEAD
+=======
+          <div 
+            v-if="error" 
+            class="text-red-500 text-sm font-medium p-3 rounded-xl bg-red-500/10 border border-red-500/20"
+          >
+            {{ error }}
+          </div>
+          
+>>>>>>> origin/main
           <div class="flex items-center justify-between">
             <a
               href="#"
               class="text-sm font-medium transition-colors"
+<<<<<<< HEAD
               :class="isDark
                 ? 'text-gray-300 hover:text-white'
                 : 'text-gray-600 hover:text-gray-900'"
+=======
+              :class="isDark ? 'text-gray-300 hover:text-white' : 'text-gray-600 hover:text-gray-900'"
+>>>>>>> origin/main
             >
               ¿Olvidaste tu contraseña?
             </a>
@@ -92,10 +106,12 @@
 
           <button
             type="submit"
+            :disabled="loading"
             class="w-full flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-semibold shadow-lg hover:scale-105 transition-all duration-200"
-            :class="theme('buttonPrimary').value"
+            :class="[theme('buttonPrimary').value, loading ? 'opacity-50 cursor-not-allowed' : '']"
           >
-            Ingresar
+            <i v-if="loading" class="fas fa-spinner animate-spin"></i>
+            {{ loading ? 'Ingresando...' : 'Ingresar' }}
           </button>
         </form>
       </div>
@@ -108,20 +124,55 @@
 import { ref } from 'vue'
 import { useTheme } from '../composables/useTheme'
 import { useRouter } from 'vue-router'
+import axios from 'axios' // <-- 1. IMPORTAR AXIOS
 
 const { theme, isDark, toggleTheme } = useTheme()
 const router = useRouter()
 
+// --- 2. NUEVOS ESTADOS PARA LOGIN ---
 const form = ref({
   email: '',
   password: ''
 })
+const loading = ref(false) // Para el estado "cargando..."
+const error = ref(null)    // Para mostrar mensajes de error
 
+<<<<<<< HEAD
 const login = () => {
   console.log('Intento de login:', form.value)
   // Lógica de autenticación...
 
   // Simulación de login exitoso:
   router.push('/home')
+=======
+// --- 3. FUNCIÓN DE LOGIN ACTUALIZADA ---
+const login = async () => {
+  loading.value = true
+  error.value = null
+
+  try {
+    // 4. LLAMAR A LA API DE LARAVEL
+    const response = await axios.post('/api/login', form.value)
+    
+    // 5. GUARDAR EL TOKEN (¡MUY IMPORTANTE!)
+    localStorage.setItem('auth_token', response.data.access_token)
+    localStorage.setItem('user_data', JSON.stringify(response.data.user))
+    
+    // 6. REDIRIGIR AL HOME
+    router.push('/home')
+
+  } catch (err) {
+    // 7. MANEJAR ERRORES
+    loading.value = false
+    if (err.response && err.response.status === 422) {
+      // Error de validación (ej. credenciales incorrectas)
+      error.value = err.response.data.errors.email[0] || 'Error de validación.'
+    } else {
+      // Otro error (ej. 500 - error de servidor)
+      error.value = 'Ocurrió un error inesperado. Intente de nuevo.'
+    }
+    console.error('Error de login:', err)
+  }
+>>>>>>> origin/main
 }
 </script>

@@ -11,36 +11,36 @@
       </div>
       <div>
         <p class="text-sm font-semibold" :class="theme('cardTitle').value">Usuario</p>
-        <p class="text-xs" :class="theme('cardSubtitle').value">admin@sis.com</p>
+        <p class="text-xs" :class="theme('cardSubtitle').value">admin@4scan.com</p>
       </div>
     </div>
-    
-    <nav class="mt-4">
+
+<nav class="mt-4">
       <ul>
         <li>
-          <a 
-            href="#" 
+          <router-link 
+            to="/perfil"
             class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all"
             :class="menuItemClass"
           >
             <i class="fas fa-user w-4 text-center" :class="theme('cardSubtitle').value"></i>
             <span class="text-sm font-medium">Mi Perfil</span>
-          </a>
+          </router-link>
         </li>
         <li>
-          <a 
-            href="#" 
+          <router-link 
+            to="/configuracion"
             class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all"
             :class="menuItemClass"
           >
             <i class="fas fa-cog w-4 text-center" :class="theme('cardSubtitle').value"></i>
             <span class="text-sm font-medium">Configuración</span>
-          </a>
+          </router-link>
         </li>
         <li class="mt-2 pt-2 border-t" :class="isDark ? 'border-white/10' : 'border-gray-200'">
           <a 
             href="#"
-            @click.prevent="$emit('logout')"
+            @click.prevent="handleLogout"
             class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all"
             :class="menuItemDangerClass"
           >
@@ -56,18 +56,40 @@
 <script setup>
 import { computed } from 'vue'
 import { useTheme } from '../composables/useTheme'
+import { useRouter } from 'vue-router'
+import axios from 'axios' // <-- 1. Importar axios
 
 const { theme, isDark } = useTheme()
-defineEmits(['logout'])
+const router = useRouter() // <-- 2. Obtener el router
 
-// CORRECCIÓN: Se añadió el color del texto (theme('cardTitle').value)
+// (Este emit ya no es necesario, manejamos el logout aquí mismo)
+// defineEmits(['logout'])
+
+// --- 3. LÓGICA DE LOGOUT ---
+const handleLogout = async () => {
+  try {
+    // Llama a la API de logout (enviará el token automáticamente gracias a axiosConfig)
+    await axios.post('/api/logout');
+  } catch (error) {
+    console.error('Error al cerrar sesión en el backend:', error);
+  } finally {
+    // Limpia el localStorage
+    localStorage.removeItem('auth_token');
+    localStorage.removeItem('user_data');
+
+    // Redirige al login
+    // Usamos window.location.href para forzar una recarga completa
+    window.location.href = '/login';
+  }
+}
+// --- FIN DE LA LÓGICA ---
+
 const menuItemClass = computed(() => {
-  const textColor = theme('cardTitle').value; // 'text-white' o 'text-gray-900'
+  const textColor = theme('cardTitle').value; 
   const hoverBg = isDark.value ? 'hover:bg-white/10' : 'hover:bg-gray-100';
   return [textColor, hoverBg];
 })
 
-// Esta ya estaba correcta, define su propio color de texto (rojo)
 const menuItemDangerClass = computed(() => {
   return isDark.value
     ? 'text-red-400 hover:bg-red-500/20'

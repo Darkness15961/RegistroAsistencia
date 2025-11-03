@@ -204,7 +204,7 @@
       </div>
     </div>
 
-    <FormularioAreaModal 
+    <FormularioAreaModal
       v-if="mostrarModal"
       @close="mostrarModal = false"
       @save="handleSaveArea"
@@ -214,9 +214,10 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useTheme } from '../composables/useTheme'
 import FormularioAreaModal from '../components/FormularioAreaModal.vue' // <-- 1. Importar modal
+import axios from 'axios'
 
 const { theme, isDark } = useTheme()
 
@@ -254,6 +255,11 @@ const areas = ref([
   { id: 14, nombre: 'Servicio Médico', descripcion: 'Atención médica y primeros auxilios dentro del colegio' }
 ])
 
+const cargarAreas = async () => {
+    const response = await axios.get('http://127.0.0.1:8000/api/areas')
+    areas.value = response.data
+}
+
 const styleCatalog = {
   'Dirección':            { gradient: 'from-indigo-400 to-indigo-600', icon: 'fas fa-building' },
   'Administración':       { gradient: 'from-cyan-400 to-blue-500',    icon: 'fas fa-briefcase' },
@@ -281,6 +287,10 @@ const areasFiltradas = computed(() =>
     a.descripcion.toLowerCase().includes(busqueda.value.toLowerCase())
   )
 )
+
+onMounted(() => {
+    cargarAreas()
+})
 </script>
 
 <style scoped>

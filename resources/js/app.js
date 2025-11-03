@@ -4,6 +4,7 @@ import router from './routes/index.js'
 import ComponentsPlugin from './components.js' 
 import '../css/app.css' 
 import '@fortawesome/fontawesome-free/css/all.min.css'
+import './axiosConfig.js';
 
 const app = createApp(App)
 app.use(ComponentsPlugin) 
