@@ -3,13 +3,8 @@
     class="min-h-screen transition-colors duration-300"
     :class="isDark ? 'bg-dark-gradient' : 'bg-light-gradient'"
   >
-<<<<<<< HEAD
 
-    <div v-if="isLoginPage" class="min-h-screen">
-=======
-    
     <div v-if="isFullScreenPage" class="min-h-screen">
->>>>>>> origin/main
       <router-view />
     </div>
 
@@ -56,8 +51,8 @@ const sidebarCollapsed = ref(false)
 // Renombramos 'isLoginPage' a 'isFullScreenPage' (es más preciso)
 // y añadimos 'NotFound' a la lista, usando 'route.name' (más robusto)
 const isFullScreenPage = computed(() => {
-  return route.name === 'login' || 
-         route.name === 'registro' || 
+  return route.name === 'login' ||
+         route.name === 'registro' ||
          route.name === 'NotFound';
 })
 // --- FIN DE LA CORRECCIÓN ---
@@ -67,7 +62,7 @@ const toggleSidebar = () => {
 }
 
 const handleResize = () => {
-  if (window.innerWidth < 768) { 
+  if (window.innerWidth < 768) {
     sidebarCollapsed.value = true
   } else {
     sidebarCollapsed.value = false

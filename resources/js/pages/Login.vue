@@ -25,17 +25,9 @@
           ? 'bg-gray-800'
           : 'bg-gradient-to-br from-blue-500 to-purple-600'"
       >
-<<<<<<< HEAD
-
-=======
->>>>>>> origin/main
         <div class="w-20 h-20 bg-gradient-to-br from-blue-400 to-cyan-400 rounded-full flex items-center justify-center mb-6 shadow-lg">
           <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
         </div>
-<<<<<<< HEAD
-
-=======
->>>>>>> origin/main
         <h1 class="text-4xl font-bold mb-3" :class="isDark ? 'text-white' : 'text-white'">
           Bienvenido a 4scan
         </h1>
@@ -78,27 +70,18 @@
             >
           </div>
 
-<<<<<<< HEAD
-=======
-          <div 
-            v-if="error" 
+          <div
+            v-if="error"
             class="text-red-500 text-sm font-medium p-3 rounded-xl bg-red-500/10 border border-red-500/20"
           >
             {{ error }}
           </div>
-          
->>>>>>> origin/main
+
           <div class="flex items-center justify-between">
             <a
               href="#"
               class="text-sm font-medium transition-colors"
-<<<<<<< HEAD
-              :class="isDark
-                ? 'text-gray-300 hover:text-white'
-                : 'text-gray-600 hover:text-gray-900'"
-=======
               :class="isDark ? 'text-gray-300 hover:text-white' : 'text-gray-600 hover:text-gray-900'"
->>>>>>> origin/main
             >
               ¿Olvidaste tu contraseña?
             </a>
@@ -137,14 +120,6 @@ const form = ref({
 const loading = ref(false) // Para el estado "cargando..."
 const error = ref(null)    // Para mostrar mensajes de error
 
-<<<<<<< HEAD
-const login = () => {
-  console.log('Intento de login:', form.value)
-  // Lógica de autenticación...
-
-  // Simulación de login exitoso:
-  router.push('/home')
-=======
 // --- 3. FUNCIÓN DE LOGIN ACTUALIZADA ---
 const login = async () => {
   loading.value = true
@@ -153,11 +128,11 @@ const login = async () => {
   try {
     // 4. LLAMAR A LA API DE LARAVEL
     const response = await axios.post('/api/login', form.value)
-    
+
     // 5. GUARDAR EL TOKEN (¡MUY IMPORTANTE!)
     localStorage.setItem('auth_token', response.data.access_token)
     localStorage.setItem('user_data', JSON.stringify(response.data.user))
-    
+
     // 6. REDIRIGIR AL HOME
     router.push('/home')
 
@@ -173,6 +148,5 @@ const login = async () => {
     }
     console.error('Error de login:', err)
   }
->>>>>>> origin/main
 }
 </script>

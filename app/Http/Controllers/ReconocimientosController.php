@@ -2,15 +2,15 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Reconocimiento;
+use App\Models\Reconocimientos;
 use Illuminate\Http\Request;
 
-class ReconocimientoController extends Controller
+class ReconocimientosController extends Controller
 {
     public function index()
     {
         // Útil para que la IA cargue todos los descriptores al iniciar
-        return Reconocimiento::all();
+        return Reconocimientos::all();
     }
 
     public function store(Request $request)
@@ -21,20 +21,20 @@ class ReconocimientoController extends Controller
             'image_url' => 'nullable|string:255',
         ]);
 
-        $reconocimiento = Reconocimiento::create($datosValidados);
+        $reconocimiento = Reconocimientos::create($datosValidados);
         return response()->json($reconocimiento, 201);
     }
 
-    public function show(Reconocimiento $reconocimiento)
+    public function show(Reconocimientos $reconocimiento)
     {
         return $reconocimiento->load('persona');
     }
 
-    public function destroy(Reconocimiento $reconocimiento)
+    public function destroy(Reconocimientos $reconocimiento)
     {
         $reconocimiento->delete();
         return response()->json(null, 204);
     }
-    
+
     // (El método Update no suele ser necesario aquí)
 }
