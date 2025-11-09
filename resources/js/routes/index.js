@@ -1,93 +1,103 @@
-import { createRouter, createWebHistory } from 'vue-router';
+import { createRouter, createWebHistory } from 'vue-router'
 
-// Páginas
-import Login from '../pages/Login.vue';
-import Home from '../pages/Home.vue';
-import Horarios from '../pages/Horarios.vue';
-import Asistencias from '../pages/Asistencias.vue';
-import Usuarios from '../pages/Usuarios.vue';
-import Empleados from '../pages/Empleados.vue';
-import areas from '../pages/Areas.vue';
-import RegistroAsistencia from '../pages/RegistroAsistencia.vue'; 
-import MiPerfil from '../pages/MiPerfil.vue'; 
-import Configuracion from '../pages/Configuracion.vue'; 
-import NotFound from '../pages/NotFound.vue';
+// --- Tu nuevo Lazy Loading  ---
+const Login = () => import('@/modules/auth/pages/Login.vue')
+const Home = () => import('@/modules/dashboard/pages/Home.vue')
+const Asistencias = () => import('@/modules/asistencias/pages/Asistencias.vue')
+const Empleados = () => import('@/modules/empleados/pages/Empleados.vue')
+const Alumnos = () => import('@/modules/alumnos/pages/Alumnos.vue')
+const Areas = () => import('@/modules/areas/pages/Areas.vue')
+const Horarios = () => import('@/modules/horarios/pages/Horarios.vue')
+const Usuarios = () => import('@/modules/usuarios/pages/Usuarios.vue')
+const MiPerfil = () => import('@/modules/perfil/pages/MiPerfil.vue')
+const Configuracion = () => import('@/modules/perfil/pages/Configuracion.vue')
+const NotFound = () => import('@/modules/common/pages/NotFound.vue')
+const RegistroAsistencia = () => import('@/modules/asistencias/pages/RegistroAsistencia.vue')
 
+
+// --- Tu lógica de rutas de 'js/routes/index.js' [cite: js/routes/index.js] (con 'meta' y 'name') ---
 const routes = [
   // --- RUTAS PÚBLICAS (No requieren login) ---
   { 
     path: '/login', 
-    name: 'login', 
+    name: 'Login', // Corregido de 'login' a 'Login' para coincidir con tu app.vue
     component: Login,
-    meta: { requiresAuth: false } // Le decimos que esta NO requiere autenticación
+    meta: { requiresAuth: false }
   },
   { 
     path: '/registro', 
     name: 'registro', 
     component: RegistroAsistencia,
-    meta: { requiresAuth: false } // Esta tampoco
+    meta: { requiresAuth: false }
   },
   
   // --- RUTAS PRIVADAS (Requieren login) ---
   { 
     path: '/', 
     redirect: '/home',
-    meta: { requiresAuth: true } // Redirigir siempre requiere autenticación
+    meta: { requiresAuth: true }
   },
   { 
     path: '/home', 
-    name: 'home', 
+    name: 'Home', // Corregido de 'home' a 'Home'
     component: Home,
-    meta: { requiresAuth: true } // <-- AÑADIR ESTO
+    meta: { requiresAuth: true }
   },
   { 
     path: '/horarios', 
-    name: 'horarios', 
+    name: 'Horarios', 
     component: Horarios,
-    meta: { requiresAuth: true } // <-- AÑADIR ESTO
+    meta: { requiresAuth: true }
   },
   { 
     path: '/asistencias', 
-    name: 'asistencias', 
+    name: 'Asistencias', 
     component: Asistencias,
-    meta: { requiresAuth: true } // <-- AÑADIR ESTO
+    meta: { requiresAuth: true }
   },
   { 
     path: '/usuarios', 
-    name: 'usuarios', 
+    name: 'Usuarios', 
     component: Usuarios,
-    meta: { requiresAuth: true } // <-- AÑADIR ESTO
+    meta: { requiresAuth: true }
   },
   { 
     path: '/empleados', 
-    name: 'empleados', 
+    name: 'Empleados', 
     component: Empleados,
-    meta: { requiresAuth: true } // <-- AÑADIR ESTO
+    meta: { requiresAuth: true }
   },
   { 
     path: '/areas', 
-    name: 'areas', 
-    component: areas,
-    meta: { requiresAuth: true } // <-- AÑADIR ESTO
+    name: 'Areas', 
+    component: Areas,
+    meta: { requiresAuth: true }
+  },
+  { 
+    path: '/alumnos', 
+    name: 'Alumnos', 
+    component: Alumnos,
+    meta: { requiresAuth: true }
   },
   { 
     path: '/perfil', 
-    name: 'perfil', 
+    name: 'MiPerfil', 
     component: MiPerfil,
-    meta: { requiresAuth: true } // <-- AÑADIR ESTO
+    meta: { requiresAuth: true }
   },
   { 
     path: '/configuracion', 
     name: 'configuracion', 
     component: Configuracion,
-    meta: { requiresAuth: true } // <-- AÑADIR ESTO
+    meta: { requiresAuth: true }
   },
+  
   // --- RUTA 404 (Catch-All) ---
   {
-    path: '/:pathMatch(.*)*', // Esto atrapa cualquier ruta no definida
+    path: '/:pathMatch(.*)*',
     name: 'NotFound',
     component: NotFound,
-    meta: { requiresAuth: false } // No requiere login para verla
+    meta: { requiresAuth: false }
   }
 ];
 
@@ -96,22 +106,17 @@ const router = createRouter({
   routes,
 });
 
-// --- ¡EL GUARDIÁN DE RUTA! ---
-// Esto se ejecuta ANTES de cada cambio de página
+// --- TU GUARDIÁN DE RUTAS (esencial para la seguridad) [cite: js/routes/index.js] ---
 router.beforeEach((to, from, next) => {
-  const isAuthenticated = !!localStorage.getItem('auth_token'); // Revisa si el token existe
-  const requiresAuth = to.meta.requiresAuth; // Revisa si la ruta destino requiere login
+  const isAuthenticated = !!localStorage.getItem('auth_token');
+  const requiresAuth = to.meta.requiresAuth;
 
   if (requiresAuth && !isAuthenticated) {
-    // Si la ruta requiere login Y no hay token...
-    // redirigir al login.
-    next({ name: 'login' });
-  } else if (!requiresAuth && isAuthenticated) {
-    // Si la ruta es pública (como 'login') Y SÍ hay un token...
-    // redirigir al home (evita ver el login si ya estás logueado).
-    next({ name: 'home' });
+    next({ name: 'Login' });
+  } else if (!requiresAuth && isAuthenticated && to.name === 'Login') {
+    // Evita ver el login si ya estás logueado
+    next({ name: 'Home' });
   } else {
-    // En cualquier otro caso, deja pasar.
     next();
   }
 });

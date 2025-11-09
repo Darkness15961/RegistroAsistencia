@@ -1,12 +1,14 @@
+// resources/js/app.js
 import { createApp } from 'vue'
-import App from './app.vue'
-import router from './routes/index.js' 
-import ComponentsPlugin from './components.js' 
-import '../css/app.css' 
+import App from './app.vue' // Tu archivo principal
+import router from './routes/index.js' // Tu router
+import '../css/app.css'
 import '@fortawesome/fontawesome-free/css/all.min.css'
-import './axiosConfig.js';
+
+// Importa tu config de Axios para registrar los interceptores
+import './axiosConfig.js' 
 
 const app = createApp(App)
-app.use(ComponentsPlugin) 
 app.use(router)
 app.mount('#app')
+
