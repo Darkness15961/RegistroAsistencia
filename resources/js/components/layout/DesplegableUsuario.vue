@@ -15,7 +15,7 @@
       </div>
     </div>
 
-<nav class="mt-4">
+    <nav class="mt-4">
       <ul>
         <li>
           <router-link 
@@ -55,39 +55,29 @@
 
 <script setup>
 import { computed } from 'vue'
-import { useTheme } from '../composables/useTheme'
+import { useTheme } from '@/composables/useTheme'
 import { useRouter } from 'vue-router'
-import axios from 'axios' // <-- 1. Importar axios
+import axios from '@/axiosConfig'
 
 const { theme, isDark } = useTheme()
-const router = useRouter() // <-- 2. Obtener el router
+const router = useRouter()
 
-// (Este emit ya no es necesario, manejamos el logout aquí mismo)
-// defineEmits(['logout'])
-
-// --- 3. LÓGICA DE LOGOUT ---
 const handleLogout = async () => {
   try {
-    // Llama a la API de logout (enviará el token automáticamente gracias a axiosConfig)
-    await axios.post('/api/logout');
+    await axios.post('/api/logout')
   } catch (error) {
-    console.error('Error al cerrar sesión en el backend:', error);
+    console.warn('No se pudo cerrar sesión en el backend:', error.response?.data || error.message)
   } finally {
-    // Limpia el localStorage
-    localStorage.removeItem('auth_token');
-    localStorage.removeItem('user_data');
-
-    // Redirige al login
-    // Usamos window.location.href para forzar una recarga completa
-    window.location.href = '/login';
+    localStorage.removeItem('auth_token')
+    localStorage.removeItem('user_data')
+    window.location.href = '/login'
   }
 }
-// --- FIN DE LA LÓGICA ---
 
 const menuItemClass = computed(() => {
-  const textColor = theme('cardTitle').value; 
-  const hoverBg = isDark.value ? 'hover:bg-white/10' : 'hover:bg-gray-100';
-  return [textColor, hoverBg];
+  const textColor = theme('cardTitle').value
+  const hoverBg = isDark.value ? 'hover:bg-white/10' : 'hover:bg-gray-100'
+  return [textColor, hoverBg]
 })
 
 const menuItemDangerClass = computed(() => {

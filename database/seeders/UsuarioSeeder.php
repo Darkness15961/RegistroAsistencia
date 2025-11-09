@@ -41,8 +41,8 @@ class UsuarioSeeder extends Seeder
 
         DB::table('usuarios')->insert([
             'id_persona' => $adminPersona,
-            'email' => 'admin@example.com',
-            'password_hash' => Hash::make('password'),
+            'email' => 'admin@4scan.com',
+            'password_hash' => Hash::make('admin123456'),
             'rol' => 'administrador',
             'estado' => 'activo',
             'created_at' => now(),
@@ -65,7 +65,7 @@ class UsuarioSeeder extends Seeder
 
             DB::table('usuarios')->insert([
                 'id_persona' => $persona->id_persona,
-                'email' => strtolower(str_replace(' ', '.', $persona->nombre_completo)) . '@colegio.com',
+                'email' => strtolower(str_replace(' ', '-', $persona->nombre_completo)) . '@Catolica.com',
                 'password_hash' => Hash::make('password'),
                 'rol' => 'empleado', // Todos los líderes son "empleado" para fines de login
                 'estado' => 'activo',

@@ -6,29 +6,37 @@
     <div class="px-6 py-4">
       <div class="flex items-center justify-between">
         
+        <!-- === BOTÓN SIDEBAR + BREADCRUMB === -->
         <div class="flex items-center gap-4">
+          <!-- Toggle Sidebar -->
           <button 
             @click="$emit('toggle-sidebar')"
             class="w-10 h-10 flex items-center justify-center rounded-xl transition-all duration-200"
             :class="theme('headerButton').value"
+            title="Abrir/Cerrar menú"
           >
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M4 6h16M4 12h16M4 18h16" />
             </svg>
           </button>
-          
+
+          <!-- Breadcrumb -->
           <div class="flex items-center gap-2 text-sm">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
             </svg>
             <span :class="theme('headerBreadcrumb').value">Home</span>
             <span :class="theme('headerBreadcrumbSeparator').value">></span>
             <span class="font-medium" :class="theme('cardTitle').value">{{ titulo }}</span>
           </div>
         </div>
-        
+
+        <!-- === CONTROLES DERECHA (tema + usuario) === -->
         <div class="flex items-center gap-4 md:mr-4">
           
+          <!-- Botón Tema -->
           <button 
             @click="toggleTheme"
             class="w-10 h-10 flex items-center justify-center rounded-xl transition-all duration-200"
@@ -42,7 +50,8 @@
               <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" />
             </svg>
           </button>
-          
+
+          <!-- Usuario -->
           <div class="relative" ref="dropdownRef">
             <button 
               @click="toggleDropdown"
@@ -58,13 +67,12 @@
                 <p class="text-xs" :class="theme('headerUserRole').value">Admin</p>
               </div>
             </button>
-            
+
             <DesplegableUsuario 
               v-if="isDropdownOpen" 
               @logout="handleLogout"
             />
           </div>
-
         </div>
       </div>
     </div>
@@ -72,17 +80,19 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue' 
-import { useRoute } from 'vue-router' 
-import { useTheme } from '../composables/useTheme'
-// CORRECCIÓN: Import renombrado
-import DesplegableUsuario from './DesplegableUsuario.vue' 
+import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { useRoute } from 'vue-router'
+import { useTheme } from '@/composables/useTheme'
+import DesplegableUsuario from '@/components/layout/DesplegableUsuario.vue'
 
+// === THEME ===
 const { isDark, toggleTheme, theme } = useTheme()
-const route = useRoute() 
 
+// === ROUTER ===
+const route = useRoute()
 defineEmits(['toggle-sidebar'])
 
+// === DROPDOWN ===
 const isDropdownOpen = ref(false)
 const dropdownRef = ref(null)
 
@@ -99,6 +109,7 @@ const handleClickOutside = (event) => {
 onMounted(() => {
   document.addEventListener('click', handleClickOutside)
 })
+
 onUnmounted(() => {
   document.removeEventListener('click', handleClickOutside)
 })
@@ -106,25 +117,19 @@ onUnmounted(() => {
 const handleLogout = () => {
   console.log('Cerrar sesión!')
   isDropdownOpen.value = false
-  // router.push('/login')
+  // TODO: Agregar router.push('/login') cuando la ruta de logout esté lista
 }
 
+// === BREADCRUMB TITLE ===
 const titulo = computed(() => {
-  switch (route.name) {
-    case 'home':
-      return 'Dashboard'
-    case 'horarios':
-      return 'Horarios'
-    case 'asistencias':
-      return 'Asistencias'
-    case 'usuarios':
-      return 'Usuarios'
-    case 'empleados':
-      return 'Empleados'
-    case 'areas':
-      return 'Áreas'
-    default:
-      return 'Dashboard'
+  const titles = {
+    home: 'Dashboard',
+    horarios: 'Horarios',
+    asistencias: 'Asistencias',
+    usuarios: 'Usuarios',
+    empleados: 'Empleados',
+    areas: 'Áreas'
   }
+  return titles[route.name] || 'Dashboard'
 })
 </script>

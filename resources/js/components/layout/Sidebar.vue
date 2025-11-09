@@ -138,7 +138,7 @@
 
 <script setup>
 import { useRoute } from 'vue-router'
-import { useTheme } from '../composables/useTheme'
+import { useTheme } from '@/composables/useTheme'
 
 defineProps({
   isCollapsed: {

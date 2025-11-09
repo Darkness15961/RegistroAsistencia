@@ -13,7 +13,8 @@ use App\Http\Controllers\AsistenciaController;
 use App\Http\Controllers\ReconocimientoController;
 use App\Http\Controllers\UsuarioController;
 use App\Http\Controllers\ConfiguracionController;
-use App\Http\Controllers\AuthController; 
+use App\Http\Controllers\AuthController;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -21,9 +22,7 @@ use App\Http\Controllers\AuthController;
 |--------------------------------------------------------------------------
 |
 | Estas rutas se cargan automáticamente con el prefijo '/api'.
-|
 */
-
 // --- RUTAS PÚBLICAS (Para Login y registro) ---
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/asistencias/registrar', [AsistenciaController::class, 'store']);
@@ -46,8 +45,5 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('/personas', PersonaController::class);
     Route::apiResource('/usuarios', UsuarioController::class);
     Route::apiResource('/asistencias', AsistenciaController::class)->except(['store']);
-    Route::apiResource('/reconocimientos', ReconocimientoController::class)->only([
-        'store', 'destroy'
-    ]);
-
+    Route::apiResource('/reconocimientos', ReconocimientoController::class)->only(['store', 'destroy']);
 });

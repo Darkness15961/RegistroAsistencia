@@ -1,8 +1,8 @@
 import CardStats from './components/CardStats.vue'
 import Footer from './components/Footer.vue'
 import FormInput from './components/FormInput.vue'
-import Header from './components/Header.vue'
-import Sidebar from './components/Sidebar.vue'
+import Header from './components/layout/Header.vue'
+import Sidebar from './components/layout/Sidebar.vue'
 import Table from './components/Table.vue'
 
 export default {

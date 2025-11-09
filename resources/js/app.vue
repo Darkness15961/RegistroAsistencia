@@ -4,10 +4,12 @@
     :class="isDark ? 'bg-dark-gradient' : 'bg-light-gradient'"
   >
     
+    <!-- 1. Páginas de Pantalla Completa (Login, Registro, 404) -->
     <div v-if="isFullScreenPage" class="min-h-screen">
       <router-view />
     </div>
     
+    <!-- 2. Layout Principal (Sidebar + Header + Contenido) -->
     <div v-else class="flex h-screen overflow-hidden">
       <div 
         v-if="!sidebarCollapsed" 
@@ -24,9 +26,12 @@
         <Header @toggle-sidebar="toggleSidebar" />
         
         <main class="flex-1 overflow-y-auto">
+          <!-- Contenido de la página actual (Home, Alumnos, Empleados, etc.) -->
           <div class="p-6">
             <router-view />
           </div>
+          <!-- Asumiendo que Footer se importa y usa aquí -->
+          <Footer />
         </main>
       </div>
     </div>
@@ -37,29 +42,28 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router'
-import Sidebar from './components/Sidebar.vue'
-import Header from './components/Header.vue'
+// --- IMPORTACIONES CORREGIDAS A LAYOUT/ ---
+import Sidebar from './components/layout/Sidebar.vue'
+import Header from './components/layout/Header.vue'
+import Footer from './components/Footer.vue' // Asumiendo que Footer está en la raíz de components
 import { useTheme } from './composables/useTheme'
 
 const route = useRoute()
 const { isDark } = useTheme()
 const sidebarCollapsed = ref(false)
 
-// --- CORRECCIÓN 2 ---
-// Renombramos 'isLoginPage' a 'isFullScreenPage' (es más preciso)
-// y añadimos 'NotFound' a la lista, usando 'route.name' (más robusto)
 const isFullScreenPage = computed(() => {
   return route.name === 'login' || 
-         route.name === 'registro' || 
-         route.name === 'NotFound';
+           route.name === 'registro' || 
+           route.name === 'NotFound';
 })
-// --- FIN DE LA CORRECCIÓN ---
 
 const toggleSidebar = () => {
   sidebarCollapsed.value = !sidebarCollapsed.value
 }
 
 const handleResize = () => {
+  // Colapsar la barra lateral automáticamente en pantallas pequeñas
   if (window.innerWidth < 768) { 
     sidebarCollapsed.value = true
   } else {

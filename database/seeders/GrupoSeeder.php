@@ -10,25 +10,71 @@ class GrupoSeeder extends Seeder
 {
     public function run(): void
     {
-        $areas = Area::all(); // Obtener todas las áreas existentes
+        $areas = Area::all();
 
         if ($areas->isEmpty()) {
-            $this->command->info('¡No hay áreas en la BD! Ejecuta AreaSeeder primero.');
+            $this->command->info('⚠️ No hay áreas en la base de datos. Ejecuta primero el AreaSeeder.');
             return;
         }
 
-        $gruposData = [
-            ['nivel' => 'Senior', 'grado' => 'N/A', 'seccion' => 'A'],
-            ['nivel' => 'Senior', 'grado' => 'N/A', 'seccion' => 'B'],
-            ['nivel' => 'Junior', 'grado' => 'N/A', 'seccion' => 'C'],
-            ['nivel' => 'Mid', 'grado' => 'N/A', 'seccion' => 'D'],
-            ['nivel' => 'Junior', 'grado' => 'N/A', 'seccion' => 'E'],
-            ['nivel' => 'Senior', 'grado' => 'N/A', 'seccion' => 'F'],
-        ];
+        $gruposData = [];
 
-        foreach ($gruposData as $grupoData) {
-            $grupoData['id_area'] = $areas->random()->id_area; // FK aleatoria
-            DB::table('grupos')->insert($grupoData);
+        foreach ($areas as $area) {
+            switch ($area->nombre_area) {
+
+                case 'Alumnos de Inicial':
+                    $gruposData = array_merge($gruposData, [
+                        ['id_area' => $area->id_area, 'nivel' => 'Inicial', 'grado' => '4 años', 'seccion' => 'A'],
+                        ['id_area' => $area->id_area, 'nivel' => 'Inicial', 'grado' => '4 años', 'seccion' => 'B'],
+                        ['id_area' => $area->id_area, 'nivel' => 'Inicial', 'grado' => '5 años', 'seccion' => 'A'],
+                        ['id_area' => $area->id_area, 'nivel' => 'Inicial', 'grado' => '5 años', 'seccion' => 'B'],
+                    ]);
+                    break;
+
+                case 'Alumnos de Primaria':
+                    foreach (['1ro', '2do', '3ro', '4to', '5to', '6to'] as $grado) {
+                        $gruposData = array_merge($gruposData, [
+                            ['id_area' => $area->id_area, 'nivel' => 'Primaria', 'grado' => $grado, 'seccion' => 'A'],
+                            ['id_area' => $area->id_area, 'nivel' => 'Primaria', 'grado' => $grado, 'seccion' => 'B'],
+                        ]);
+                    }
+                    break;
+
+                case 'Alumnos de Secundaria':
+                    foreach (['1ro', '2do', '3ro', '4to', '5to'] as $grado) {
+                        $gruposData = array_merge($gruposData, [
+                            ['id_area' => $area->id_area, 'nivel' => 'Secundaria', 'grado' => $grado, 'seccion' => 'A'],
+                            ['id_area' => $area->id_area, 'nivel' => 'Secundaria', 'grado' => $grado, 'seccion' => 'B'],
+                        ]);
+                    }
+                    break;
+
+                case 'Docentes de Primaria':
+                    $gruposData = array_merge($gruposData, [
+                        ['id_area' => $area->id_area, 'nivel' => 'Docentes Primaria', 'grado' => 'N/A', 'seccion' => 'A'],
+                    ]);
+                    break;
+
+                case 'Docentes de Secundaria':
+                    $gruposData = array_merge($gruposData, [
+                        ['id_area' => $area->id_area, 'nivel' => 'Docentes Secundaria', 'grado' => 'N/A', 'seccion' => 'A'],
+                    ]);
+                    break;
+
+                default:
+                    // Otras áreas administrativas o de soporte
+                    $gruposData[] = [
+                        'id_area' => $area->id_area,
+                        'nivel' => 'General',
+                        'grado' => 'N/A',
+                        'seccion' => 'A'
+                    ];
+                    break;
+            }
         }
+
+        DB::table('grupos')->insert($gruposData);
+
+        $this->command->info('✅ Grupos insertados correctamente.');
     }
 }
