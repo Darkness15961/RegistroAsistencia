@@ -1,6 +1,6 @@
 <template>
   <div class="w-full h-[300px] md:h-[400px] relative">
-    <Bar :data="chartData" :options="chartOptions" />
+    <Bar :data="props.chartData" :options="chartOptions" />
   </div>
 </template>
 
@@ -16,37 +16,22 @@ import {
   CategoryScale,
   LinearScale
 } from 'chart.js'
-import { useTheme } from '@/composables/useTheme.js'
+// Importación corregida con el alias @
+import { useTheme } from '@/composables/useTheme' 
 
 ChartJS.register(Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale)
 
+// 1. DEFINIR EL PROP chartData
+const props = defineProps({
+  chartData: {
+    type: Object,
+    required: true
+  }
+})
+
 const { isDark } = useTheme()
 
-const chartData = {
-  labels: ['Lun', 'Mar', 'Mié', 'Jue', 'Vie'],
-  datasets: [
-    {
-      label: 'Asistencias',
-      backgroundColor: [
-        'rgba(59, 130, 246, 0.8)',   // Azul
-        'rgba(16, 185, 129, 0.8)',   // Verde
-        'rgba(139, 92, 246, 0.8)',   // Morado
-        'rgba(236, 72, 153, 0.8)',   // Rosa
-        'rgba(251, 146, 60, 0.8)'    // Naranja
-      ],
-      borderColor: [
-        'rgb(59, 130, 246)',
-        'rgb(16, 185, 129)',
-        'rgb(139, 92, 246)',
-        'rgb(236, 72, 153)',
-        'rgb(251, 146, 60)'
-      ],
-      borderWidth: 2,
-      borderRadius: 8,
-      data: [18, 22, 21, 25, 20]
-    }
-  ]
-}
+// 2. ELIMINAR la definición estática de 'chartData' de este script.
 
 const chartOptions = computed(() => ({
   responsive: true,

@@ -14,8 +14,7 @@ use App\Http\Controllers\ReconocimientoController;
 use App\Http\Controllers\UsuarioController;
 use App\Http\Controllers\ConfiguracionController;
 use App\Http\Controllers\AuthController;
-
-
+use App\Http\Controllers\Api\DashboardController;
 /*
 |--------------------------------------------------------------------------
 | Rutas de la API (Backend de Laravel)
@@ -46,4 +45,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('/usuarios', UsuarioController::class);
     Route::apiResource('/asistencias', AsistenciaController::class)->except(['store']);
     Route::apiResource('/reconocimientos', ReconocimientoController::class)->only(['store', 'destroy']);
+    Route::get('/dashboard-stats', [DashboardController::class, 'getStats']);
+    Route::post('/logout', [AuthController::class, 'logout']);
 });

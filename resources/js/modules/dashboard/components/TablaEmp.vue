@@ -1,6 +1,6 @@
 <template>
   <div class="w-full h-[300px] md:h-[400px] relative">
-    <Line :data="chartData" :options="chartOptions" />
+    <Line :data="dynamicChartData" :options="chartOptions" />
   </div>
 </template>
 
@@ -18,7 +18,8 @@ import {
   LinearScale,
   Filler
 } from 'chart.js'
-import { useTheme } from '@/composables/useTheme.js'
+// Importación corregida con el alias @
+import { useTheme } from '@/composables/useTheme'
 
 ChartJS.register(
   Title,
@@ -31,9 +32,17 @@ ChartJS.register(
   Filler
 )
 
+// 1. DEFINIR EL PROP chartData
+const props = defineProps({
+  chartData: {
+    type: Object,
+    required: true
+  }
+})
+
 const { isDark } = useTheme()
 
-// Función para crear gradiente
+// Función para crear gradiente (DEBE PERMANECER IGUAL)
 const createGradient = (ctx, chartArea) => {
   const gradient = ctx.createLinearGradient(0, chartArea.bottom, 0, chartArea.top)
   gradient.addColorStop(0, 'rgba(16, 185, 129, 0.0)')
@@ -42,35 +51,38 @@ const createGradient = (ctx, chartArea) => {
   return gradient
 }
 
-const chartData = {
-  labels: ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio'],
-  datasets: [
-    {
-      label: 'Empleados',
-      borderColor: '#10B981',
-      backgroundColor: (context) => {
-        const chart = context.chart
-        const {ctx, chartArea} = chart
-        if (!chartArea) return 'rgba(16, 185, 129, 0.2)'
-        return createGradient(ctx, chartArea)
-      },
-      tension: 0.4,
-      fill: true,
-      pointRadius: 6,
-      pointHoverRadius: 8,
-      pointBackgroundColor: '#10B981',
-      pointBorderColor: '#fff',
-      pointBorderWidth: 2,
-      pointHoverBackgroundColor: '#059669',
-      pointHoverBorderColor: '#fff',
-      pointHoverBorderWidth: 3,
-      borderWidth: 3,
-      data: [5, 7, 8, 9, 11, 13]
+// 2. CREAR PROPIEDAD COMPUTADA PARA INYECTAR EL GRADIENTE DINÁMICAMENTE
+const dynamicChartData = computed(() => {
+    // Si no hay datos, devolvemos un objeto vacío para evitar errores
+    if (!props.chartData || !props.chartData.datasets) return { datasets: [] }
+
+    // Inyectamos el callback de gradiente en el dataset principal
+    const datasetsWithGradient = props.chartData.datasets.map(dataset => {
+        // Solo inyectamos si el dataset es para empleados (o el que queremos con gradiente)
+        if (dataset.label === 'Empleados') { 
+            return {
+                ...dataset,
+                backgroundColor: (context) => {
+                    const chart = context.chart
+                    const {ctx, chartArea} = chart
+                    if (!chartArea) return 'rgba(16, 185, 129, 0.2)'
+                    return createGradient(ctx, chartArea)
+                },
+            }
+        }
+        return dataset
+    })
+
+    return {
+        ...props.chartData,
+        datasets: datasetsWithGradient
     }
-  ]
-}
+})
+
+// 3. ELIMINAR la definición estática de 'chartData' de este script.
 
 const chartOptions = computed(() => ({
+  // ... (El resto de tu código para chartOptions es correcto)
   responsive: true,
   maintainAspectRatio: false,
   interaction: {
