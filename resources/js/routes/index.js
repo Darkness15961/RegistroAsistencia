@@ -11,7 +11,7 @@ const Horarios = () => import('@/modules/horarios/pages/Horarios.vue')
 const Usuarios = () => import('@/modules/usuarios/pages/Usuarios.vue')
 const MiPerfil = () => import('@/modules/perfil/pages/MiPerfil.vue')
 const Configuracion = () => import('@/modules/perfil/pages/Configuracion.vue')
-const NotFound = () => import('@/modules/common/pages/NotFound.vue')
+const NotFound = () => import('@/modules/NotFound/pages/NotFound.vue')
 const RegistroAsistencia = () => import('@/modules/asistencias/pages/RegistroAsistencia.vue')
 
 

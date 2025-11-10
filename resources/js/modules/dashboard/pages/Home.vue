@@ -1,108 +1,89 @@
+<!-- resources/js/modules/dashboard/pages/Home.vue -->
 <script setup>
 import { ref, onMounted } from 'vue'
-
-
-import { useTheme } from '@/composables/useTheme'
 import api from '@/axiosConfig'
+
+// Componentes
 import Card from '../components/Card.vue'
-import AttendanceChart from '../components/TablaAsis.vue'
-import EmployeesChart from '../components/TablaEmp.vue'
+import TablaAsistencia from '@/modules/asistencias/components/TablaAsistencia.vue'
+import TablaEmpleados from '@/modules/empleados/components/TablaEmpleados.vue'
+import TablaAlumnos from '@/modules/Alumnos/components/TablaAlumnos.vue'
+import UserCard from '@/modules/usuarios/components/UserCard.vue'
 
-// --- FIN RUTAS ADAPTADAS ---
+const loading = ref(true)
+const error = ref(null)
 
-const { theme } = useTheme()
+// Datos para dashboard
+const stats = ref({})
+const asistencias = ref([])
+const empleados = ref([])
+const alumnos = ref([])
+const usuarios = ref([])
 
-// --- Estados para manejar los datos de la API ---
-const stats = ref(null) // Para las 4 tarjetas
-const attendanceData = ref(null) // Para el gráfico de asistencias
-const employeesData = ref(null) // Para el gráfico de empleados
-const loading = ref(true) // Estado de carga
-const error = ref(null) // Manejo de errores
-
-// --- Función para cargar los datos ---
 const fetchDashboardData = async () => {
   loading.value = true
   error.value = null
   try {
-    // Esta llamada ahora usa la instancia 'api' importada de axiosConfig.js
-    const response = await api.get('/dashboard-stats')
-    
-    // Asignamos los datos a nuestros 'refs'
-    stats.value = response.data.stats 
-    attendanceData.value = response.data.attendanceChart
-    employeesData.value = response.data.employeesChart
+    // Estadísticas
+    const statsRes = await api.get('/dashboard-stats')
+    stats.value = statsRes.data.stats || {}
+
+    // Últimas asistencias
+    const asistenciasRes = await api.get('/asistencias')
+    asistencias.value = Array.isArray(asistenciasRes.data) ? asistenciasRes.data : []
+
+    // Empleados
+    const empleadosRes = await api.get('/personas')
+    empleados.value = empleadosRes.data.filter(p => p.tipo_persona === 'empleado')
+
+    // Alumnos
+    alumnos.value = empleadosRes.data.filter(p => p.tipo_persona === 'alumno')
+
+    // Usuarios
+    const usuariosRes = await api.get('/usuarios')
+    usuarios.value = Array.isArray(usuariosRes.data) ? usuariosRes.data : []
 
   } catch (err) {
-    console.error("Error al cargar datos del dashboard:", err)
-    error.value = "No se pudieron cargar las estadísticas. Intente más tarde."
+    console.error("Error cargando dashboard:", err)
+    error.value = "No se pudieron cargar los datos. Intente más tarde."
   } finally {
     loading.value = false
   }
 }
 
-// --- Cargar los datos cuando el componente se monta ---
-onMounted(() => {
-  fetchDashboardData()
-})
+onMounted(fetchDashboardData)
 </script>
 
 <template>
-  <div class="flex-1 p-4 sm:p-6 overflow-x-hidden">
-    
-    <div v-if="loading" class="text-center py-20" :class="theme('cardSubtitle').value">
+  <div class="p-6">
+    <div v-if="loading" class="text-center py-20">
       <i class="fas fa-spinner fa-spin text-4xl"></i>
-      <p class="mt-4">Cargando estadísticas...</p>
+      <p class="mt-4">Cargando dashboard...</p>
     </div>
 
-    <div v-else-if="error" class="bg-red-500/10 border border-red-500/20 text-red-300 p-6 rounded-2xl text-center">
-      <i class="fas fa-exclamation-triangle text-4xl mb-4"></i>
-      <h3 class="font-bold text-lg">Error</h3>
+    <div v-else-if="error" class="text-center text-red-500">
       <p>{{ error }}</p>
     </div>
 
-    <div v-else-if="stats">
-      <section class="grid gap-6 sm:grid-cols-2 lg:grid-cols-4 mb-10">
-        <Card 
-          title="EmpleADOS" 
-          :value="stats.empleados" 
-          icon="users"
-          gradient-class="bg-gradient-to-br from-blue-400 to-blue-600"
-        />
-        <Card 
-          title="Asistencias Hoy" 
-          :value="stats.asistenciasHoy" 
-          icon="calendar-check"
-          gradient-class="bg-gradient-to-br from-green-400 to-emerald-600"
-        />
-        <Card 
-          title="Horarios Activos" 
-          :value="stats.horariosActivos" 
-          icon="clock"
-          gradient-class="bg-gradient-to-br from-purple-400 to-pink-600"
-        />
-        <Card 
-          title="Usuarios del Sistema" 
-          :value="stats.usuarios" 
-          icon="user-shield"
-          gradient-class="bg-gradient-to-br from-orange-400 to-red-600"
-        />
-      </section>
+    <div v-else>
+      <!-- Estadísticas -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <Card title="Empleados" :value="stats.empleados" icon="users" gradient-class="bg-gradient-to-br from-blue-400 to-blue-600"/>
+        <Card title="Asistencias Hoy" :value="stats.asistenciasHoy" icon="calendar-check" gradient-class="bg-gradient-to-br from-green-400 to-emerald-600"/>
+        <Card title="Horarios Activos" :value="stats.horariosActivos" icon="clock" gradient-class="bg-gradient-to-br from-purple-400 to-pink-600"/>
+        <Card title="Usuarios" :value="stats.usuarios" icon="user-shield" gradient-class="bg-gradient-to-br from-orange-400 to-red-600"/>
+      </div>
 
-      <section class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
-        <div
-          class="backdrop-blur-xl rounded-3xl shadow-md p-4 sm:p-6 transition-colors"
-          :class="theme('card').value"
-        >
-          <AttendanceChart v-if="attendanceData" :chart-data="attendanceData" />
-        </div>
-        <div
-          class="backdrop-blur-xl rounded-3xl shadow-md p-4 sm:p-6 transition-colors"
-          :class="theme('card').value"
-        >
-          <EmployeesChart v-if="employeesData" :chart-data="employeesData" />
-        </div>
-      </section>
+      <!-- Tablas -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <TablaAsistencia :asistencias="asistencias"/>
+        <TablaEmpleados :empleados="empleados"/>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+        <TablaAlumnos :alumnos="alumnos"/>
+        <UserCard :usuarios="usuarios"/>
+      </div>
     </div>
-
   </div>
 </template>

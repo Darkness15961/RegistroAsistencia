@@ -31,7 +31,7 @@
 </template>
 
 <script setup>
-import { useTheme } from '../composables/useTheme'
+import { useTheme } from '@/composables/useTheme.js' 
 // Importar isDark para el fondo
 const { theme, isDark } = useTheme()
 </script>

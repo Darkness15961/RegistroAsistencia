@@ -12,63 +12,72 @@ class AsistenciaController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Asistencia::with('persona'); // Cargar la persona
-        
-        // Filtro por fecha (ej: /api/asistencias?fecha=2025-10-31)
+        // Verificar si viene un id_persona en la URL
+        $query = Asistencia::with('persona');
+
+        if ($request->has('id_persona')) {
+            $query->where('id_persona', $request->id_persona);
+        }
+
+        // También puedes filtrar por fecha si deseas (opcional)
         if ($request->has('fecha')) {
             $query->whereDate('fecha', $request->fecha);
         }
 
-        // Ordenar por más reciente y paginar
-        return $query->latest()->paginate(50);
+        // Finalmente, devolver los resultados
+        $asistencias = $query->orderBy('fecha', 'desc')->paginate(10);
+        return response()->json($asistencias);
     }
 
     // ESTA ES LA LÓGICA 
-    public function store(Request $request)
+        public function store(Request $request)
     {
         $request->validate([
             'id_persona' => 'required|exists:personas,id_persona',
+            'fecha' => 'nullable|date',
+            'hora_entrada' => 'nullable|date_format:H:i:s',
+            'hora_salida' => 'nullable|date_format:H:i:s',
         ]);
 
         $persona = Persona::find($request->id_persona);
-        $hoy = Carbon::now();
-        $horaActual = $hoy->toTimeString();
+        $fecha = $request->input('fecha', Carbon::now()->toDateString()); // si no se envía, usa hoy
+        $horaActual = $request->input('hora_entrada', Carbon::now()->toTimeString());
 
-        // 1. Buscar el horario de la persona a través de su área
+        // Buscar el horario del área
         $horario = Horario::where('id_area', $persona->id_area)->first();
         if (!$horario) {
             return response()->json(['error' => 'La persona no tiene un horario asignado'], 404);
         }
 
-        // 2. Buscar si ya existe un registro de asistencia para esta persona HOY
+        // Buscar si ya existe asistencia para esa persona y fecha
         $asistencia = Asistencia::firstOrNew([
             'id_persona' => $persona->id_persona,
-            'fecha' => $hoy->toDateString(),
+            'fecha' => $fecha,
         ]);
 
-        // 3. Lógica de registro (Entrada/Salida)
+        // Si no tiene hora de entrada, registrar entrada
         if (is_null($asistencia->hora_entrada)) {
-            // -- ES MARCACIÓN DE ENTRADA --
             $asistencia->hora_entrada = $horaActual;
-            
-            // Calcular estado (Puntual o Tarde)
+
+            // Calcular estado según hora de entrada del horario
             $horaLimiteEntrada = Carbon::parse($horario->hora_entrada);
             if (Carbon::parse($horaActual)->lte($horaLimiteEntrada)) {
                 $asistencia->estado_asistencia = 'Presente';
             } else {
                 $asistencia->estado_asistencia = 'Tarde';
             }
+
             $asistencia->metodo_registro = 'IA';
-        
         } else {
-            // -- ES MARCACIÓN DE SALIDA --
-            $asistencia->hora_salida = $horaActual;
+            // Si ya tiene entrada, registrar salida
+            $asistencia->hora_salida = $request->input('hora_salida', Carbon::now()->toTimeString());
         }
 
         $asistencia->save();
-        
+
         return response()->json($asistencia->load('persona'), 201);
     }
+
     
     // El resto de métodos (show, update, destroy) son para el panel
     

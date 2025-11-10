@@ -1,93 +1,40 @@
+<!-- resources/js/modules/asistencias/components/TablaAsistencia.vue -->
 <template>
-  <div class="w-full h-[300px] md:h-[400px] relative">
-    <Bar :data="props.chartData" :options="chartOptions" />
+  <div>
+    <h3 class="font-bold mb-2">Últimas Asistencias</h3>
+    <table class="w-full table-auto border-collapse border border-gray-200">
+      <thead>
+        <tr class="bg-gray-100">
+          <th class="border p-2">ID</th>
+          <th class="border p-2">Nombre</th>
+          <th class="border p-2">Fecha</th>
+          <th class="border p-2">Hora Entrada</th>
+          <th class="border p-2">Hora Salida</th>
+          <th class="border p-2">Estado</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr v-for="asistencia in asistencias" :key="asistencia.id_asistencia" class="hover:bg-gray-50">
+          <td class="border p-2">{{ asistencia.id_asistencia }}</td>
+          <td class="border p-2">{{ asistencia.persona.nombre_completo }}</td>
+          <td class="border p-2">{{ asistencia.fecha }}</td>
+          <td class="border p-2">{{ asistencia.hora_entrada }}</td>
+          <td class="border p-2">{{ asistencia.hora_salida }}</td>
+          <td class="border p-2">{{ asistencia.estado_asistencia }}</td>
+        </tr>
+        <tr v-if="asistencias.length === 0">
+          <td class="border p-2 text-center" colspan="6">No hay asistencias recientes.</td>
+        </tr>
+      </tbody>
+    </table>
   </div>
 </template>
 
 <script setup>
-import { computed } from 'vue'
-import { Bar } from 'vue-chartjs'
-import {
-  Chart as ChartJS,
-  Title,
-  Tooltip,
-  Legend,
-  BarElement,
-  CategoryScale,
-  LinearScale
-} from 'chart.js'
-// Importación corregida con el alias @
-import { useTheme } from '@/composables/useTheme' 
-
-ChartJS.register(Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale)
-
-// 1. DEFINIR EL PROP chartData
-const props = defineProps({
-  chartData: {
-    type: Object,
-    required: true
-  }
-})
-
-const { isDark } = useTheme()
-
-// 2. ELIMINAR la definición estática de 'chartData' de este script.
-
-const chartOptions = computed(() => ({
-  responsive: true,
-  maintainAspectRatio: false,
-  plugins: {
-    legend: {
-      position: 'bottom',
-      labels: { 
-        color: isDark.value ? '#e5e7eb' : '#374151',
-        font: {
-          size: 13,
-          weight: '500'
-        },
-        padding: 15
-      }
-    },
-    title: {
-      display: true,
-      text: 'Asistencias Semanales',
-      color: isDark.value ? '#f3f4f6' : '#111827',
-      font: {
-        size: 16,
-        weight: 'bold'
-      },
-      padding: {
-        bottom: 20
-      }
-    }
+defineProps({
+  asistencias: {
+    type: Array,
+    default: () => [],
   },
-  scales: {
-    x: {
-      ticks: { 
-        color: isDark.value ? '#d1d5db' : '#6b7280',
-        font: {
-          size: 12,
-          weight: '500'
-        }
-      },
-      grid: { 
-        color: isDark.value ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)',
-        drawBorder: false
-      }
-    },
-    y: {
-      beginAtZero: true,
-      ticks: { 
-        color: isDark.value ? '#d1d5db' : '#6b7280',
-        font: {
-          size: 12
-        }
-      },
-      grid: { 
-        color: isDark.value ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)',
-        drawBorder: false
-      }
-    }
-  }
-}))
+})
 </script>
