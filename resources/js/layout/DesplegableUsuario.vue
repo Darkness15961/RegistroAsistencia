@@ -1,6 +1,6 @@
 <template>
   <div
-    class="absolute top-full right-0 mt-3 w-64 rounded-3xl border shadow-2xl p-4 z-50"
+    class="absolute top-full right-0 mt-3 w-64 rounded-3xl border p-4 z-50"
     :class="isDark 
       ? 'bg-gradient-to-br from-gray-800 to-gray-900 border-gray-700' 
       : 'bg-white border-gray-200'"
@@ -20,6 +20,7 @@
         <li>
           <router-link 
             to="/perfil"
+            @click="emit('close')" 
             class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all"
             :class="menuItemClass"
           >
@@ -30,6 +31,7 @@
         <li>
           <router-link 
             to="/configuracion"
+            @click="emit('close')" 
             class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all"
             :class="menuItemClass"
           >
@@ -59,18 +61,23 @@ import { useTheme } from '@/composables/useTheme'
 import { useRouter } from 'vue-router'
 import axios from '@/axiosConfig'
 
+// Define el emit 'close'
+const emit = defineEmits(['close'])
+
+// isDark se usa en el template, así que es necesario
 const { theme, isDark } = useTheme()
 const router = useRouter()
 
 const handleLogout = async () => {
+  emit('close') // Cierra el dropdown
   try {
-    await axios.post('/api/logout')
+    await axios.post('/logout')
   } catch (error) {
     console.warn('No se pudo cerrar sesión en el backend:', error.response?.data || error.message)
   } finally {
     localStorage.removeItem('auth_token')
     localStorage.removeItem('user_data')
-    window.location.href = '/login'
+    router.push('/login') 
   }
 }
 

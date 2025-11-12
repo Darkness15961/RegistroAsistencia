@@ -1,7 +1,0 @@
-export * from './alumnos'
-// export * from './empleados'
-// export * from './usuarios'
-// export * from './asistencias'
-// export * from './areas'
-// export * from './perfil'
-// export * from './auth'

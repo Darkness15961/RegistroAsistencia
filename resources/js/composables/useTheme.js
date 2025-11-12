@@ -39,7 +39,7 @@ export function useTheme() {
       input: computed(() => 
         isDark.value 
           ? 'bg-white/5 border-white/20 text-white placeholder-gray-400 focus:border-purple-400' 
-          : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:border-blue-500'
+          : 'bg-white border border-gray-400 text-gray-900 placeholder-gray-500 focus:border-blue-500' // <-- LÍNEA MODIFICADA
       ),
       
       // Buttons

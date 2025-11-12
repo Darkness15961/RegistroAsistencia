@@ -1,18 +1,24 @@
 <template>
-  <VentanaModal @close="$emit('close')">
-    <template #header>
-      <i class="fas fa-building mr-2"></i>
-      Crear Nueva Área
-    </template>
-    
-    <template #body>
-      <form @submit.prevent="submitForm" class="space-y-4">
+  <div 
+    class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+    @click.self="$emit('cerrar')"
+  >
+    <div 
+      class="w-full max-w-md rounded-3xl border shadow-2xl p-6" 
+      :class="theme('card').value"
+    >
+      <h3 class="text-xl font-bold mb-6 flex items-center" :class="theme('cardTitle').value">
+        <i class="fas fa-building mr-3"></i>
+        {{ area ? 'Editar Área' : 'Nueva Área' }}
+      </h3>
+
+      <form @submit.prevent="guardarArea" class="space-y-4">
         <div>
           <label class="block text-sm font-medium mb-1.5" :class="theme('cardSubtitle').value">
             Nombre del Área
           </label>
           <input 
-            v-model="form.nombre"
+            v-model="form.nombre_area"
             type="text" 
             placeholder="Ej: Docentes de Primaria"
             class="w-full rounded-xl"
@@ -25,60 +31,83 @@
           <label class="block text-sm font-medium mb-1.5" :class="theme('cardSubtitle').value">
             Descripción
           </label>
-          <textarea
+          <input
             v-model="form.descripcion"
-            rows="3"
-            placeholder="Ej: Profesores encargados del nivel primaria"
+            type="text"
+            placeholder="Ej: Área encargada de los docentes de primaria"
             class="w-full rounded-xl"
             :class="theme('input').value"
-          ></textarea>
+          />
+        </div>
+        
+        <div class="flex justify-end gap-3 pt-4">
+          <button 
+            @click="$emit('cerrar')"
+            type="button"
+            class="px-5 py-2.5 rounded-xl font-semibold"
+            :class="theme('buttonSecondary').value"
+          >
+            Cancelar
+          </button>
+          <button 
+            type="submit"
+            :disabled="loading"
+            class="flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold shadow-lg"
+            :class="theme('buttonPrimary').value"
+          >
+            <i v-if="loading" class="fas fa-spinner animate-spin"></i>
+            {{ area ? 'Actualizar' : 'Guardar' }}
+          </button>
         </div>
       </form>
-    </template>
-    
-    <template #footer>
-      <button 
-        @click="$emit('close')"
-        type="button"
-        class="px-5 py-2.5 rounded-xl font-semibold"
-        :class="theme('buttonSecondary').value"
-      >
-        Cancelar
-      </button>
-      <button 
-        @click="submitForm"
-        type="button"
-        class="flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold shadow-lg"
-        :class="theme('buttonPrimary').value"
-      >
-        <i class="fas fa-save"></i>
-        Guardar Área
-      </button>
-    </template>
-  </VentanaModal>
+    </div>
+  </div>
 </template>
 
 <script setup>
-import { ref } from 'vue'
-import { useTheme } from '../composables/useTheme'
-import VentanaModal from './VentanaModal.vue' // Importamos el modal base
+import { ref, watch } from 'vue'
+import { useTheme } from '@/composables/useTheme'
+import api from '@/axiosConfig'
+
+const props = defineProps({ area: Object })
+const emit = defineEmits(['cerrar'])
 
 const { theme } = useTheme()
-const emit = defineEmits(['close', 'save'])
+const loading = ref(false)
 
-// Estado local para el formulario
 const form = ref({
-  nombre: '',
+  nombre_area: '',
   descripcion: ''
 })
 
-// Función para enviar el formulario
-const submitForm = () => {
-  if (form.value.nombre) {
-    emit('save', { ...form.value }) // Enviamos una copia de los datos
-  } else {
-    // Manejo de error simple
-    console.warn('El nombre del área es requerido')
+// Lógica original para cargar datos al editar
+watch(
+  () => props.area,
+  (val) => {
+    if (val) {
+      form.value = { nombre_area: val.nombre_area, descripcion: val.descripcion || '' }
+    } else {
+      form.value = { nombre_area: '', descripcion: '' }
+    }
+  },
+  { immediate: true }
+)
+
+// Lógica original para guardar
+const guardarArea = async () => {
+  loading.value = true
+  try {
+    if (props.area) {
+      await api.put(`/areas/${props.area.id_area}`, form.value)
+    } else {
+      await api.post('/areas', form.value)
+    }
+    emit('cerrar')
+  } catch (error) {
+    console.error('Error guardando área:', error)
+    alert(error.response?.data?.message || 'Error al guardar.')
+  } finally {
+    loading.value = false
   }
 }
 </script>

@@ -29,4 +29,11 @@
   ::-webkit-scrollbar-thumb:hover {
     background: rgba(255, 255, 255, 0.3);
   }
+
+    @layer base {
+    button,
+    a {
+      @apply cursor-pointer;
+    }
+  }
 }

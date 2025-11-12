@@ -88,15 +88,21 @@ class AuthController extends Controller
             ]);
         }
 
-        $token = $usuario->createToken('auth_token')->plainTextToken;
+        // 🔐 Eliminar tokens anteriores → sesión única
+        $usuario->tokens()->delete();
+
+        // 🔐 Crear nuevo token con nombre descriptivo
+        $token = $usuario->createToken('auth_token_' . now()->format('Ymd_His'))->plainTextToken;
 
         return response()->json([
             'message' => 'Login exitoso',
             'access_token' => $token,
             'token_type' => 'Bearer',
             'user' => $usuario->load('persona'),
+            'expires_in' => 3600 // 1 hora en segundos
         ], 200);
     }
+
 
     /**
      * LOGOUT

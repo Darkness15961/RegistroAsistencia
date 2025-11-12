@@ -49,7 +49,9 @@ class GrupoController extends Controller
 
     public function destroy(Grupo $grupo)
     {
-        $grupo->delete();
-        return response()->json(null, 204);
+        return response()->json([
+            'message' => 'Grupo eliminado correctamente',
+            'id_eliminado' => $grupo->id_grupo
+        ], 200);
     }
 }

@@ -11,24 +11,27 @@ use Illuminate\Validation\Rule;
 
 class UsuarioController extends Controller
 {
+    /**
+     * Listar usuarios con paginación
+     */
     public function index(Request $request)
     {
-        
         $perPage = $request->get('per_page', 10);
-
         $usuarios = Usuario::with('persona')->paginate($perPage);
 
         return response()->json($usuarios);
     }
 
-
+    /**
+     * Crear un nuevo usuario con su persona
+     */
     public function store(Request $request)
     {
         $datosValidados = $request->validate([
             // Datos de Persona
             'nombre_completo' => 'required|string|max:150',
-            'correo' => 'required|email|max:100|unique:personas',
-            'dni' => 'required|string|max:20|unique:personas',
+            'correo' => 'required|email|max:100|unique:personas,correo',
+            'dni' => 'required|string|max:20|unique:personas,dni',
             'telefono' => 'nullable|string|max:20',
             'cargo_grado' => 'required|string|max:100',
             'id_area' => 'required|exists:areas,id_area',
@@ -80,11 +83,23 @@ class UsuarioController extends Controller
         }
     }
 
-    public function show(Usuario $usuario)
+    /**
+     * Mostrar un usuario específico con su persona
+     */
+    public function show($id)
     {
-        return $usuario->load('persona');
+        $usuario = Usuario::with('persona')->find($id);
+
+        if (!$usuario) {
+            return response()->json(['error' => 'Usuario no encontrado'], 404);
+        }
+
+        return response()->json($usuario);
     }
 
+    /**
+     * Actualizar usuario y su persona
+     */
     public function update(Request $request, Usuario $usuario)
     {
         $datosValidados = $request->validate([
@@ -92,33 +107,57 @@ class UsuarioController extends Controller
             'password' => 'nullable|string|min:8',
             'rol' => 'string|in:administrador,empleado,estudiante',
             'estado' => 'string|in:activo,inactivo',
+
+            // Datos de persona opcionales
+            'nombre_completo' => 'sometimes|string|max:150',
+            'dni' => ['sometimes','string','max:20', Rule::unique('personas')->ignore($usuario->persona->id_persona, 'id_persona')],
+            'telefono' => 'nullable|string|max:20',
+            'cargo_grado' => 'sometimes|string|max:100',
+            'correo' => ['sometimes','email','max:100', Rule::unique('personas')->ignore($usuario->persona->id_persona, 'id_persona')],
         ]);
 
-        // Si envía una nueva contraseña
         if ($request->filled('password')) {
             $datosValidados['password_hash'] = Hash::make($request->password);
         }
-
         unset($datosValidados['password']);
 
-        $usuario->update($datosValidados);
+        DB::beginTransaction();
+        try {
+            // Actualiza usuario
+            $usuario->update($datosValidados);
 
-        return response()->json([
-            'message' => 'Usuario actualizado correctamente',
-            'usuario' => $usuario->load('persona')
-        ], 200);
+            // Actualiza persona si se enviaron datos
+            if ($request->hasAny(['nombre_completo', 'dni', 'telefono', 'cargo_grado', 'correo'])) {
+                $usuario->persona->update($request->only(['nombre_completo', 'dni', 'telefono', 'cargo_grado', 'correo']));
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'message' => 'Usuario actualizado correctamente',
+                'usuario' => $usuario->load('persona')
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'error' => 'No se pudo actualizar el usuario',
+                'message' => $e->getMessage()
+            ], 500);
+        }
     }
 
+    /**
+     * Eliminar usuario (solo administradores)
+     */
     public function destroy(Usuario $usuario)
     {
         $usuarioAutenticado = auth()->user();
 
-        // Solo los administradores pueden eliminar usuarios
         if (!$usuarioAutenticado || $usuarioAutenticado->rol !== 'administrador') {
             return response()->json(['error' => 'No autorizado para eliminar usuarios'], 403);
         }
 
-        // Evitar que un admin se elimine a sí mismo
         if ($usuarioAutenticado->id_usuario === $usuario->id_usuario) {
             return response()->json(['error' => 'No puedes eliminar tu propia cuenta'], 400);
         }

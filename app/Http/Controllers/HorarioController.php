@@ -9,8 +9,10 @@ class HorarioController extends Controller
 {
     public function index()
     {
-        // Usamos with('area') para traer también la info del área asociada
-        return Horario::with('area')->get();
+        // Trae todos los horarios junto con el área asociada
+        return response()->json(
+            Horario::with('area')->get()
+        );
     }
 
     public function store(Request $request)
@@ -23,14 +25,18 @@ class HorarioController extends Controller
         ]);
 
         $horario = Horario::create($datosValidados);
-        
-        // Devolvemos el nuevo horario con su área
-        return response()->json($horario->load('area'), 201);
+
+        return response()->json([
+            'message' => 'Horario creado correctamente',
+            'data' => $horario->load('area')
+        ], 201);
     }
 
     public function show(Horario $horario)
     {
-        return $horario->load('area');
+        return response()->json(
+            $horario->load('area')
+        );
     }
 
     public function update(Request $request, Horario $horario)
@@ -43,12 +49,20 @@ class HorarioController extends Controller
         ]);
 
         $horario->update($datosValidados);
-        return response()->json($horario->load('area'), 200);
+
+        return response()->json([
+            'message' => 'Horario actualizado correctamente',
+            'data' => $horario->load('area')
+        ], 200);
     }
 
     public function destroy(Horario $horario)
     {
         $horario->delete();
-        return response()->json(null, 204);
+
+        return response()->json([
+            'message' => 'Horario eliminado correctamente',
+            'id_eliminado' => $horario->id_horario
+        ], 200);
     }
 }
