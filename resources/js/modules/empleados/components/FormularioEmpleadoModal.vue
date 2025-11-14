@@ -39,14 +39,15 @@
             </label>
             <input v-model="form.cargo_grado" placeholder="Cargo o puesto" class="w-full rounded-xl" :class="theme('input').value" />
           </div>
+          
           <div>
             <label class="block text-sm font-medium mb-1.5" :class="theme('cardSubtitle').value">
-              Área
+              Grupo
             </label>
-            <select v-model="form.id_area" class="w-full rounded-xl appearance-none pr-8" :class="[theme('input').value, isDark ? 'bg-gray-900/50' : 'bg-white']" required>
-              <option value="" disabled>Seleccionar área</option>
-              <option v-for="area in areas" :key="area.id_area" :value="area.id_area" :class="isDark ? 'bg-gray-800' : 'bg-white'">
-                {{ area.nombre_area }}
+            <select v-model="form.id_grupo" class="w-full rounded-xl appearance-none pr-8" :class="[theme('input').value, isDark ? 'bg-gray-900/50' : 'bg-white']" required>
+              <option value="">Seleccionar grupo</option>
+              <option v-for="grupo in gruposDeEmpleados" :key="grupo.id_grupo" :value="grupo.id_grupo" :class="isDark ? 'bg-gray-800' : 'bg-white'">
+                {{ getNombreGrupo(grupo) }} (Área: {{ grupo.area.nombre_area }})
               </option>
             </select>
           </div>
@@ -67,24 +68,22 @@
 </template>
 
 <script setup>
-import { ref, watch, onMounted } from 'vue'
+import { ref, watch, onMounted, computed } from 'vue'
 import { useTheme } from '@/composables/useTheme'
 import { useEmpleados } from '../composables/useEmpleados'
 import api from '@/axiosConfig'
 
 const props = defineProps({ 
   empleado: Object,
-  // Recibimos las áreas filtradas (solo empleados) como prop
-  areas: {
-    type: Array,
-    required: true
-  }
 })
 const emit = defineEmits(['cerrar', 'actualizado'])
 
 const { theme, isDark } = useTheme()
 const { crearEmpleado, actualizarEmpleado } = useEmpleados()
 const loading = ref(false)
+
+const areas = ref([])
+const grupos = ref([])
 
 const form = ref({
   nombre_completo: '',
@@ -93,9 +92,36 @@ const form = ref({
   telefono: '',
   cargo_grado: '',
   id_area: '',
+  id_grupo: '',
 })
 
-// Carga los datos del empleado cuando se abre para editar
+const gruposConArea = computed(() => {
+  return grupos.value.map(g => ({
+    ...g,
+    area: areas.value.find(a => a.id_area === g.id_area)
+  }))
+})
+
+// ✅ CORREGIDO: de 'estudiante' a 'alumno'
+const gruposDeEmpleados = computed(() => {
+  return gruposConArea.value.filter(g => 
+    g.area && !g.area.nombre_area.toLowerCase().includes('alumno')
+  )
+})
+
+onMounted(async () => {
+  try {
+    const [resAreas, resGrupos] = await Promise.all([
+      api.get('/areas'),
+      api.get('/grupos')
+    ])
+    areas.value = resAreas.data
+    grupos.value = resGrupos.data.data || resGrupos.data
+  } catch (e) {
+    console.error("Error cargando datos para el modal", e)
+  }
+})
+
 watch(() => props.empleado, (nuevo) => {
   if (nuevo) {
     form.value = { 
@@ -105,16 +131,25 @@ watch(() => props.empleado, (nuevo) => {
       telefono: nuevo.telefono || '',
       cargo_grado: nuevo.cargo_grado || '',
       id_area: nuevo.id_area || '',
+      id_grupo: nuevo.id_grupo || '',
     }
   } else {
-    // Resetea el formulario si es para crear uno nuevo
-    form.value = { nombre_completo: '', dni: '', correo: '', telefono: '', cargo_grado: '', id_area: '' }
+    form.value = { nombre_completo: '', dni: '', correo: '', telefono: '', cargo_grado: '', id_area: '', id_grupo: '' }
   }
-}, { immediate: true }) // immediate:true asegura que se llene al abrir
+}, { immediate: true })
 
 const guardar = async () => {
   loading.value = true
   try {
+    const grupoSeleccionado = grupos.value.find(g => g.id_grupo === form.value.id_grupo)
+    if (grupoSeleccionado) {
+      form.value.id_area = grupoSeleccionado.id_area
+    } else {
+      alert("Error: No se pudo encontrar el área para el grupo seleccionado.")
+      loading.value = false
+      return
+    }
+
     if (props.empleado) {
       await actualizarEmpleado(props.empleado.id_persona, form.value)
     } else {
@@ -127,5 +162,12 @@ const guardar = async () => {
   } finally {
     loading.value = false
   }
+}
+
+const getNombreGrupo = (grupo) => {
+  if (grupo.grado || grupo.nivel) {
+    return `${grupo.nivel || ''} ${grupo.grado || ''} "${grupo.seccion || ''}"`.trim()
+  }
+  return grupo.area?.nombre_area || 'Grupo'
 }
 </script>

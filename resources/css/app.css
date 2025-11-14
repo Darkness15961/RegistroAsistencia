@@ -36,4 +36,17 @@
       @apply cursor-pointer;
     }
   }
+
+  @layer base {
+    /* ... (Otros estilos base como cursor-pointer) ... */
+
+    /* ✅ SOLUCIÓN PARA SELECT Y OPTIONS EN MODO OSCURO */
+    /* Forzamos el fondo y el texto a colores oscuros/claros para anular los estilos del OS/navegador. */
+    .dark select, 
+    .dark option {
+        /* Usamos !important para asegurar la anulación de los estilos del sistema operativo */
+        background-color: #1f2937 !important; /* Color base oscuro (gray-800) */
+        color: #f3f4f6 !important; /* Color de texto claro (gray-100) */
+    }
+}
 }

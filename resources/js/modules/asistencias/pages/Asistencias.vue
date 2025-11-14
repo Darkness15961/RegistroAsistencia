@@ -1,51 +1,65 @@
 <template>
   <div class="flex-1 p-4 sm:p-6 overflow-x-hidden">
-
-    <div v-if="loading" class="text-center py-20" :class="theme('cardSubtitle').value">
+    <div v-if="loadingAsistencias || loadingGrupos || loadingAreas" class="text-center py-20" :class="theme('cardSubtitle').value">
       <i class="fas fa-spinner fa-spin text-4xl"></i>
       <p class="mt-3 text-lg">Cargando datos...</p>
     </div>
 
-    <div v-else-if="error" class="text-red-400 text-center py-20">
+    <div v-else-if="errorAsistencias" class="text-red-400 text-center py-20">
       <i class="fas fa-exclamation-triangle text-4xl mb-3"></i>
-      <p>{{ error }}</p>
+      <p>{{ errorAsistencias }}</p>
     </div>
 
     <div v-else>
-      <div v-if="!areaSeleccionada" class="space-y-6">
+      <div class="flex items-center justify-between p-4 rounded-xl border mb-6" :class="theme('card').value">
+        <button @click="navigateWeek('prev')" class="px-3 py-1.5 rounded-lg" :class="theme('buttonSecondary').value">
+          <i class="fas fa-chevron-left"></i>
+        </button>
+        <span class="font-semibold" :class="theme('cardTitle').value">{{ weekRange.display }}</span>
+        <button @click="navigateWeek('next')" class="px-3 py-1.5 rounded-lg" :class="theme('buttonSecondary').value">
+          <i class="fas fa-chevron-right"></i>
+        </button>
+      </div>
+
+      <div v-if="!grupoSeleccionado" class="space-y-6">
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
-            <h1 class="text-3xl font-bold mb-2" :class="theme('cardTitle').value">
-              Asistencias por Área
-            </h1>
-            <p class="text-sm" :class="theme('cardSubtitle').value">
-              Selecciona un área para ver el resumen de asistencia semanal
-            </p>
+            <h1 class="text-3xl font-bold mb-2" :class="theme('cardTitle').value">Asistencia por Grupo</h1>
+            <p class="text-sm" :class="theme('cardSubtitle').value">Selecciona un grupo para ver el reporte de asistencia semanal</p>
           </div>
         </div>
-        
+
+        <div class="relative w-full sm:max-w-md">
+          <input v-model="busquedaGrupo" type="text" placeholder="Buscar por grupo o área..." class="w-full rounded-xl pl-10 pr-4 py-3 outline-none border transition-colors" :class="theme('input').value" />
+          <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2" :class="theme('cardSubtitle').value"></i>
+        </div>
+
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          <AreaCard
-            v-for="area in areasConAsistencia"
-            :key="area.id_area"
-            :nombre="area.nombre_area"
-            :descripcion="area.codigo || 'Sin código'"
-            :icon="getAreaStyle(area.nombre_area).icon"
-            :cantidadPersonas="area.cantidadPersonas"
-            :iconClass="getAreaStyle(area.nombre_area).gradient"
-            @click="seleccionarArea(area)"
+          <GrupoCard
+            v-for="grupo in gruposFiltrados"
+            :key="grupo.id_grupo"
+            :grupo="grupo"
+            :cantidadPersonas="grupo.cantidadPersonasConAsistencia"
+            @click="seleccionarGrupo(grupo)"
           />
         </div>
       </div>
-      
+
       <TablaAsistencia
         v-else
-        :asistencias="asistenciasDelArea"
-        :nombreArea="areaSeleccionada.nombre_area"
-        @volver="areaSeleccionada = null" 
+        :asistencias="asistenciasDelGrupo"
+        :nombreGrupo="getNombreGrupo(grupoSeleccionado)"
+        @volver="grupoSeleccionado = null"
+        @editar-asistencia="abrirModalEdicion"
       />
     </div>
 
+    <FormularioAsistenciaModal
+      v-if="modalEdicionVisible"
+      :registro="registroEditando"
+      @cerrar="cerrarModalEdicion"
+      @actualizado="handleActualizacion"
+    />
   </div>
 </template>
 
@@ -53,76 +67,126 @@
 import { ref, computed, onMounted } from 'vue'
 import api from '@/axiosConfig'
 import { useTheme } from '@/composables/useTheme'
-// Importamos los componentes
-import AreaCard from '@/modules/empleados/components/AreaCard.vue' // Reutiliza el de empleados
+import { useAsistencias } from '@/composables/useAsistencias'
+import { useGrupos } from '@/composables/useGrupos'
+import GrupoCard from '@/modules/empleados/components/GrupoCard.vue'
 import TablaAsistencia from '../components/TablaAsistencia.vue'
+import FormularioAsistenciaModal from '../components/FormularioAsistenciaModal.vue'
 
 const { theme } = useTheme()
 
 // --- Lógica de Datos ---
-const asistencias = ref([]) // Los datos de /asistencias-semana
-const areas = ref([])
-const loading = ref(true)
-const error = ref(null)
-const areaSeleccionada = ref(null)
+const {
+  asistencias,
+  loading: loadingAsistencias,
+  error: errorAsistencias,
+  fetchAsistenciasSemana,
+  weekRange,
+  navigateWeek,
+  refreshWeek
+} = useAsistencias()
 
+const {
+  grupos,
+  loading: loadingGrupos,
+  fetchGrupos
+} = useGrupos()
+
+const areas = ref([])
+const loadingAreas = ref(true)
+
+// Modal
+const modalEdicionVisible = ref(false)
+const registroEditando = ref(null)
+
+// Carga inicial
 onMounted(async () => {
-  loading.value = true
-  error.value = null
+  loadingAreas.value = true
   try {
-    // Cargamos ambas fuentes de datos en paralelo
-    const [resAsistencias, resAreas] = await Promise.all([
-      api.get('/asistencias-semana'),
-      api.get('/areas')
+    await Promise.all([
+      fetchAsistenciasSemana(), // carga semanal
+      fetchGrupos(),
+      api.get('/areas').then(res => areas.value = res.data)
     ])
-    
-    asistencias.value = Array.isArray(resAsistencias.data) ? resAsistencias.data : []
-    areas.value = resAreas.data
   } catch (e) {
     console.error(e)
-    error.value = "No se pudieron cargar los datos de asistencia."
+    errorAsistencias.value = 'No se pudieron cargar los datos.'
   } finally {
-    loading.value = false
+    loadingAreas.value = false
   }
 })
 
-// --- Lógica de UI ---
+// UI
+const grupoSeleccionado = ref(null)
+const busquedaGrupo = ref('')
 
-// Calcula cuántas personas de cada área están en el reporte semanal
-const areasConAsistencia = computed(() => {
-  return areas.value.map(area => ({
-    ...area,
-    cantidadPersonas: asistencias.value.filter(a => a.persona?.id_area === area.id_area).length
+const gruposConArea = computed(() => {
+  return grupos.value.map(g => ({
+    ...g,
+    area: areas.value.find(a => a.id_area === g.id_area)
   }))
 })
 
-// Filtra las asistencias para la tabla cuando se selecciona un área
-const asistenciasDelArea = computed(() => {
-  if (!areaSeleccionada.value) return []
-  return asistencias.value.filter(a => a.persona?.id_area === areaSeleccionada.value.id_area)
+const gruposConAsistencia = computed(() => {
+  return gruposConArea.value.map(g => ({
+    ...g,
+    cantidadPersonasConAsistencia: asistencias.value.filter(a => a.persona?.id_grupo === g.id_grupo).length
+  }))
 })
 
-const seleccionarArea = (area) => {
-  areaSeleccionada.value = area
+const gruposFiltrados = computed(() => {
+  if (!busquedaGrupo.value) return gruposConAsistencia.value
+  const search = busquedaGrupo.value.toLowerCase()
+  return gruposConAsistencia.value.filter(g =>
+    (g.area?.nombre_area || '').toLowerCase().includes(search) ||
+    (g.nivel || '').toLowerCase().includes(search) ||
+    (g.grado || '').toLowerCase().includes(search)
+  )
+})
+
+const asistenciasDelGrupo = computed(() => {
+  if (!grupoSeleccionado.value) return []
+  // retornamos un array de resúmenes (lunes..viernes) para el grupo seleccionado
+  return asistencias.value.filter(a => a.persona?.id_grupo === grupoSeleccionado.value.id_grupo)
+})
+
+const seleccionarGrupo = async (grupo) => {
+  grupoSeleccionado.value = grupo;
+  await fetchAsistenciasSemana({ group_id: grupo.id_grupo });
+};
+
+// Edición
+const abrirModalEdicion = (data) => {
+  // data = { asistencia, dia, estado }
+  registroEditando.value = data
+  modalEdicionVisible.value = true
 }
 
-// --- Estilos (copiados de Empleados.vue) ---
-const styleCatalog = {
-  'Dirección':            { gradient: 'bg-gradient-to-br from-green-400 to-emerald-600', icon: 'fas fa-building' },
-  'Administración':       { gradient: 'bg-gradient-to-br from-pink-400 to-pink-600',    icon: 'fas fa-briefcase' },
-  'Docentes de Primaria': { gradient: 'bg-gradient-to-br from-orange-400 to-orange-600', icon: 'fas fa-chalkboard-teacher' },
-  'Docentes de Secundaria': { gradient: 'bg-gradient-to-br from-violet-400 to-indigo-500',  icon: 'fas fa-user-graduate' },
-  'Alumnos de Inicial':   { gradient: 'bg-gradient-to-br from-emerald-400 to-green-500', icon: 'fas fa-child' },
-  'Alumnos de Primaria':  { gradient: 'bg-gradient-to-br from-blue-400 to-sky-500',     icon: 'fas fa-book-reader' },
-  'Alumnos de Secundaria':{ gradient: 'bg-gradient-to-br from-purple-400 to-fuchsia-500', icon: 'fas fa-users' },
-  'Tutoría y Psicología': { gradient: 'bg-gradient-to-br from-red-400 to-pink-500',   icon: 'fas fa-hands-helping' },
-  'Mantenimiento y Limpieza': { gradient: 'bg-gradient-to-br from-gray-400 to-gray-700',   icon: 'fas fa-broom' },
-  'Seguridad':            { gradient: 'bg-gradient-to-br from-cyan-400 to-cyan-600',     icon: 'fas fa-shield-alt' },
-  'Biblioteca':           { gradient: 'bg-gradient-to-br from-yellow-400 to-amber-500', icon: 'fas fa-book' },
-  'Laboratorio':          { gradient: 'bg-gradient-to-br from-green-400 to-lime-500',   icon: 'fas fa-flask' },
-  'Coordinación Académica': { gradient: 'bg-gradient-to-br from-teal-400 to-cyan-500', icon: 'fas fa-graduation-cap' },
-  'Servicio Médico':      { gradient: 'bg-gradient-to-br from-red-400 to-rose-500',     icon: 'fas fa-medkit' },
+const cerrarModalEdicion = () => {
+  modalEdicionVisible.value = false
+  registroEditando.value = null
 }
-const defaultStyle = { gradient: 'bg-gradient-to-br from-slate-400 to-slate-600', icon: 'fas fa-university' }
-const getAreaStyle = (nombre) => styleCatalog[nombre] ?? defaultStyle
+
+const handleActualizacion = async () => {
+  try {
+    if (grupoSeleccionado.value) {
+      await refreshWeek({ group_id: grupoSeleccionado.value.id_grupo });
+    } else {
+      await refreshWeek({ group_id: grupoSeleccionado.value.id_grupo });
+    }
+  } catch (e) {
+    console.error('Error recargando semana después de actualizar:', e)
+  } finally {
+    cerrarModalEdicion()
+  }
+}
+
+// Util
+const getNombreGrupo = (grupo) => {
+  if (!grupo) return ''
+  if (grupo.grado || grupo.nivel) {
+    return `${grupo.nivel || ''} ${grupo.grado || ''} "${grupo.seccion || ''}"`.trim()
+  }
+  return grupo.area?.nombre_area || 'Grupo'
+}
 </script>

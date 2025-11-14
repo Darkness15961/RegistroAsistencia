@@ -5,17 +5,17 @@
         <div>
           <h1 class="text-2xl sm:text-3xl font-bold mb-2" :class="theme('cardTitle').value">
             <i class="fas fa-users mr-2"></i>
-            {{ nombreArea }}
+            {{ nombreGrupo }}
           </h1>
           <p :class="theme('cardSubtitle').value" class="text-sm">
-            Gestiona el personal del área
+            Gestiona el personal de este grupo
           </p>
         </div>
         
         <div class="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
           <button 
             @click="$emit('nuevoEmpleado')"
-            class="flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-semibold shadow-lg hover:scale-105 transition-all duration-200 whitespace-nowrap"
+            class="flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-semibold shadow-lg"
             :class="theme('buttonPrimary').value"
           >
             <i class="fas fa-plus"></i>
@@ -24,11 +24,11 @@
           
           <button 
             @click="$emit('volver')"
-            class="flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-semibold shadow-lg hover:scale-105 transition-all duration-200 whitespace-nowrap"
+            class="flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-semibold shadow-lg"
             :class="theme('buttonSecondary').value" 
           >
             <i class="fas fa-arrow-left"></i>
-            Volver a Áreas
+            Volver a Grupos
           </button>
         </div>
       </div>
@@ -67,7 +67,7 @@
             <tr v-if="empleadosFiltrados.length === 0">
               <td colspan="5" class="text-center p-8" :class="theme('cardSubtitle').value">
                 <i class="fas fa-user-slash text-5xl mb-3 opacity-50"></i>
-                <p>No se encontraron empleados en esta área</p>
+                <p>No se encontraron empleados en este grupo</p>
               </td>
             </tr>
             
@@ -94,12 +94,12 @@
               </td>
               
               <td class="p-4" :class="theme('cardSubtitle').value">
-                {{ empleado.cargo_grado || 'N/A' }}
+                {{ empleado.cargo_grado }}
               </td>
               
               <td class="p-4 text-sm" :class="theme('cardSubtitle').value">
-                <div>{{ empleado.correo || 'N/A' }}</div>
-                <div class="font-mono">{{ empleado.telefono || 'N/A' }}</div>
+                <div>{{ empleado.correo }}</div>
+                <div class="font-mono">{{ empleado.telefono }}</div>
               </td>
 
               <td class="p-4">
@@ -110,7 +110,7 @@
                     : (isDark ? 'bg-red-500/20 border-red-500/30 text-red-200' : 'bg-red-50 border-red-200 text-red-700')"
                 >
                   <i class="fas fa-circle text-xs" :class="empleado.estado === 'activo' ? (isDark ? 'text-green-300' : 'text-green-500') : (isDark ? 'text-red-300' : 'text-red-500')"></i>
-                  <span class="capitalize">{{ empleado.estado }}</span>
+                  {{ empleado.estado }}
                 </span>
               </td>
               
@@ -119,9 +119,7 @@
                   <button 
                     @click="$emit('editar', empleado)"
                     class="p-2 w-10 h-10 rounded-xl transition-all hover:scale-110 group"
-                    :class="isDark 
-                      ? 'bg-blue-500/20 hover:bg-blue-500/30' 
-                      : 'bg-blue-50 hover:bg-blue-100'"
+                    :class="isDark ? 'bg-blue-500/20 hover:bg-blue-500/30' : 'bg-blue-50 hover:bg-blue-100'"
                     title="Editar"
                   >
                     <i class="fas fa-edit" :class="isDark ? 'text-blue-300' : 'text-blue-600'"></i>
@@ -129,9 +127,7 @@
                   <button 
                     @click="$emit('eliminar', empleado.id_persona)"
                     class="p-2 w-10 h-10 rounded-xl transition-all hover:scale-110 group"
-                    :class="isDark 
-                      ? 'bg-red-500/20 hover:bg-red-500/30' 
-                      : 'bg-red-50 hover:bg-red-100'"
+                    :class="isDark ? 'bg-red-500/20 hover:bg-red-500/30' : 'bg-red-50 hover:bg-red-100'"
                     title="Eliminar"
                   >
                     <i class="fas fa-trash" :class="isDark ? 'text-red-300' : 'text-red-600'"></i>
@@ -205,7 +201,7 @@
               <span class="font-medium text-sm" :class="theme('cardTitle').value">{{ empleado.correo }}</span>
             </div>
              <div 
-              class="px-3 py-1.5 rounded-full text-xs font-bold inline-flex items-center gap-2 border w-fit capitalize"
+              class="px-3 py-1.5 rounded-full text-xs font-bold inline-flex items-center gap-2 border w-fit"
               :class="empleado.estado === 'activo' 
                 ? (isDark ? 'bg-green-500/20 border-green-500/30 text-green-200' : 'bg-green-50 border-green-200 text-green-700') 
                 : (isDark ? 'bg-red-500/20 border-red-500/30 text-red-200' : 'bg-red-50 border-red-200 text-red-700')"
@@ -226,7 +222,7 @@ import { useTheme } from '@/composables/useTheme'
 const { theme, isDark } = useTheme()
 
 const props = defineProps({
-  nombreArea: {
+  nombreGrupo: {
     type: String,
     default: 'Empleados'
   },

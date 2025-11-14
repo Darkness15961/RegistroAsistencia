@@ -1,7 +1,7 @@
 <template>
   <div class="flex-1 p-4 sm:p-6 overflow-x-hidden">
 
-    <div v-if="loadingAlumnos || loadingAreas" class="text-center py-20" :class="theme('cardSubtitle').value">
+    <div v-if="loadingAlumnos || loadingGrupos || loadingAreas" class="text-center py-20" :class="theme('cardSubtitle').value">
       <i class="fas fa-spinner fa-spin text-4xl"></i>
       <p class="mt-3 text-lg">Cargando datos...</p>
     </div>
@@ -12,36 +12,69 @@
     </div>
 
     <div v-else>
-      <div v-if="!areaSeleccionada" class="space-y-6">
+      <div v-if="!grupoSeleccionado" class="space-y-6">
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
             <h1 class="text-3xl font-bold mb-2" :class="theme('cardTitle').value">
-              Alumnos por Área
+              Alumnos por Grupo
             </h1>
             <p class="text-sm" :class="theme('cardSubtitle').value">
-              Selecciona un área para ver los alumnos
+              Selecciona un grupo para ver los alumnos
             </p>
           </div>
+          <button 
+            @click="abrirModalNuevo"
+            class="flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-semibold shadow-lg"
+            :class="theme('buttonPrimary').value"
+          >
+            <i class="fas fa-plus"></i>
+            Nuevo Alumno
+          </button>
         </div>
+        
+        <div class="relative w-full sm:max-w-md">
+          <input
+            v-model="busquedaGrupo"
+            type="text"
+            placeholder="Buscar por grupo o área..."
+            class="w-full rounded-xl pl-10 pr-4 py-3 outline-none border transition-colors"
+            :class="theme('input').value"
+          />
+          <i 
+            class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2"
+            :class="theme('cardSubtitle').value"
+          ></i>
+        </div>
+
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          <AreaCard
-            v-for="area in areasDeAlumnos"
-            :key="area.id_area"
-            :nombre="area.nombre_area"
-            :descripcion="area.codigo || 'Sin código'"
-            :icon="getAreaStyle(area.nombre_area).icon"
-            :cantidadPersonas="area.cantidadPersonas"
-            :iconClass="getAreaStyle(area.nombre_area).gradient"
-            @click="seleccionarArea(area)"
+          
+          <GrupoCard
+            v-if="gruposDeAlumnosFiltrados.length > 0 || alumnosSinGrupo.length > 0"
+            :grupo="grupoSinAsignar"
+            :cantidadPersonas="alumnosSinGrupo.length"
+            @click="seleccionarGrupo(grupoSinAsignar)"
+          />
+          
+          <GrupoCard
+            v-for="grupo in gruposDeAlumnosFiltrados"
+            :key="grupo.id_grupo"
+            :grupo="grupo"
+            :cantidadPersonas="grupo.cantidadPersonas"
+            @click="seleccionarGrupo(grupo)"
           />
         </div>
+
+        <p v-if="!gruposDeAlumnosFiltrados.length && alumnosSinGrupo.length === 0" class="text-center py-12 text-lg" :class="theme('cardSubtitle').value">
+          No se encontraron grupos ni alumnos sin asignar.
+        </p>
+
       </div>
       
       <TablaAlumnos
         v-else
-        :alumnos="alumnosDelArea"
-        :nombreArea="areaSeleccionada.nombre_area"
-        @volver="areaSeleccionada = null" 
+        :alumnos="alumnosDelGrupo"
+        :nombreGrupo="getNombreGrupo(grupoSeleccionado)"
+        @volver="grupoSeleccionado = null" 
         @nuevoAlumno="abrirModalNuevo"
         @editar="abrirModalEditar"
         @eliminar="handleEliminarAlumno"
@@ -51,7 +84,6 @@
     <FormularioAlumnoModal
       v-if="mostrarModal"
       :alumno="alumnoSeleccionado"
-      :areas="areasDeAlumnos"
       @cerrar="cerrarModal"
       @actualizado="handleGuardado"
     />
@@ -63,13 +95,13 @@ import { ref, computed, onMounted } from 'vue'
 import api from '@/axiosConfig'
 import { useTheme } from '@/composables/useTheme'
 import { useAlumnos } from '@/composables/useAlumnos' 
-import AreaCard from '@/modules/empleados/components/AreaCard.vue' // Reutilizamos el AreaCard de empleados
+import { useGrupos } from '@/composables/useGrupos'
+import GrupoCard from '@/modules/empleados/components/GrupoCard.vue'
 import TablaAlumnos from '../components/TablaAlumnos.vue'
 import FormularioAlumnoModal from '../components/FormularioAlumnoModal.vue'
 
 const { theme } = useTheme()
 
-// --- Lógica de Datos ---
 const { 
   alumnos, 
   loading: loadingAlumnos, 
@@ -77,47 +109,86 @@ const {
   fetchAlumnos, 
   eliminarAlumno 
 } = useAlumnos()
+const { 
+  grupos, 
+  loading: loadingGrupos, 
+  fetchGrupos 
+} = useGrupos()
 const areas = ref([])
-const areaSeleccionada = ref(null)
 const loadingAreas = ref(true)
 
 onMounted(async () => {
   loadingAreas.value = true
-  await fetchAlumnos() // Carga todos los alumnos
-  try {
-    const res = await api.get('/areas') // Carga todas las áreas
-    areas.value = res.data
-  } catch (e) {
-    errorAlumnos.value = "No se pudieron cargar las áreas."
-  } finally {
-    loadingAreas.value = false
-  }
+  await Promise.all([
+    fetchAlumnos(),
+    fetchGrupos(),
+    api.get('/areas').then(res => areas.value = res.data)
+  ]).catch(e => {
+    console.error(e)
+    errorAlumnos.value = "No se pudieron cargar los datos."
+  })
+  loadingAreas.value = false
 })
 
-// --- Lógica de UI ---
 const mostrarModal = ref(false)
 const alumnoSeleccionado = ref(null)
+const grupoSeleccionado = ref(null)
+const busquedaGrupo = ref('')
 
-// ✅ FILTRO DE ÁREAS (Alumnos)
-const areasDeAlumnos = computed(() => {
-  return areas.value
-    .filter(area => area.nombre_area.toLowerCase().includes('alumno'))
-    .map(area => ({
-      ...area,
-      cantidadPersonas: alumnos.value.filter(e => e.id_area === area.id_area).length
+const grupoSinAsignar = {
+  id_grupo: 'unassigned',
+  nivel: 'Alumnos',
+  grado: 'Sin Asignar',
+  seccion: '',
+  area: {
+    nombre_area: 'Sin Grupo'
+  }
+}
+
+const gruposConArea = computed(() => {
+  return grupos.value.map(g => ({
+    ...g,
+    area: areas.value.find(a => a.id_area === g.id_area)
+  }))
+})
+
+const gruposDeAlumnos = computed(() => {
+  return gruposConArea.value
+    .filter(g => g.area && g.area.nombre_area.toLowerCase().includes('alumno'))
+    .map(g => ({
+      ...g,
+      cantidadPersonas: alumnos.value.filter(e => e.id_grupo === g.id_grupo).length
     }))
 })
 
-const alumnosDelArea = computed(() => {
-  if (!areaSeleccionada.value) return []
-  return alumnos.value.filter(e => e.id_area === areaSeleccionada.value.id_area)
+const gruposDeAlumnosFiltrados = computed(() => {
+  if (!busquedaGrupo.value) {
+    return gruposDeAlumnos.value
+  }
+  const search = busquedaGrupo.value.toLowerCase()
+  return gruposDeAlumnos.value.filter(g => 
+    (g.area?.nombre_area.toLowerCase().includes(search)) ||
+    (g.nivel && g.nivel.toLowerCase().includes(search)) ||
+    (g.grado && g.grado.toLowerCase().includes(search))
+  )
 })
 
-const seleccionarArea = (area) => {
-  areaSeleccionada.value = area
+const alumnosSinGrupo = computed(() => {
+  return alumnos.value.filter(a => !a.id_grupo)
+})
+
+const alumnosDelGrupo = computed(() => {
+  if (!grupoSeleccionado.value) return []
+  if (grupoSeleccionado.value.id_grupo === 'unassigned') {
+    return alumnosSinGrupo.value
+  }
+  return alumnos.value.filter(a => a.id_grupo === grupoSeleccionado.value.id_grupo)
+})
+
+const seleccionarGrupo = (grupo) => {
+  grupoSeleccionado.value = grupo
 }
 
-// --- Lógica de Modal ---
 const abrirModalNuevo = () => {
   alumnoSeleccionado.value = null
   mostrarModal.value = true
@@ -132,20 +203,18 @@ const cerrarModal = () => {
 }
 const handleGuardado = () => {
   cerrarModal()
-  fetchAlumnos() // Recarga la lista de alumnos
+  fetchAlumnos() 
 }
 const handleEliminarAlumno = async (id) => {
   if (!confirm('¿Seguro que deseas eliminar este alumno?')) return
   await eliminarAlumno(id)
 }
 
-// --- Estilos ---
-const styleCatalog = {
-  'Alumnos de Inicial':   { gradient: 'bg-gradient-to-br from-emerald-400 to-green-500', icon: 'fas fa-child' },
-  'Alumnos de Primaria':  { gradient: 'bg-gradient-to-br from-blue-400 to-sky-500',     icon: 'fas fa-book-reader' },
-  'Alumnos de Secundaria':{ gradient: 'bg-gradient-to-br from-purple-400 to-fuchsia-500', icon: 'fas fa-users' },
+const getNombreGrupo = (grupo) => {
+  if (!grupo) return ''
+  if (grupo.grado || grupo.nivel) {
+    return `${grupo.nivel || ''} ${grupo.grado || ''} "${grupo.seccion || ''}"`.trim()
+  }
+  return grupo.area?.nombre_area || 'Grupo'
 }
-const defaultStyle = { gradient: 'bg-gradient-to-br from-gray-400 to-gray-600', icon: 'fas fa-user-graduate' }
-const getAreaStyle = (nombre) => styleCatalog[nombre] ?? defaultStyle
-
 </script>

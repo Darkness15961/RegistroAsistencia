@@ -17,55 +17,45 @@ use App\Http\Controllers\{
 };
 use App\Http\Controllers\Api\DashboardController;
 
-// ------------------------------------------------------
-// 🔓 RUTAS PÚBLICAS (sin autenticación)
-// ------------------------------------------------------
-
-// 🔐 Autenticación básica
+// RUTAS PÚBLICAS
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/register', [AuthController::class, 'register']);
 
-// 🧾 Registro de asistencia desde IA (FaceAPI)
+// Registro de asistencia desde IA (FaceAPI) - pública
 Route::post('/asistencias/registrar', [AsistenciaController::class, 'store']);
 
-// 🤖 Descriptores faciales para la IA
-// (El frontend los usa para reconocer rostros)
+// Descriptores faciales para la IA
 Route::get('/reconocimientos/descriptores', [ReconocimientoController::class, 'index']);
 
-// ✅ NUEVO: Resumen semanal de asistencias (público o para dashboard)
+// Resumen semanal público o para dashboard
 Route::get('/asistencias-semana', [AsistenciaController::class, 'asistenciasSemana']);
 
+// Historial por persona (público)
+Route::get('/asistencias/historial', [AsistenciaController::class, 'historialPersona']);
 
-// ------------------------------------------------------
-// 🔒 RUTAS PRIVADAS (requieren autenticación con Sanctum)
-// ------------------------------------------------------
+/* RUTAS PROTEGIDAS (auth:sanctum) */
 Route::middleware('auth:sanctum')->group(function () {
 
-    // 👤 Perfil del usuario autenticado
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::put('/perfil', [AuthController::class, 'update']);
     Route::delete('/perfil', [AuthController::class, 'destroy']);
     Route::post('/perfil/cambiar-password', [AuthController::class, 'cambiarPassword']);
 
-    // ⚙️ Configuraciones y Dashboard
     Route::get('/dashboard-stats', [DashboardController::class, 'getStats']);
     Route::get('/configuraciones', [ConfiguracionController::class, 'index']);
     Route::post('/configuraciones', [ConfiguracionController::class, 'store']);
 
-    // 📂 CRUDs del sistema
     Route::apiResource('/areas', AreaController::class);
     Route::apiResource('/horarios', HorarioController::class);
     Route::apiResource('/grupos', GrupoController::class);
     Route::apiResource('/personas', PersonaController::class);
-    
-    // 📋 Asistencias (store es público, el resto requiere autenticación)
-    Route::apiResource('/asistencias', AsistenciaController::class)->except(['store']);
 
-    // 🧠 Reconocimientos faciales
+    // Las rutas REST de asistencias (index, show, update, destroy, etc.) protegidas
+    Route::apiResource('/asistencias', AsistenciaController::class)->except(['store']);
+    
     Route::apiResource('/reconocimientos', ReconocimientoController::class)
         ->only(['store', 'destroy', 'show']);
 
-    // 👥 Gestión de usuarios del sistema
     Route::get('/usuarios', [UsuarioController::class, 'index']);
     Route::post('/usuarios', [UsuarioController::class, 'store']);
     Route::get('/usuarios/{usuario}', [UsuarioController::class, 'show']);

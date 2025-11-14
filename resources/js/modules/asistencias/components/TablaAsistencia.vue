@@ -5,21 +5,21 @@
         <div>
           <h1 class="text-2xl sm:text-3xl font-bold mb-2" :class="theme('cardTitle').value">
             <i class="fas fa-calendar-check mr-2"></i>
-            {{ nombreArea }}
+            {{ nombreGrupo }}
           </h1>
           <p :class="theme('cardSubtitle').value" class="text-sm">
-            Resumen de asistencias semanales para esta área
+            Resumen de asistencias semanales para este grupo
           </p>
         </div>
         
         <div class="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
           <button 
             @click="$emit('volver')"
-            class="flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-semibold shadow-lg hover:scale-105 transition-all duration-200 whitespace-nowrap"
+            class="flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-semibold shadow-lg"
             :class="theme('buttonSecondary').value" 
           >
             <i class="fas fa-arrow-left"></i>
-            Volver a Áreas
+            Volver a Grupos
           </button>
         </div>
       </div>
@@ -60,7 +60,7 @@
             <tr v-if="filteredAsistencias.length === 0">
               <td colspan="7" class="text-center p-8" :class="theme('cardSubtitle').value">
                 <i class="fas fa-calendar-times text-5xl mb-3 opacity-50"></i>
-                <p>No se encontraron asistencias para esta área</p>
+                <p>No se encontraron asistencias para este grupo</p>
               </td>
             </tr>
             <tr 
@@ -75,20 +75,13 @@
               <td class="px-6 py-4" :class="theme('cardSubtitle').value">
                 {{ asistencia.persona?.cargo_grado || '-' }}
               </td>
-              <td class="text-center px-4 py-4">
-                <span :class="estadoClase(asistencia.lunes)">{{ asistencia.lunes || '-' }}</span>
-              </td>
-              <td class="text-center px-4 py-4">
-                <span :class="estadoClase(asistencia.martes)">{{ asistencia.martes || '-' }}</span>
-              </td>
-              <td class="text-center px-4 py-4">
-                <span :class="estadoClase(asistencia.miercoles)">{{ asistencia.miercoles || '-' }}</span>
-              </td>
-              <td class="text-center px-4 py-4">
-                <span :class="estadoClase(asistencia.jueves)">{{ asistencia.jueves || '-' }}</span>
-              </td>
-              <td class="text-center px-4 py-4">
-                <span :class="estadoClase(asistencia.viernes)">{{ asistencia.viernes || '-' }}</span>
+              <td v-for="(dia, diaKey) in ['lunes', 'martes', 'miercoles', 'jueves', 'viernes']"
+                  :key="diaKey"
+                  class="text-center px-4 py-4 cursor-pointer group/cell relative hover:bg-gray-700/30"
+                  @click="$emit('editar-asistencia', {asistencia, dia: dia, estado: asistencia[dia]})"
+              >
+                <span :class="estadoClase(asistencia[dia])">{{ asistencia[dia] || '-' }}</span>
+                <i class="fas fa-edit absolute top-0 right-0 text-xs text-blue-500 opacity-0 group-hover/cell:opacity-100 p-1"></i>
               </td>
             </tr>
           </tbody>
@@ -104,25 +97,21 @@ import { useTheme } from '@/composables/useTheme'
 
 const { theme, isDark } = useTheme()
 
-// Aceptamos props en lugar de cargar datos aquí
 const props = defineProps({
   asistencias: {
     type: Array,
     required: true
   },
-  nombreArea: {
+  nombreGrupo: {
     type: String,
     default: 'Asistencias'
   }
 })
 
-defineEmits(['volver'])
+defineEmits(['volver', 'editar-asistencia'])
 
 const search = ref('')
 
-/**
- * Filtrar por nombre (basado en el prop)
- */
 const filteredAsistencias = computed(() =>
   props.asistencias.filter(a =>
     (a.persona?.nombre_completo || '')
@@ -131,9 +120,6 @@ const filteredAsistencias = computed(() =>
   )
 )
 
-/**
- * Colores según estado (P, T, F)
- */
 const estadoClase = (valor) => {
   const v = (valor || '').toUpperCase()
   const base = 'inline-flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold'
@@ -147,7 +133,6 @@ const estadoClase = (valor) => {
   if (v === 'F') {
     return [base, isDark.value ? 'bg-red-500/20 text-red-300' : 'bg-red-100 text-red-800']
   }
-  // Estado vacío o '-'
   return [base, isDark.value ? 'bg-white/5 text-gray-500' : 'bg-gray-100 text-gray-400']
 }
 </script>

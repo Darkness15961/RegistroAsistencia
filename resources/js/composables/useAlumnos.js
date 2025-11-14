@@ -10,9 +10,9 @@ export function useAlumnos() {
     loading.value = true
     error.value = null
     try {
-      // ✅ Filtra por tipo=alumno
-      const res = await api.get('/personas?tipo=alumno') 
-      alumnos.value = res.data
+      // ✅ CORREGIDO: de 'alumno' a 'estudiante'
+      const res = await api.get('/personas?tipo=estudiante') 
+      alumnos.value = res.data.data || res.data
     } catch (err) {
       console.error(err)
       error.value = 'No se pudieron cargar los alumnos'
@@ -23,11 +23,12 @@ export function useAlumnos() {
 
   const crearAlumno = async (nuevoAlumno) => {
     try {
-      // ✅ Envía con tipo_persona: 'alumno'
-      const res = await api.post('/personas', { ...nuevoAlumno, tipo_persona: 'alumno' })
+      // ✅ CORREGIDO: de 'alumno' a 'estudiante'
+      const res = await api.post('/personas', { ...nuevoAlumno, tipo_persona: 'estudiante' })
       await fetchAlumnos()
       return res.data
     } catch (err) {
+      console.error("Error al crear alumno:", err.response?.data)
       throw err.response?.data || { error: 'Error al crear alumno' }
     }
   }
@@ -38,6 +39,7 @@ export function useAlumnos() {
       await fetchAlumnos()
       return res.data
     } catch (err) {
+      console.error("Error al actualizar alumno:", err.response?.data)
       throw err.response?.data || { error: 'Error al actualizar alumno' }
     }
   }
@@ -47,6 +49,7 @@ export function useAlumnos() {
       await api.delete(`/personas/${id}`)
       alumnos.value = alumnos.value.filter(e => e.id_persona !== id)
     } catch (err) {
+      console.error("Error al eliminar alumno:", err.response?.data)
       throw err.response?.data || { error: 'Error al eliminar alumno' }
     }
   }
