@@ -12,7 +12,7 @@ class Reconocimiento extends Model
     protected $primaryKey = 'id_reconocimiento';
     protected $fillable = ['id_persona', 'face_descriptor', 'image_url', 'fecha_registro'];
     protected $casts = [
-        'face_descriptor' => 'json',
+        'face_descriptor' => 'array',
     ];
     // Un Reconocimiento pertenece a una Persona
     public function persona()

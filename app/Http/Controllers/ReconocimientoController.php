@@ -3,20 +3,23 @@
 namespace App\Http\Controllers;
 
 use App\Models\Reconocimiento;
-use App\Models\Persona;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class ReconocimientoController extends Controller
 {
     /**
-     * ✅ Devuelve todos los descriptores faciales registrados.
-     * Usado por la IA en el frontend para cargar las caras conocidas.
+     * Lista todos los descriptores faciales
      */
-    public function index()
+    public function index(Request $request)
     {
-        // Traemos todos los descriptores junto a la persona asociada
-        $reconocimientos = Reconocimiento::with('persona:id_persona,nombres,apellidos,dni,image_url')->get();
+        // Traer todos los reconocimientos, sin paginación
+        $reconocimientos = Reconocimiento::with('persona:id_persona,nombre_completo,dni')
+            ->select('id_reconocimiento', 'id_persona', 'face_descriptor', 'image_url', 'fecha_registro', 'created_at')
+            ->orderBy('created_at', 'desc')
+            ->get(); // <-- aquí eliminamos la paginación
 
         return response()->json([
             'message' => 'Lista de descriptores cargada correctamente.',
@@ -24,23 +27,43 @@ class ReconocimientoController extends Controller
         ], 200);
     }
 
+
+
     /**
-     * ✅ Registra un nuevo descriptor facial para una persona.
+     * Registrar nuevo rostro
      */
     public function store(Request $request)
     {
         $datosValidados = $request->validate([
             'id_persona' => 'required|exists:personas,id_persona',
-            'face_descriptor' => 'required|json',
-            'image_url' => 'nullable|string|max:255',
+            'face_descriptor' => 'required|array',
+            'image_base64' => 'nullable|string', // 👈 AÑADIDO
         ]);
 
         try {
-            $reconocimiento = Reconocimiento::create($datosValidados);
+
+            // ------------------------------------------------------------------
+            // 1) GUARDAR LA IMAGEN BASE64 (solo si viene del frontend)
+            // ------------------------------------------------------------------
+            $imageUrl = null;
+
+            if (!empty($request->image_base64)) {
+                $imageUrl = $this->guardarImagenBase64($request->image_base64);
+            }
+
+            // ------------------------------------------------------------------
+            // 2) CREAR EL REGISTRO TAL COMO YA HACÍAS
+            // ------------------------------------------------------------------
+            $reconocimiento = Reconocimiento::create([
+                'id_persona' => $datosValidados['id_persona'],
+                'face_descriptor' => $datosValidados['face_descriptor'],
+                'image_url' => $imageUrl,                
+                'fecha_registro' => now(),
+            ]);
 
             return response()->json([
                 'message' => 'Rostro registrado correctamente.',
-                'data' => $reconocimiento->load('persona')
+                'data' => $reconocimiento->load('persona:id_persona,nombre_completo,dni')
             ], 201);
 
         } catch (\Exception $e) {
@@ -53,19 +76,41 @@ class ReconocimientoController extends Controller
         }
     }
 
+
     /**
-     *  Muestra un solo registro (opcional).
+     * Guardar imagen Base64 en storage/app/public/rostros/
+     */
+    private function guardarImagenBase64($base64)
+    {
+        // Limpiar encabezado: "data:image/jpeg;base64,"
+        $image = preg_replace('/^data:image\/\w+;base64,/', '', $base64);
+        $image = str_replace(' ', '+', $image);
+        $imageData = base64_decode($image);
+
+        // Nombre único
+        $filename = 'rostro_' . Str::random(20) . '.jpg';
+
+        // Guardar en disco público
+        Storage::disk('public')->put("rostros/{$filename}", $imageData);
+
+        // URL accesible públicamente
+        return asset("storage/rostros/{$filename}");
+    }
+
+
+    /**
+     * Mostrar un reconocimiento específico
      */
     public function show(Reconocimiento $reconocimiento)
     {
         return response()->json([
-            'data' => $reconocimiento->load('persona')
+            'data' => $reconocimiento->load('persona:id_persona,nombre_completo,dni')
         ], 200);
     }
 
+
     /**
-     *  Elimina un reconocimiento facial.
-     * Usado cuando se elimina una persona o se reemplaza su rostro.
+     * Eliminar rostro
      */
     public function destroy(Reconocimiento $reconocimiento)
     {
@@ -86,3 +131,4 @@ class ReconocimientoController extends Controller
         }
     }
 }
+

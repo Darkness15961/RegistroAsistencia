@@ -23,9 +23,8 @@ Route::post('/register', [AuthController::class, 'register']);
 
 // Registro de asistencia desde IA (FaceAPI) - pública
 Route::post('/asistencias/registrar', [AsistenciaController::class, 'store']);
-
-// Descriptores faciales para la IA
 Route::get('/reconocimientos/descriptores', [ReconocimientoController::class, 'index']);
+
 
 // Resumen semanal público o para dashboard
 Route::get('/asistencias-semana', [AsistenciaController::class, 'asistenciasSemana']);

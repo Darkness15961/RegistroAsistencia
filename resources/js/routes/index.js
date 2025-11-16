@@ -20,7 +20,7 @@ const routes = [
   // --- RUTAS PÚBLICAS (No requieren login) ---
   { 
     path: '/login', 
-    name: 'Login', // Corregido de 'login' a 'Login' para coincidir con tu app.vue
+    name: 'Login', 
     component: Login,
     meta: { requiresAuth: false }
   },
