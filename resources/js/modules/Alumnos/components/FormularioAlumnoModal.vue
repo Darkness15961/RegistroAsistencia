@@ -10,46 +10,79 @@
 
       <form @submit.prevent="guardar">
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          
           <div>
             <label class="block text-sm font-medium mb-1.5" :class="theme('cardSubtitle').value">
               Nombre Completo
             </label>
-            <input v-model="form.nombre_completo" placeholder="Nombre completo" class="w-full rounded-xl" :class="theme('input').value" required />
+            <input v-model="form.nombre_completo" placeholder="Nombre completo" 
+                   class="w-full rounded-xl border px-3 py-2 outline-none transition-colors"
+                   :class="isDark ? 'bg-gray-800 border-gray-600 text-white placeholder-gray-500 focus:border-blue-500' : 'bg-white border-gray-200 text-gray-900 focus:border-blue-500'"
+                   required />
           </div>
+
           <div>
             <label class="block text-sm font-medium mb-1.5" :class="theme('cardSubtitle').value">
               DNI
             </label>
-            <input v-model="form.dni" placeholder="DNI" class="w-full rounded-xl" :class="theme('input').value" required />
+            <input v-model="form.dni" placeholder="DNI" 
+                   class="w-full rounded-xl border px-3 py-2 outline-none transition-colors"
+                   :class="isDark ? 'bg-gray-800 border-gray-600 text-white placeholder-gray-500 focus:border-blue-500' : 'bg-white border-gray-200 text-gray-900 focus:border-blue-500'"
+                   required />
           </div>
+
           <div>
             <label class="block text-sm font-medium mb-1.5" :class="theme('cardSubtitle').value">
               Correo Electrónico
             </label>
-            <input v-model="form.correo" placeholder="Correo electrónico" type="email" class="w-full rounded-xl" :class="theme('input').value" />
+            <input v-model="form.correo" placeholder="Correo electrónico" type="email" 
+                   class="w-full rounded-xl border px-3 py-2 outline-none transition-colors"
+                   :class="isDark ? 'bg-gray-800 border-gray-600 text-white placeholder-gray-500 focus:border-blue-500' : 'bg-white border-gray-200 text-gray-900 focus:border-blue-500'"
+                   />
           </div>
+
           <div>
             <label class="block text-sm font-medium mb-1.5" :class="theme('cardSubtitle').value">
               Teléfono (Opcional)
             </label>
-            <input v-model="form.telefono" placeholder="Teléfono" class="w-full rounded-xl" :class="theme('input').value" />
+            <input v-model="form.telefono" placeholder="Teléfono" 
+                   class="w-full rounded-xl border px-3 py-2 outline-none transition-colors"
+                   :class="isDark ? 'bg-gray-800 border-gray-600 text-white placeholder-gray-500 focus:border-blue-500' : 'bg-white border-gray-200 text-gray-900 focus:border-blue-500'"
+                   />
           </div>
+
           <div>
             <label class="block text-sm font-medium mb-1.5" :class="theme('cardSubtitle').value">
               Grado y Sección
             </label>
-            <input v-model="form.cargo_grado" placeholder="Ej: 5to Secundaria 'A'" class="w-full rounded-xl" :class="theme('input').value" />
+            <input v-model="form.cargo_grado" placeholder="Ej: 5to Secundaria 'A'" 
+                   class="w-full rounded-xl border px-3 py-2 outline-none transition-colors"
+                   :class="isDark ? 'bg-gray-800 border-gray-600 text-white placeholder-gray-500 focus:border-blue-500' : 'bg-white border-gray-200 text-gray-900 focus:border-blue-500'"
+                   />
           </div>
+
           <div>
             <label class="block text-sm font-medium mb-1.5" :class="theme('cardSubtitle').value">
               Grupo
             </label>
-            <select v-model="form.id_grupo" class="w-full rounded-xl appearance-none pr-8" :class="[theme('input').value, isDark ? 'bg-gray-900/50' : 'bg-white']" required>
-              <option value="">Seleccionar grupo</option>
-              <option v-for="grupo in gruposDeAlumnos" :key="grupo.id_grupo" :value="grupo.id_grupo" :class="isDark ? 'bg-gray-800' : 'bg-white'">
-                {{ getNombreGrupo(grupo) }}
-              </option>
-            </select>
+            <div class="relative">
+              <select v-model="form.id_grupo" 
+                      class="w-full rounded-xl appearance-none border px-3 py-2 pr-8 outline-none transition-colors"
+                      :class="isDark ? 'bg-gray-800 border-gray-600 text-white focus:border-blue-500' : 'bg-white border-gray-200 text-gray-900 focus:border-blue-500'"
+                      required>
+                <option value="" :class="isDark ? 'bg-gray-800' : 'bg-white'">Seleccionar grupo</option>
+                <option v-for="grupo in gruposDeAlumnos" 
+                        :key="grupo.id_grupo" 
+                        :value="grupo.id_grupo" 
+                        :class="isDark ? 'bg-gray-800 text-white' : 'bg-white text-gray-900'">
+                  {{ getNombreGrupo(grupo) }}
+                </option>
+              </select>
+              <div class="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none" 
+                   :class="isDark ? 'text-white' : 'text-gray-600'">
+                <i class="fas fa-chevron-down text-xs"></i>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -161,8 +194,8 @@ const form = ref({
 
 /* --------------------- Cámara y face-api --------------------- */
 const videoEl = ref(null)
-const previewImgEl = ref(null) // Ref a la <img> de preview
-const previewCanvasEl = ref(null) // Ref al <canvas> de preview
+const previewImgEl = ref(null)
+const previewCanvasEl = ref(null)
 
 const cameraActive = ref(false)
 const capturedImage = ref(null)      // Almacena el DataURL (image_base64)
@@ -203,9 +236,9 @@ const cargarModelos = async () => {
   if (modelosCargados.value) return
   const MODEL_URL = '/models' // asegúrate de tener /public/models
   await Promise.all([
-    faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL), // Detector
-    faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL), // Puntos faciales
-    faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL) // Descriptor
+    faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL),
+    faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
+    faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL)
   ])
   modelosCargados.value = true
 }
@@ -357,8 +390,8 @@ watch(() => props.alumno, (nuevo) => {
 onMounted(async () => {
   try {
     const [resAreas, resGrupos] = await Promise.all([
-      api.get('/areas'), //
-      api.get('/grupos') //
+      api.get('/areas'), 
+      api.get('/grupos') 
     ])
     areas.value = resAreas.data
     grupos.value = resGrupos.data.data || resGrupos.data
@@ -367,20 +400,17 @@ onMounted(async () => {
   }
 })
 
-
 /* Helper para nombres de grupo */
 const gruposConArea = computed(() => {
   return grupos.value.map(g => ({
     ...g,
-    area: areas.value.find(a => a.id_area === g.id_area) || {} // Devuelve {} si no encuentra área
+    area: areas.value.find(a => a.id_area === g.id_area) || {}
   }))
 })
 
 const gruposDeAlumnos = computed(() => {
   return gruposConArea.value.filter(g => 
-    // 1. Asegura que g.area exista
-    // 2. Asegura que g.area.nombre_area (¡el nombre correcto!) exista
-    // 3. Compara en minúsculas
+    // Usamos nombre_area, que es el campo correcto y seguro
     g.area && g.area.nombre_area && String(g.area.nombre_area).toLowerCase().includes('alumno')
   )
 })
@@ -390,7 +420,6 @@ const getNombreGrupo = (grupo) => {
   if (grupo.grado || grupo.nivel) {
     return `${grupo.nivel || ''} ${grupo.grado || ''} "${grupo.seccion || ''}"`.trim()
   }
-  // 4. Corregido para usar nombre_area también aquí
   return grupo.area?.nombre_area || 'Grupo'
 }
 
@@ -410,9 +439,8 @@ const guardar = async () => {
       return
     }
 
-    // NOTA: No añadimos 'tipo_persona' aquí.
-    // Tu 'useAlumnos.js' ya lo hace.
-    
+    // NOTA: No añadimos 'tipo_persona' aquí, 'useAlumnos.js' lo hace.
+
     // 2. Crear o Actualizar la Persona (Alumno)
     let personaId = null
     if (props.alumno) {
@@ -421,7 +449,7 @@ const guardar = async () => {
       personaId = props.alumno.id_persona
     } else {
       // Crear nuevo
-      const personaCreada = await crearAlumno(form.value) //
+      const personaCreada = await crearAlumno(form.value)
       personaId = personaCreada?.data?.id_persona || personaCreada?.id_persona
     }
 
@@ -434,15 +462,13 @@ const guardar = async () => {
       
       const payload = {
         id_persona: personaId,
-        face_descriptor: currentDescriptor.value, // El Array del descriptor
-        image_base64: capturedImage.value      // El string DataURL
+        face_descriptor: currentDescriptor.value, 
+        image_base64: capturedImage.value      
       }
       
-      // Llamada al endpoint de tu controller
-      await api.post('/reconocimientos', payload) //
+      await api.post('/reconocimientos', payload)
     
     } else if (capturedImage.value && !currentDescriptor.value && !props.alumno) {
-      // Si es un ALUMNO NUEVO, capturó foto pero no la analizó
       alert("Advertencia: Se guardó el alumno, pero no se analizó ni guardó el rostro. Debe presionar 'Usar y Analizar Foto' antes de guardar.")
     }
 
@@ -454,7 +480,6 @@ const guardar = async () => {
   } catch (err) {
     console.error("Error guardando alumno o reconocimiento:", err)
     
-    // Mostrar errores de validación de Laravel (Error 422)
     const errorData = err?.response?.data
     if (errorData && errorData.errors) {
         const primerError = Object.values(errorData.errors)[0][0]
@@ -474,5 +499,5 @@ const guardar = async () => {
 .relative { position: relative; }
 .absolute { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
 img.absolute { object-fit: cover; }
-canvas.absolute { z-index: 10; } /* Pone el canvas por encima de la img */
+canvas.absolute { z-index: 10; }
 </style>

@@ -16,49 +16,73 @@
               Nombre Completo
             </label>
             <input v-model="form.nombre_completo" placeholder="Nombre completo"
-                   class="w-full rounded-xl" :class="theme('input').value" required />
+                   class="w-full rounded-xl border px-3 py-2 outline-none transition-colors" 
+                   :class="isDark ? 'bg-gray-800 border-gray-600 text-white placeholder-gray-500 focus:border-blue-500' : 'bg-white border-gray-200 text-gray-900 focus:border-blue-500'"
+                   required />
           </div>
+
           <div>
             <label class="block text-sm font-medium mb-1.5" :class="theme('cardSubtitle').value">
               DNI
             </label>
             <input v-model="form.dni" placeholder="DNI"
-                   class="w-full rounded-xl" :class="theme('input').value" required />
+                   class="w-full rounded-xl border px-3 py-2 outline-none transition-colors" 
+                   :class="isDark ? 'bg-gray-800 border-gray-600 text-white placeholder-gray-500 focus:border-blue-500' : 'bg-white border-gray-200 text-gray-900 focus:border-blue-500'"
+                   required />
           </div>
+
           <div>
             <label class="block text-sm font-medium mb-1.5" :class="theme('cardSubtitle').value">
               Correo Electrónico
             </label>
             <input v-model="form.correo" placeholder="Correo electrónico" type="email"
-                   class="w-full rounded-xl" :class="theme('input').value" required />
+                   class="w-full rounded-xl border px-3 py-2 outline-none transition-colors" 
+                   :class="isDark ? 'bg-gray-800 border-gray-600 text-white placeholder-gray-500 focus:border-blue-500' : 'bg-white border-gray-200 text-gray-900 focus:border-blue-500'"
+                   required />
           </div>
+
           <div>
             <label class="block text-sm font-medium mb-1.5" :class="theme('cardSubtitle').value">
               Teléfono
             </label>
             <input v-model="form.telefono" placeholder="Teléfono"
-                   class="w-full rounded-xl" :class="theme('input').value" />
+                   class="w-full rounded-xl border px-3 py-2 outline-none transition-colors" 
+                   :class="isDark ? 'bg-gray-800 border-gray-600 text-white placeholder-gray-500 focus:border-blue-500' : 'bg-white border-gray-200 text-gray-900 focus:border-blue-500'"
+                   />
           </div>
+
           <div>
             <label class="block text-sm font-medium mb-1.5" :class="theme('cardSubtitle').value">
               Cargo
             </label>
             <input v-model="form.cargo_grado" placeholder="Cargo o puesto"
-                   class="w-full rounded-xl" :class="theme('input').value" />
+                   class="w-full rounded-xl border px-3 py-2 outline-none transition-colors" 
+                   :class="isDark ? 'bg-gray-800 border-gray-600 text-white placeholder-gray-500 focus:border-blue-500' : 'bg-white border-gray-200 text-gray-900 focus:border-blue-500'"
+                   />
           </div>
+
           <div>
             <label class="block text-sm font-medium mb-1.5" :class="theme('cardSubtitle').value">
               Grupo
             </label>
-            <select v-model="form.id_grupo"
-                    class="w-full rounded-xl appearance-none pr-8"
-                    :class="[theme('input').value, isDark ? 'bg-gray-900/40' : 'bg-white']"
-                    required>
-              <option value="">Seleccionar grupo</option>
-              <option v-for="grupo in gruposDeEmpleados" :key="grupo.id_grupo" :value="grupo.id_grupo">
-                {{ getNombreGrupo(grupo) }} (Área: {{ grupo.area.nombre_area }})
-              </option>
-            </select>
+            <div class="relative">
+              <select v-model="form.id_grupo"
+                      class="w-full rounded-xl appearance-none border px-3 py-2 pr-8 outline-none transition-colors"
+                      :class="isDark ? 'bg-gray-800 border-gray-600 text-white focus:border-blue-500' : 'bg-white border-gray-200 text-gray-900 focus:border-blue-500'"
+                      required>
+                <option value="" :class="isDark ? 'bg-gray-800' : 'bg-white'">Seleccionar grupo</option>
+                <option v-for="grupo in gruposDeEmpleados" 
+                        :key="grupo.id_grupo" 
+                        :value="grupo.id_grupo"
+                        :class="isDark ? 'bg-gray-800 text-white' : 'bg-white text-gray-900'">
+                  {{ getNombreGrupo(grupo) }} (Área: {{ grupo.area.nombre_area }})
+                </option>
+              </select>
+              <div class="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none" 
+                   :class="isDark ? 'text-white' : 'text-gray-600'">
+                <i class="fas fa-chevron-down text-xs"></i>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -139,19 +163,19 @@
 <script setup>
 import { ref, watch, onMounted, onUnmounted, computed, reactive } from 'vue'
 import { useTheme } from '@/composables/useTheme'
-import { useEmpleados } from '../composables/useEmpleados' // <-- CAMBIO
+import { useEmpleados } from '../composables/useEmpleados'
 import api from '@/axiosConfig'
 import * as faceapi from 'face-api.js'
 
 /* Props / Emits */
-const props = defineProps({ empleado: Object }) // <-- CAMBIO
+const props = defineProps({ empleado: Object })
 const emit = defineEmits(['cerrar', 'actualizado'])
 
 /* Theme */
 const { theme, isDark } = useTheme()
 
 /* Composable Empleados */
-const { crearEmpleado, actualizarEmpleado } = useEmpleados() // <-- CAMBIO
+const { crearEmpleado, actualizarEmpleado } = useEmpleados()
 
 /* Estado formulario */
 const loading = ref(false)
@@ -324,7 +348,7 @@ const clearCapture = () => {
 /* --------------------- Lógica de Carga y Guardado (Formulario) --------------------- */
 
 /* Sync props -> form */
-watch(() => props.empleado, (nuevo) => { // <-- CAMBIO
+watch(() => props.empleado, (nuevo) => {
   if (nuevo) {
     form.value = { 
       nombre_completo: nuevo.nombre_completo || '',
@@ -350,8 +374,8 @@ watch(() => props.empleado, (nuevo) => { // <-- CAMBIO
 onMounted(async () => {
   try {
     const [resAreas, resGrupos] = await Promise.all([
-      api.get('/areas'), //
-      api.get('/grupos') //
+      api.get('/areas'), 
+      api.get('/grupos') 
     ])
     areas.value = resAreas.data
     grupos.value = resGrupos.data.data || resGrupos.data
@@ -369,11 +393,12 @@ const gruposConArea = computed(() => {
 })
 
 // ======================================================
-// LÓGICA DE FILTRADO (COPIADA DE TU CÓDIGO ORIGINAL)
+// LÓGICA DE FILTRADO (Misma que en Alumnos pero para empleados)
 // ======================================================
-const gruposDeEmpleados = computed(() => { // <-- CAMBIO
+const gruposDeEmpleados = computed(() => {
   return gruposConArea.value.filter(g =>
-    g.area && !String(g.area.nombre_area || '').toLowerCase().includes('alumno')
+    // Usamos 'nombre_area' que es el campo correcto en tu BD
+    g.area && g.area.nombre_area && !String(g.area.nombre_area).toLowerCase().includes('alumno')
   )
 })
 // ======================================================
@@ -403,17 +428,16 @@ const guardar = async () => {
     }
 
     // NOTA: Asumimos que 'useEmpleados.js' añade 'tipo_persona: "empleado"'
-    // (igual que 'useAlumnos.js' añade 'estudiante')
     
     // 2. Crear o Actualizar la Persona (Empleado)
     let personaId = null
-    if (props.empleado) { // <-- CAMBIO
+    if (props.empleado) {
       // Actualizar
-      await actualizarEmpleado(props.empleado.id_persona, form.value) // <-- CAMBIO
-      personaId = props.empleado.id_persona // <-- CAMBIO
+      await actualizarEmpleado(props.empleado.id_persona, form.value)
+      personaId = props.empleado.id_persona
     } else {
       // Crear nuevo
-      const personaCreada = await crearEmpleado(form.value) // <-- CAMBIO
+      const personaCreada = await crearEmpleado(form.value)
       personaId = personaCreada?.data?.id_persona || personaCreada?.id_persona
     }
 
@@ -426,12 +450,11 @@ const guardar = async () => {
       
       const payload = {
         id_persona: personaId,
-        face_descriptor: currentDescriptor.value, // El Array del descriptor
-        image_base64: capturedImage.value      // El string DataURL
+        face_descriptor: currentDescriptor.value, 
+        image_base64: capturedImage.value      
       }
       
-      // Llamada al endpoint de tu controller
-      await api.post('/reconocimientos', payload) //
+      await api.post('/reconocimientos', payload)
     
     } else if (capturedImage.value && !currentDescriptor.value && !props.empleado) {
       alert("Advertencia: Se guardó el empleado, pero no se analizó ni guardó el rostro. Debe presionar 'Usar y Analizar Foto' antes de guardar.")

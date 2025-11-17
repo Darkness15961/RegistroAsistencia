@@ -49,16 +49,24 @@
             <tr class="border-b" :class="isDark ? 'border-white/20' : 'border-gray-200'">
               <th class="px-6 py-4 font-bold text-sm uppercase" :class="theme('cardSubtitle').value">Nombre</th>
               <th class="px-6 py-4 font-bold text-sm uppercase" :class="theme('cardSubtitle').value">Cargo / Grado</th>
-              <th class="text-center px-4 py-4 font-bold text-sm uppercase" :class="theme('cardSubtitle').value">Lun</th>
-              <th class="text-center px-4 py-4 font-bold text-sm uppercase" :class="theme('cardSubtitle').value">Mar</th>
-              <th class="text-center px-4 py-4 font-bold text-sm uppercase" :class="theme('cardSubtitle').value">Mié</th>
-              <th class="text-center px-4 py-4 font-bold text-sm uppercase" :class="theme('cardSubtitle').value">Jue</th>
-              <th class="text-center px-4 py-4 font-bold text-sm uppercase" :class="theme('cardSubtitle').value">Vie</th>
+              
+              <!-- ====================================================== -->
+              <!-- CABECERA DINÁMICA (LUN - SAB/DOM)                    -->
+              <!-- ====================================================== -->
+              <th 
+                v-for="dia in diasMostrados" 
+                :key="dia" 
+                class="text-center px-4 py-4 font-bold text-sm uppercase" 
+                :class="theme('cardSubtitle').value"
+              >
+                {{ diasHeader[dia] }}
+              </th>
+              <!-- ====================================================== -->
             </tr>
           </thead>
           <tbody class="divide-y" :class="isDark ? 'divide-white/10' : 'divide-gray-200'">
             <tr v-if="filteredAsistencias.length === 0">
-              <td colspan="7" class="text-center p-8" :class="theme('cardSubtitle').value">
+              <td :colspan="diasMostrados.length + 2" class="text-center p-8" :class="theme('cardSubtitle').value">
                 <i class="fas fa-calendar-times text-5xl mb-3 opacity-50"></i>
                 <p>No se encontraron asistencias para este grupo</p>
               </td>
@@ -75,14 +83,23 @@
               <td class="px-6 py-4" :class="theme('cardSubtitle').value">
                 {{ asistencia.persona?.cargo_grado || '-' }}
               </td>
-              <td v-for="(dia, diaKey) in ['lunes', 'martes', 'miercoles', 'jueves', 'viernes']"
-                  :key="diaKey"
+              
+              <!-- ====================================================== -->
+              <!-- CELDAS DINÁMICAS (LUN - SAB/DOM)                     -->
+              <!-- ====================================================== -->
+              <td v-for="dia in diasMostrados"
+                  :key="dia"
                   class="text-center px-4 py-4 cursor-pointer group/cell relative hover:bg-gray-700/30"
                   @click="$emit('editar-asistencia', {asistencia, dia: dia, estado: asistencia[dia]})"
               >
+                <!-- 
+                  AQUÍ ESTÁ TU LÓGICA DE GUIÓN:
+                  Si asistencia[dia] es 'null' (del backend), se mostrará '-'
+                -->
                 <span :class="estadoClase(asistencia[dia])">{{ asistencia[dia] || '-' }}</span>
                 <i class="fas fa-edit absolute top-0 right-0 text-xs text-blue-500 opacity-0 group-hover/cell:opacity-100 p-1"></i>
               </td>
+              <!-- ====================================================== -->
             </tr>
           </tbody>
         </table>
@@ -120,6 +137,40 @@ const filteredAsistencias = computed(() =>
   )
 )
 
+// ======================================================
+// LÓGICA DE DÍAS DINÁMICOS
+// ======================================================
+const diasHeader = {
+  lunes: 'Lun',
+  martes: 'Mar',
+  miercoles: 'Mié',
+  jueves: 'Jue',
+  viernes: 'Vie',
+  sabado: 'Sáb',
+  domingo: 'Dom'
+}
+
+// Revisa si CUALQUIER persona en la lista es 'empleado'
+const mostrarDomingo = computed(() => {
+  return props.asistencias.some(a => 
+    a.persona?.tipo_persona === 'empleado' ||
+    a.persona?.tipo_persona === 'docente' // (Añade otros tipos de empleado si los tienes)
+  )
+})
+
+// Devuelve el array de días a mostrar
+const diasMostrados = computed(() => {
+  if (mostrarDomingo.value) {
+    return ['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado', 'domingo'];
+  }
+  // Por defecto (si solo hay estudiantes)
+  return ['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado'];
+})
+// ======================================================
+
+
+// Tu lógica de clases. 'null' (que se convierte en '') 
+// caerá en el 'return' final, mostrando el guion gris.
 const estadoClase = (valor) => {
   const v = (valor || '').toUpperCase()
   const base = 'inline-flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold'
@@ -133,6 +184,7 @@ const estadoClase = (valor) => {
   if (v === 'F') {
     return [base, isDark.value ? 'bg-red-500/20 text-red-300' : 'bg-red-100 text-red-800']
   }
+  // Estado por defecto (para 'null' o guion)
   return [base, isDark.value ? 'bg-white/5 text-gray-500' : 'bg-gray-100 text-gray-400']
 }
 </script>
