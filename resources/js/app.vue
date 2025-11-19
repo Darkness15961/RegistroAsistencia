@@ -26,7 +26,7 @@
         <Header @toggle-sidebar="toggleSidebar" />
         
         <main class="flex-1 overflow-y-auto">
-          <!-- Contenido de la página actual (Home, Alumnos, Empleados, etc.) -->
+          <!-- Contenido de la página actual (Home, Alumnos, Personal, etc.) -->
           <div class="p-6">
             <router-view />
           </div>

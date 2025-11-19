@@ -23,51 +23,100 @@
               type="email"
               placeholder="usuario@dominio.com" 
               required
-              class="w-full rounded-xl"
-              :class="theme('input').value"
+              class="w-full rounded-xl border px-3 py-2 outline-none transition-colors"
+              :class="isDark ? 'bg-gray-800 border-gray-600 text-white placeholder-gray-500 focus:border-blue-500' : 'bg-white border-gray-200 text-gray-900 focus:border-blue-500'"
             />
           </div>
           
-          <div>
+          <div class="relative">
             <label class="block text-sm font-medium mb-1.5" :class="theme('cardSubtitle').value">
-              Persona (ID Opcional)
+              Vincular a Persona
             </label>
-            <input 
-              v-model="form.id_persona" 
-              type="number"
-              placeholder="Vincular a ID de persona" 
-              class="w-full rounded-xl"
-              :class="theme('input').value"
-            />
+            
+            <div class="relative">
+              <input 
+                v-model="busquedaPersona" 
+                type="text"
+                placeholder="Buscar por nombre..." 
+                @input="buscarPersonas"
+                @focus="mostrarResultados = true"
+                class="w-full rounded-xl border px-3 py-2 pr-8 outline-none transition-colors"
+                :class="[
+                  isDark ? 'bg-gray-800 border-gray-600 text-white placeholder-gray-500 focus:border-blue-500' : 'bg-white border-gray-200 text-gray-900 focus:border-blue-500',
+                  personaSeleccionada ? 'border-green-500 focus:border-green-500' : ''
+                ]"
+              />
+              
+              <div class="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none">
+                <i v-if="personaSeleccionada" class="fas fa-check text-green-500"></i>
+                <i v-else class="fas fa-search" :class="theme('cardSubtitle').value"></i>
+              </div>
+            </div>
+
+            <div v-if="mostrarResultados && resultadosPersonas.length > 0" 
+                 class="absolute z-10 w-full mt-1 rounded-xl shadow-lg max-h-60 overflow-auto border"
+                 :class="isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'">
+              
+              <div 
+                v-for="persona in resultadosPersonas" 
+                :key="persona.id_persona"
+                @click="seleccionarPersona(persona)"
+                class="px-4 py-2 cursor-pointer transition-colors flex justify-between items-center"
+                :class="isDark ? 'hover:bg-gray-700 text-gray-200' : 'hover:bg-blue-50 text-gray-800'"
+              >
+                <span class="font-medium">{{ persona.nombre_completo }}</span>
+                <span class="text-xs opacity-70">{{ persona.cargo_grado }}</span>
+              </div>
+            </div>
+            
+            <div v-if="mostrarResultados && busquedaPersona && resultadosPersonas.length === 0 && !personaSeleccionada" 
+                 class="absolute z-10 w-full mt-1 p-2 text-sm text-center rounded-xl border"
+                 :class="isDark ? 'bg-gray-800 border-gray-700 text-gray-400' : 'bg-white border-gray-200 text-gray-500'">
+              No se encontraron personas.
+            </div>
+            
+            <input type="hidden" v-model="form.id_persona">
           </div>
 
           <div>
             <label class="block text-sm font-medium mb-1.5" :class="theme('cardSubtitle').value">
               Rol del Usuario
             </label>
-            <select 
-              v-model="form.rol" 
-              class="w-full rounded-xl appearance-none pr-8" 
-              :class="[theme('input').value, isDark ? 'bg-gray-900/50' : 'bg-white']"
-            >
-              <option value="administrador" :class="isDark ? 'bg-gray-800' : 'bg-white'">Administrador</option>
-              <option value="empleado" :class="isDark ? 'bg-gray-800' : 'bg-white'">Empleado</option>
-              <option value="docente" :class="isDark ? 'bg-gray-800' : 'bg-white'">Docente</option>
-            </select>
+            <div class="relative">
+              <select 
+                v-model="form.rol" 
+                class="w-full rounded-xl appearance-none border px-3 py-2 pr-8 outline-none transition-colors"
+                :class="isDark ? 'bg-gray-800 border-gray-600 text-white focus:border-blue-500' : 'bg-white border-gray-200 text-gray-900 focus:border-blue-500'"
+              >
+                <option value="administrador" :class="isDark ? 'bg-gray-800' : 'bg-white'">Administrador</option>
+                <option value="empleado" :class="isDark ? 'bg-gray-800' : 'bg-white'">Empleado</option>
+                <option value="docente" :class="isDark ? 'bg-gray-800' : 'bg-white'">Docente</option>
+              </select>
+              <div class="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none" 
+                   :class="isDark ? 'text-white' : 'text-gray-600'">
+                <i class="fas fa-chevron-down text-xs"></i>
+              </div>
+            </div>
           </div>
 
           <div>
             <label class="block text-sm font-medium mb-1.5" :class="theme('cardSubtitle').value">
               Estado
             </label>
-            <select 
-              v-model="form.estado" 
-              class="w-full rounded-xl appearance-none pr-8"
-              :class="[theme('input').value, isDark ? 'bg-gray-900/50' : 'bg-white']"
-            >
-              <option value="activo" :class="isDark ? 'bg-gray-800' : 'bg-white'">Activo</option>
-              <option value="inactivo" :class="isDark ? 'bg-gray-800' : 'bg-white'">Inactivo</option>
-            </select>
+            <div class="relative">
+              <select 
+                v-model="form.estado" 
+                class="w-full rounded-xl appearance-none border px-3 py-2 pr-8 outline-none transition-colors"
+                :class="isDark ? 'bg-gray-800 border-gray-600 text-white focus:border-blue-500' : 'bg-white border-gray-200 text-gray-900 focus:border-blue-500'"
+              >
+                <option value="activo" :class="isDark ? 'bg-gray-800' : 'bg-white'">Activo</option>
+                <option value="inactivo" :class="isDark ? 'bg-gray-800' : 'bg-white'">Inactivo</option>
+              </select>
+              <div class="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none" 
+                   :class="isDark ? 'text-white' : 'text-gray-600'">
+                <i class="fas fa-chevron-down text-xs"></i>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -82,8 +131,8 @@
                 :type="showPassword ? 'text' : 'password'" 
                 placeholder="••••••••" 
                 required
-                class="w-full rounded-xl pr-10"
-                :class="theme('input').value"
+                class="w-full rounded-xl border px-3 py-2 pr-10 outline-none transition-colors"
+                :class="isDark ? 'bg-gray-800 border-gray-600 text-white placeholder-gray-500 focus:border-blue-500' : 'bg-white border-gray-200 text-gray-900 focus:border-blue-500'"
               />
               <button 
                 type="button" 
@@ -105,8 +154,8 @@
                 :type="showConfirmPassword ? 'text' : 'password'" 
                 placeholder="••••••••" 
                 required
-                class="w-full rounded-xl pr-10"
-                :class="theme('input').value"
+                class="w-full rounded-xl border px-3 py-2 pr-10 outline-none transition-colors"
+                :class="isDark ? 'bg-gray-800 border-gray-600 text-white placeholder-gray-500 focus:border-blue-500' : 'bg-white border-gray-200 text-gray-900 focus:border-blue-500'"
               />
               <button 
                 type="button" 
@@ -119,12 +168,6 @@
             </div>
           </div>
         </div>
-        <p v-if="!isEditing" class="text-xs" :class="theme('cardSubtitle').value">
-          Si no especificas un ID de Persona, se creará una nueva persona con datos básicos.
-        </p>
-        <p v-if="isEditing" class="text-xs" :class="theme('cardSubtitle').value">
-          La contraseña no se puede modificar desde este modal.
-        </p>
 
         <div class="flex gap-3 justify-end pt-4">
           <button 
@@ -151,7 +194,7 @@
 </template>
 
 <script setup>
-import { reactive, computed, watch, ref } from 'vue'
+import { reactive, computed, watch, ref, onMounted } from 'vue'
 import { useTheme } from '@/composables/useTheme'
 import api from '@/axiosConfig'
 
@@ -162,10 +205,61 @@ const emit = defineEmits(['close', 'saved'])
 
 const { theme, isDark } = useTheme()
 const loading = ref(false)
-const showPassword = ref(false) // Para el ojo
-const showConfirmPassword = ref(false) // Para el ojo
+const showPassword = ref(false)
+const showConfirmPassword = ref(false)
 
-// ✅ ID de persona ya no es requerido, es opcional
+// --- Lógica de Búsqueda de Personas ---
+const busquedaPersona = ref('')
+const resultadosPersonas = ref([])
+const mostrarResultados = ref(false)
+const personaSeleccionada = ref(null)
+
+// Cargar lista completa de personas (o usar un endpoint de búsqueda)
+// Nota: Si son muchos usuarios, mejor haz un endpoint de búsqueda en el backend.
+// Aquí asumimos que podemos cargar todos o los primeros 20.
+let todasLasPersonas = [] 
+
+onMounted(async () => {
+  try {
+    // Cargamos personas para el autocompletado
+    const res = await api.get('/personas') //
+    todasLasPersonas = res.data.data || res.data
+  } catch (e) {
+    console.error("Error cargando personas:", e)
+  }
+})
+
+const buscarPersonas = () => {
+  if (!busquedaPersona.value) {
+    resultadosPersonas.value = []
+    mostrarResultados.value = false
+    // Si borra el texto, limpiamos la selección
+    if (personaSeleccionada.value) {
+        personaSeleccionada.value = null
+        form.id_persona = null
+    }
+    return
+  }
+  
+  // Filtro simple en cliente
+  const term = busquedaPersona.value.toLowerCase()
+  resultadosPersonas.value = todasLasPersonas.filter(p => 
+    (p.nombre_completo && p.nombre_completo.toLowerCase().includes(term)) ||
+    (p.dni && p.dni.includes(term))
+  ).slice(0, 5) // Limitamos a 5 resultados
+  
+  mostrarResultados.value = true
+}
+
+const seleccionarPersona = (persona) => {
+  busquedaPersona.value = persona.nombre_completo
+  form.id_persona = persona.id_persona
+  personaSeleccionada.value = persona
+  mostrarResultados.value = false
+}
+
+// ---------------------------------------
+
 const getInitialForm = () => ({
   id_persona: props.usuario?.id_persona || null,
   email: props.usuario?.email || '',
@@ -178,20 +272,26 @@ const getInitialForm = () => ({
 const form = reactive(getInitialForm())
 const isEditing = computed(() => !!props.usuario)
 
-watch(() => props.usuario, () => {
+watch(() => props.usuario, (nuevo) => {
   Object.assign(form, getInitialForm())
+  // Si estamos editando, intentamos pre-llenar el nombre de la persona
+  if (nuevo && nuevo.persona) {
+     busquedaPersona.value = nuevo.persona.nombre_completo
+     personaSeleccionada.value = nuevo.persona
+  } else {
+     busquedaPersona.value = ''
+     personaSeleccionada.value = null
+  }
 }, { immediate: true })
 
 const submit = async () => {
   loading.value = true
   try {
-    // Limpiamos el payload
     const payload = {
       email: form.email,
       rol: form.rol,
       estado: form.estado
     }
-    // Añadimos id_persona solo si tiene valor
     if (form.id_persona) {
       payload.id_persona = form.id_persona
     }
@@ -201,16 +301,15 @@ const submit = async () => {
     } else {
       payload.password = form.password
       payload.password_confirmation = form.password_confirmation
-      // Si no hay id_persona, tu API (según tu plantilla) puede necesitar un nombre
-      // Asumimos que la API lo maneja o crea uno por defecto.
-      // Si no, tendrías que añadir un campo "nombre" al crear.
       await api.post('/usuarios', payload)
     }
     emit('saved')
     emit('close')
   } catch (err) {
     console.error('Error en modal usuario:', err)
-    alert(err.response?.data?.message || 'Error al guardar.')
+    // Manejo de errores de validación
+    const msg = err.response?.data?.message || err.response?.data?.error || 'Error al guardar.'
+    alert(msg)
   } finally {
     loading.value = false
   }

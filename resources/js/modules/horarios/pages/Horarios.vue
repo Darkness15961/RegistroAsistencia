@@ -61,7 +61,6 @@ import { ref, computed, onMounted } from 'vue'
 import { useTheme } from '@/composables/useTheme'
 import api from '@/axiosConfig'
 import TablaHorarios from '../components/TablaHorarios.vue'
-// ✅ ¡IMPORTACIÓN CORREGIDA!
 import FormularioHorarioModal from '../components/FormularioHorarioModal.vue'
 
 const { theme } = useTheme()

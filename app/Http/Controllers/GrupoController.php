@@ -18,9 +18,11 @@ class GrupoController extends Controller
         $datosValidados = $request->validate([
             'id_area' => 'required|exists:areas,id_area',
             'id_tutor' => 'nullable|exists:personas,id_persona',
-            'nivel' => 'required|string|max:20',
-            'grado' => 'required|string|max:20',
-            'seccion' => 'required|string|max:5',
+            'nivel' => 'required|string|max:50', // Aumentado a 50 por si el nombre es largo
+            
+            // ✅ CORRECCIÓN: Ahora son 'nullable' para permitir grupos sin grado/sección
+            'grado' => 'nullable|string|max:20',
+            'seccion' => 'nullable|string|max:5',
         ]);
 
         $grupo = Grupo::create($datosValidados);
@@ -38,9 +40,11 @@ class GrupoController extends Controller
         $datosValidados = $request->validate([
             'id_area' => 'exists:areas,id_area',
             'id_tutor' => 'nullable|exists:personas,id_persona',
-            'nivel' => 'string|max:20',
-            'grado' => 'string|max:20',
-            'seccion' => 'string|max:5',
+            'nivel' => 'string|max:50',
+            
+            // ✅ CORRECCIÓN: También 'nullable' en la actualización
+            'grado' => 'nullable|string|max:50',
+            'seccion' => 'nullable|string|max:20',
         ]);
 
         $grupo->update($datosValidados);
@@ -49,6 +53,8 @@ class GrupoController extends Controller
 
     public function destroy(Grupo $grupo)
     {
+        $grupo->delete();
+        
         return response()->json([
             'message' => 'Grupo eliminado correctamente',
             'id_eliminado' => $grupo->id_grupo

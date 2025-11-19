@@ -81,7 +81,7 @@ const menu = ref([
   { path: '/usuarios', label: 'Usuarios', icon: 'fa-user-cog' },
   { path: '/areas', label: 'Áreas', icon: 'fa-building' },
   { path: '/horarios', label: 'Horarios', icon: 'fa-clock' },
-  { path: '/empleados', label: 'Empleados', icon: 'fa-users' },
+  { path: '/personal', label: 'Personal', icon: 'fa-users' },
   { path: '/alumnos', label: 'Alumnos', icon: 'fa-user-graduate' },
   { path: '/asistencias', label: 'Asistencias', icon: 'fa-calendar-check' },
 

@@ -1,10 +1,9 @@
 import { createRouter, createWebHistory } from 'vue-router'
-
 // --- Tu nuevo Lazy Loading  ---
 const Login = () => import('@/modules/auth/pages/Login.vue')
 const Home = () => import('@/modules/dashboard/pages/Home.vue')
 const Asistencias = () => import('@/modules/asistencias/pages/Asistencias.vue')
-const Empleados = () => import('@/modules/empleados/pages/Empleados.vue')
+const Personal = () => import('@/modules/personal/pages/Personal.vue')
 const Alumnos = () => import('@/modules/alumnos/pages/Alumnos.vue')
 const Areas = () => import('@/modules/areas/pages/Areas.vue')
 const Horarios = () => import('@/modules/horarios/pages/Horarios.vue')
@@ -62,9 +61,9 @@ const routes = [
     meta: { requiresAuth: true }
   },
   { 
-    path: '/empleados', 
-    name: 'Empleados', 
-    component: Empleados,
+    path: '/personal', 
+    name: 'Personal', 
+    component: Personal,
     meta: { requiresAuth: true }
   },
   { 

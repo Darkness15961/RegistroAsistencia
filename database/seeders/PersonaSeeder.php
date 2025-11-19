@@ -4,163 +4,55 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema; // <--- Importar
 use App\Models\Grupo;
-use App\Models\Area;
 use Faker\Factory as Faker;
 
 class PersonaSeeder extends Seeder
 {
     public function run(): void
     {
-        $faker = Faker::create();
-        $areas = Area::all();
-        $grupos = Grupo::all();
+        Schema::disableForeignKeyConstraints();
+        DB::table('personas')->truncate();
+        Schema::enableForeignKeyConstraints();
 
-        if ($areas->isEmpty()) {
-            $this->command->info('¡No hay áreas! Ejecuta AreaSeeder primero.');
-            return;
-        }
-
+        $faker = Faker::create('es_PE');
+        $grupos = Grupo::with('area')->get();
         $personasData = [];
 
-        // 1. Dirección (solo 1 persona)
-        $direccion = $areas->firstWhere('nombre_area', 'Dirección');
-        $personasData[] = [
-            'nombre_completo' => 'Carlos Gómez',
-            'dni' => $faker->unique()->numerify('1#######'),
-            'telefono' => $faker->phoneNumber,
-            'correo' => 'direccion@colegio.com',
-            'cargo_grado' => 'Director',
-            'tipo_persona' => 'empleado',
-            'id_area' => $direccion->id_area,
-            'id_grupo' => null,
-        ];
+        // ... (El resto del código de generación sigue igual que te pasé antes) ...
+        foreach ($grupos as $grupo) {
+            $nombreArea = $grupo->area->nombre_area;
+            
+            if (str_contains($nombreArea, 'Alumnos')) {
+                $tipo = 'estudiante';
+                $cargo = 'Estudiante';
+                $cantidad = 15;
+            } else {
+                $tipo = 'empleado';
+                $cargo = str_contains($nombreArea, 'Docente') ? 'Docente' : 'Personal Administrativo';
+                $cantidad = 3;
+            }
 
-        // 2. Administración (3 empleados)
-        $admin = $areas->firstWhere('nombre_area', 'Administración');
-        for ($i=1; $i<=3; $i++) {
-            $personasData[] = [
-                'nombre_completo' => $faker->name,
-                'dni' => $faker->unique()->numerify('2#######'),
-                'telefono' => $faker->phoneNumber,
-                'correo' => $faker->unique()->safeEmail,
-                'cargo_grado' => 'Empleado Administrativo',
-                'tipo_persona' => 'empleado',
-                'id_area' => $admin->id_area,
-                'id_grupo' => null,
-            ];
-        }
-
-        // 3. Docentes de Primaria (5 docentes)
-        $docentesPrimaria = $areas->firstWhere('nombre_area', 'Docentes de Primaria');
-        for ($i=1; $i<=5; $i++) {
-            $personasData[] = [
-                'nombre_completo' => $faker->name,
-                'dni' => $faker->unique()->numerify('3#######'),
-                'telefono' => $faker->phoneNumber,
-                'correo' => $faker->unique()->safeEmail,
-                'cargo_grado' => 'Docente Primaria',
-                'tipo_persona' => 'empleado',
-                'id_area' => $docentesPrimaria->id_area,
-                'id_grupo' => null,
-            ];
-        }
-
-        // 4. Docentes de Secundaria (5 docentes)
-        $docentesSec = $areas->firstWhere('nombre_area', 'Docentes de Secundaria');
-        for ($i=1; $i<=5; $i++) {
-            $personasData[] = [
-                'nombre_completo' => $faker->name,
-                'dni' => $faker->unique()->numerify('4#######'),
-                'telefono' => $faker->phoneNumber,
-                'correo' => $faker->unique()->safeEmail,
-                'cargo_grado' => 'Docente Secundaria',
-                'tipo_persona' => 'empleado',
-                'id_area' => $docentesSec->id_area,
-                'id_grupo' => null,
-            ];
-        }
-
-        // 5. Alumnos de Inicial (10 por grupo)
-        $alumnosInicial = $areas->firstWhere('nombre_area', 'Alumnos de Inicial');
-        $gruposInicial = $grupos->where('id_area', $alumnosInicial->id_area);
-        foreach ($gruposInicial as $grupo) {
-            for ($i=1; $i<=10; $i++) {
+            for ($i = 0; $i < $cantidad; $i++) {
                 $personasData[] = [
-                    'nombre_completo' => $faker->name,
-                    'dni' => $faker->unique()->numerify('5#######'),
+                    'nombre_completo' => $faker->firstName . ' ' . $faker->lastName . ' ' . $faker->lastName,
+                    'dni' => $faker->unique()->numerify('########'),
                     'telefono' => $faker->phoneNumber,
                     'correo' => $faker->unique()->safeEmail,
-                    'cargo_grado' => 'Estudiante',
-                    'tipo_persona' => 'estudiante',
-                    'id_area' => $alumnosInicial->id_area,
+                    'cargo_grado' => $cargo,
+                    'tipo_persona' => $tipo,
+                    'id_area' => $grupo->id_area,
                     'id_grupo' => $grupo->id_grupo,
+                    'estado' => 'activo',
+                    'created_at' => now(),
+                    'updated_at' => now(),
                 ];
             }
         }
-
-        // 6. Alumnos de Primaria (10 por grupo)
-        $alumnosPrim = $areas->firstWhere('nombre_area', 'Alumnos de Primaria');
-        $gruposPrim = $grupos->where('id_area', $alumnosPrim->id_area);
-        foreach ($gruposPrim as $grupo) {
-            for ($i=1; $i<=10; $i++) {
-                $personasData[] = [
-                    'nombre_completo' => $faker->name,
-                    'dni' => $faker->unique()->numerify('6#######'),
-                    'telefono' => $faker->phoneNumber,
-                    'correo' => $faker->unique()->safeEmail,
-                    'cargo_grado' => 'Estudiante',
-                    'tipo_persona' => 'estudiante',
-                    'id_area' => $alumnosPrim->id_area,
-                    'id_grupo' => $grupo->id_grupo,
-                ];
-            }
+        
+        foreach (array_chunk($personasData, 50) as $chunk) {
+            DB::table('personas')->insert($chunk);
         }
-
-        // 7. Alumnos de Secundaria (10 por grupo)
-        $alumnosSec = $areas->firstWhere('nombre_area', 'Alumnos de Secundaria');
-        $gruposSec = $grupos->where('id_area', $alumnosSec->id_area);
-        foreach ($gruposSec as $grupo) {
-            for ($i=1; $i<=10; $i++) {
-                $personasData[] = [
-                    'nombre_completo' => $faker->name,
-                    'dni' => $faker->unique()->numerify('7#######'),
-                    'telefono' => $faker->phoneNumber,
-                    'correo' => $faker->unique()->safeEmail,
-                    'cargo_grado' => 'Estudiante',
-                    'tipo_persona' => 'estudiante',
-                    'id_area' => $alumnosSec->id_area,
-                    'id_grupo' => $grupo->id_grupo,
-                ];
-            }
-        }
-
-        // 8. Otros empleados (Tutoría, Biblioteca, Laboratorio, Coordinación Académica, Servicio Médico)
-        $otrasAreas = ['Tutoría y Psicología', 'Biblioteca', 'Laboratorio', 'Coordinación Académica', 'Servicio Médico'];
-        foreach ($otrasAreas as $nombreArea) {
-            $area = $areas->firstWhere('nombre_area', $nombreArea);
-            for ($i=1; $i<=3; $i++) { // 3 empleados por área
-                $personasData[] = [
-                    'nombre_completo' => $faker->name,
-                    'dni' => $faker->unique()->numerify('8#######'),
-                    'telefono' => $faker->phoneNumber,
-                    'correo' => $faker->unique()->safeEmail,
-                    'cargo_grado' => 'Empleado',
-                    'tipo_persona' => 'empleado',
-                    'id_area' => $area->id_area,
-                    'id_grupo' => null,
-                ];
-            }
-        }
-
-        // Insertar todos los registros
-        foreach ($personasData as $persona) {
-            $persona['estado'] = 'activo';
-            $persona['created_at'] = now();
-            $persona['updated_at'] = now();
-            DB::table('personas')->insert($persona);
-        }
-
-        $this->command->info('Se han creado '.count($personasData).' personas.');
     }
 }

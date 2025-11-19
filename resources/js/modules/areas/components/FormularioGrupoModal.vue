@@ -1,46 +1,158 @@
 <template>
-  <div 
-    class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
-    @click.self="$emit('cerrar')"
-  >
-    <div 
-      class="w-full max-w-lg rounded-3xl border shadow-2xl p-6" 
-      :class="theme('card').value"
-    >
-      <h3 class="text-xl font-bold mb-6 flex items-center" :class="theme('cardTitle').value">
-        <span :class="['w-8 h-8 rounded-lg flex items-center justify-center mr-3 shadow-lg', getAreaStyle(area.nombre_area).gradient]">
-           <i :class="[getAreaStyle(area.nombre_area).icon, 'text-white text-base']"></i>
-        </span>
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+       @click.self="$emit('cerrar')">
+    <div class="rounded-3xl w-full max-w-lg shadow-2xl border p-6" :class="theme('card').value">
+      
+      <h2 class="text-xl font-bold mb-6" :class="theme('cardTitle').value">
+        <i class="fas fa-layer-group mr-2"></i>
         {{ grupo ? 'Editar Grupo' : 'Nuevo Grupo' }}
-      </h3>
+      </h2>
 
-      <form @submit.prevent="guardar" class="space-y-4">
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <form @submit.prevent="guardarGrupo">
+        <div class="space-y-5">
+          
           <div>
-            <label class="block text-sm font-medium mb-1.5" :class="theme('cardSubtitle').value">Nivel</label>
-            <input v-model="form.nivel" placeholder="Ej: Secundaria" class="w-full rounded-xl" :class="theme('input').value" required />
+            <label class="block text-sm font-medium mb-1.5" :class="theme('cardSubtitle').value">
+              Área de Pertenencia
+            </label>
+            <div class="relative">
+              <select 
+                v-model="form.id_area"
+                class="w-full rounded-xl appearance-none border px-3 py-2 pr-8 outline-none transition-colors"
+                :class="isDark ? 'bg-gray-800 border-gray-600 text-white focus:border-blue-500' : 'bg-white border-gray-200 text-gray-900 focus:border-blue-500'"
+                required
+              >
+                <option value="" disabled>Seleccionar área</option>
+                <option v-for="area in areas" :key="area.id_area" :value="area.id_area">
+                  {{ area.nombre_area }}
+                </option>
+              </select>
+              <div class="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none" :class="isDark ? 'text-white' : 'text-gray-600'">
+                <i class="fas fa-chevron-down text-xs"></i>
+              </div>
+            </div>
           </div>
+
           <div>
-            <label class="block text-sm font-medium mb-1.5" :class="theme('cardSubtitle').value">Grado</label>
-            <input v-model="form.grado" placeholder="Ej: Quinto" class="w-full rounded-xl" :class="theme('input').value" required />
+            <label class="block text-sm font-medium mb-1.5" :class="theme('cardSubtitle').value">
+              Tipo de Gestión
+            </label>
+            <div class="relative">
+              <select 
+                v-model="tipoGestion"
+                @change="onTipoGestionChange"
+                class="w-full rounded-xl appearance-none border px-3 py-2 pr-8 outline-none transition-colors"
+                :class="isDark ? 'bg-gray-800 border-gray-600 text-white focus:border-blue-500' : 'bg-white border-gray-200 text-gray-900 focus:border-blue-500'"
+                required
+              >
+                <option value="" disabled>Seleccione el tipo de grupo</option>
+                <option value="alumnos">Gestión de Alumnado</option>
+                <option value="docentes">Gestión de Docentes</option>
+                <option value="administrativos">Administrativos</option>
+                <option value="otros">Otros</option>
+              </select>
+              <div class="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none" :class="isDark ? 'text-white' : 'text-gray-600'">
+                <i class="fas fa-list-ul text-xs"></i>
+              </div>
+            </div>
           </div>
-          <div>
-            <label class="block text-sm font-medium mb-1.5" :class="theme('cardSubtitle').value">Sección</label>
-            <input v-model="form.seccion" placeholder="Ej: 'A'" class="w-full rounded-xl" :class="theme('input').value" required />
+
+          <div v-if="tipoGestion" class="animate-fade-in">
+            <label class="block text-sm font-medium mb-1.5" :class="theme('cardSubtitle').value">
+              Nombre del Grupo / Nivel
+            </label>
+            <input 
+              v-model="form.nivel" 
+              :placeholder="placeholderNivel"
+              class="w-full rounded-xl border px-3 py-2 outline-none transition-colors"
+              :class="isDark ? 'bg-gray-800 border-gray-600 text-white placeholder-gray-500 focus:border-blue-500' : 'bg-white border-gray-200 text-gray-900 focus:border-blue-500'"
+              required
+            />
           </div>
-        </div>
-        
-        <div>
-          <label class="block text-sm font-medium mb-1.5" :class="theme('cardSubtitle').value">Tutor (Opcional)</label>
-          <select v-model="form.id_tutor" class="w-full rounded-xl appearance-none pr-8" :class="[theme('input').value, isDark ? 'bg-gray-900/50' : 'bg-white']">
-            <option :value="null">No asignado</option>
-            <option v-for="tutor in tutores" :key="tutor.id_persona" :value="tutor.id_persona" :class="isDark ? 'bg-gray-800' : 'bg-white'">
-              {{ tutor.nombre_completo }}
-            </option>
-          </select>
+
+          <div v-if="tipoGestion === 'alumnos'" class="grid grid-cols-2 gap-4 animate-fade-in">
+            <div>
+              <label class="block text-sm font-medium mb-1.5" :class="theme('cardSubtitle').value">
+                Grado
+              </label>
+              <input 
+                v-model="form.grado" 
+                placeholder="Ej: 5to"
+                class="w-full rounded-xl border px-3 py-2 outline-none transition-colors"
+                :class="isDark ? 'bg-gray-800 border-gray-600 text-white focus:border-blue-500' : 'bg-white border-gray-200 text-gray-900 focus:border-blue-500'"
+                required
+              />
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1.5" :class="theme('cardSubtitle').value">
+                Sección
+              </label>
+              <input 
+                v-model="form.seccion" 
+                placeholder="Ej: A"
+                class="w-full rounded-xl border px-3 py-2 outline-none transition-colors"
+                :class="isDark ? 'bg-gray-800 border-gray-600 text-white focus:border-blue-500' : 'bg-white border-gray-200 text-gray-900 focus:border-blue-500'"
+                required
+              />
+            </div>
+          </div>
+
+          <div class="relative md:col-span-2">
+            <label class="block text-sm font-medium mb-1.5" :class="theme('cardSubtitle').value">
+              {{ tipoGestion === 'alumnos' ? 'Tutor de Aula' : 'Encargado del Grupo' }} (Opcional)
+            </label>
+            
+            <div class="relative">
+              <input 
+                v-model="busquedaTutor" 
+                type="text"
+                :placeholder="tipoGestion === 'alumnos' ? 'Buscar docente tutor...' : 'Buscar encargado...'"
+                @input="buscarTutores"
+                @focus="mostrarResultados = true"
+                class="w-full rounded-xl border px-3 py-2 pr-10 outline-none transition-colors"
+                :class="[
+                  isDark ? 'bg-gray-800 border-gray-600 text-white placeholder-gray-500 focus:border-blue-500' : 'bg-white border-gray-200 text-gray-900 focus:border-blue-500',
+                  tutorSeleccionado ? 'border-green-500 focus:border-green-500' : ''
+                ]"
+              />
+              <div class="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none">
+                 <i v-if="tutorSeleccionado" class="fas fa-check text-green-500"></i>
+                 <i v-else class="fas fa-search opacity-50" :class="isDark ? 'text-white' : 'text-gray-600'"></i>
+              </div>
+            </div>
+            
+            <div v-if="mostrarResultados && resultadosTutores.length > 0" 
+                 class="absolute z-20 w-full mt-1 rounded-xl shadow-xl max-h-48 overflow-auto border"
+                 :class="isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'">
+              <div 
+                v-for="tutor in resultadosTutores" 
+                :key="tutor.id_persona"
+                @mousedown.prevent="seleccionarTutor(tutor)"
+                class="px-4 py-2.5 cursor-pointer transition-colors flex justify-between items-center border-b last:border-0"
+                :class="isDark ? 'border-white/5 hover:bg-gray-700 text-gray-200' : 'border-gray-100 hover:bg-blue-50 text-gray-800'"
+              >
+                <div>
+                  <span class="font-medium block">{{ tutor.nombre_completo }}</span>
+                  <span class="text-xs opacity-70">{{ tutor.cargo_grado || 'Sin cargo' }}</span>
+                </div>
+                <span v-if="tutor.dni" class="text-xs font-mono bg-black/10 dark:bg-white/10 px-1.5 py-0.5 rounded">
+                  {{ tutor.dni }}
+                </span>
+              </div>
+            </div>
+
+            <div v-if="mostrarResultados && busquedaTutor && resultadosTutores.length === 0 && !tutorSeleccionado" 
+                 class="absolute z-20 w-full mt-1 p-3 text-sm text-center rounded-xl border"
+                 :class="isDark ? 'bg-gray-800 border-gray-700 text-gray-400' : 'bg-white border-gray-200 text-gray-500'">
+              No se encontraron personas.
+            </div>
+
+            <input type="hidden" v-model="form.id_tutor">
+          </div>
+
         </div>
 
-        <div class="flex justify-end gap-3 pt-4">
+        <div class="flex justify-end gap-3 pt-8">
           <button type="button" @click="$emit('cerrar')" class="px-5 py-2.5 rounded-xl font-semibold" :class="theme('buttonSecondary').value">
             Cancelar
           </button>
@@ -55,97 +167,178 @@
 </template>
 
 <script setup>
-import { ref, watch, onMounted } from 'vue'
+import { ref, reactive, onMounted, watch, computed } from 'vue'
 import { useTheme } from '@/composables/useTheme'
-import { useGrupos } from '@/composables/useGrupos'
 import api from '@/axiosConfig'
 
-const props = defineProps({ 
-  grupo: Object,
-  area: { type: Object, required: true } // ✅ Recibimos el objeto 'area' completo
+const props = defineProps({
+  grupo: { type: [Object, null], default: null }
 })
 const emit = defineEmits(['cerrar', 'actualizado'])
-
 const { theme, isDark } = useTheme()
-const { crearGrupo, actualizarGrupo } = useGrupos()
 const loading = ref(false)
-const tutores = ref([]) // Para el dropdown
+const areas = ref([])
+let todasLasPersonas = []
 
-const form = ref({
-  nivel: '',
-  grado: '',
-  seccion: '',
-  id_tutor: null,
-  id_area: props.area.id_area // Asignamos el ID del área
+// --- Estado UI ---
+const tipoGestion = ref('') // 'alumnos', 'docentes', 'administrativos', 'otros'
+
+// --- Estado Formulario ---
+const form = reactive({
+  id_area: '',
+  nivel: '',   // Se usará para "Nombre del Grupo"
+  grado: '',   // Se usará para "Grado" (solo alumnos)
+  seccion: '', // Se usará para "Sección" (solo alumnos)
+  id_tutor: null
 })
 
-watch(() => props.grupo, (val) => {
-  if (val) {
-    form.value = {
-      id_area: val.id_area,
-      nivel: val.nivel,
-      grado: val.grado,
-      seccion: val.seccion,
-      id_tutor: val.id_tutor
+// --- Buscador ---
+const busquedaTutor = ref('')
+const resultadosTutores = ref([])
+const mostrarResultados = ref(false)
+const tutorSeleccionado = ref(null)
+
+// --- Helpers Visuales ---
+const placeholderNivel = computed(() => {
+  if (tipoGestion.value === 'alumnos') return 'Ej: Primaria / Secundaria'
+  if (tipoGestion.value === 'docentes') return 'Ej: Plana Docente de Ciencias'
+  if (tipoGestion.value === 'administrativos') return 'Ej: Equipo de Administración'
+  return 'Nombre del Grupo'
+})
+
+// --- Funciones Helpers (Definidas antes de usarse) ---
+const resetForm = () => {
+  form.id_area = ''
+  form.nivel = ''
+  form.grado = ''
+  form.seccion = ''
+  form.id_tutor = null
+  tipoGestion.value = ''
+  busquedaTutor.value = ''
+  tutorSeleccionado.value = null
+}
+
+const seleccionarTutor = (tutor) => {
+  tutorSeleccionado.value = tutor
+  busquedaTutor.value = tutor.nombre_completo
+  form.id_tutor = tutor.id_persona
+  mostrarResultados.value = false
+}
+
+const buscarTutores = () => {
+  if (!busquedaTutor.value) {
+    resultadosTutores.value = []
+    tutorSeleccionado.value = null
+    form.id_tutor = null
+    mostrarResultados.value = false
+    return
+  }
+  
+  const term = busquedaTutor.value.toLowerCase()
+  resultadosTutores.value = todasLasPersonas.filter(p => 
+    (p.nombre_completo && p.nombre_completo.toLowerCase().includes(term)) ||
+    (p.dni && p.dni.includes(term)) ||
+    (p.cargo_grado && p.cargo_grado.toLowerCase().includes(term))
+  ).slice(0, 7)
+  mostrarResultados.value = resultadosTutores.value.length > 0
+}
+
+// Limpia campos si cambiamos de 'alumnos' a 'docentes' por error
+const onTipoGestionChange = () => {
+  if (tipoGestion.value !== 'alumnos') {
+    form.grado = ''
+    form.seccion = ''
+  }
+}
+
+// --- Carga Inicial ---
+onMounted(async () => {
+  try {
+    const [resAreas, resPersonas] = await Promise.all([
+        api.get('/areas'),
+        api.get('/personas') 
+    ])
+    areas.value = resAreas.data
+    todasLasPersonas = resPersonas.data.data || resPersonas.data
+  } catch (e) {
+    console.error("Error cargando datos base:", e)
+  }
+})
+
+
+// --- Watcher Principal ---
+watch(() => props.grupo, (nuevo) => {
+  if (nuevo) {
+    form.id_area = nuevo.id_area || ''
+    form.nivel = nuevo.nivel || ''
+    form.grado = nuevo.grado || ''
+    form.seccion = nuevo.seccion || ''
+    form.id_tutor = nuevo.id_tutor || null
+
+    // Lógica inteligente para detectar el tipo de gestión al editar
+    if (nuevo.grado || nuevo.seccion) {
+        // Si tiene grado o sección, es Alumno
+        tipoGestion.value = 'alumnos'
+    } else {
+        // Si no tiene, asumimos que es personal (Docente/Admin)
+        // Podríamos afinar esto si tuviéramos un campo específico, 
+        // pero 'docentes' es un buen default para editar si no es alumno.
+        tipoGestion.value = 'docentes'
     }
+
+    if (nuevo.id_tutor && todasLasPersonas.length > 0) {
+       const tutor = todasLasPersonas.find(p => p.id_persona === nuevo.id_tutor)
+       if (tutor) seleccionarTutor(tutor)
+    } else if (nuevo.tutor) { 
+       seleccionarTutor(nuevo.tutor)
+    }
+  } else {
+    resetForm()
   }
 }, { immediate: true })
 
-// ✅ Carga los usuarios (para tutores) al montar
-const obtenerTutores = async () => {
-  try {
-    const res = await api.get('/usuarios')
-    // Filtramos usuarios que tengan una persona asociada
-    tutores.value = (res.data.data || res.data)
-      .filter(u => u.persona)
-      .map(u => u.persona)
-  } catch (e) {
-    console.error("No se pudo cargar la lista de tutores", e)
-  }
-}
-onMounted(obtenerTutores)
 
-const guardar = async () => {
+// --- Guardado ---
+const guardarGrupo = async () => {
   loading.value = true
-  try {
-    const payload = { ...form.value }
-    if (!payload.id_tutor) {
-      payload.id_tutor = null // Asegura que se envíe null si está vacío
-    }
+  
+  // Limpieza final de datos antes de enviar
+  if (tipoGestion.value !== 'alumnos') {
+      form.grado = null // Para personal, estos campos van nulos a la BD
+      form.seccion = null
+  }
+  if (!form.id_tutor) form.id_tutor = null
 
+  try {
     if (props.grupo) {
-      await actualizarGrupo(props.grupo.id_grupo, payload)
+      await api.put(`/grupos/${props.grupo.id_grupo}`, form)
     } else {
-      await crearGrupo(payload)
+      await api.post('/grupos', form)
     }
     emit('actualizado')
     emit('cerrar')
   } catch (err) {
-    alert(err.error || 'Error al guardar el grupo')
+    console.error('Error guardando grupo:', err)
+    const msg = err.response?.data?.message || 'Error al guardar el grupo.'
+    const errorData = err.response?.data
+    if (errorData && errorData.errors) {
+       const primerError = Object.values(errorData.errors).map(e => e[0]).join(', ')
+       alert(`Error: ${primerError}`)
+    } else {
+       alert(msg)
+    }
   } finally {
     loading.value = false
   }
 }
-
-// --- Lógica de Estilos (copiada de AreaCard) ---
-const styleCatalog = {
-  'Dirección':            { gradient: 'bg-gradient-to-br from-green-400 to-emerald-600', icon: 'fas fa-building' },
-  'Administración':       { gradient: 'bg-gradient-to-br from-pink-400 to-pink-600',    icon: 'fas fa-briefcase' },
-  'Docentes de Primaria': { gradient: 'bg-gradient-to-br from-orange-400 to-orange-600', icon: 'fas fa-chalkboard-teacher' },
-  'Docentes de Secundaria': { gradient: 'bg-gradient-to-br from-violet-400 to-indigo-500',  icon: 'fas fa-user-graduate' },
-  'Alumnos de Inicial':   { gradient: 'bg-gradient-to-br from-emerald-400 to-green-500', icon: 'fas fa-child' },
-  'Alumnos de Primaria':  { gradient: 'bg-gradient-to-br from-blue-400 to-sky-500',     icon: 'fas fa-book-reader' },
-  'Alumnos de Secundaria':{ gradient: 'bg-gradient-to-br from-purple-400 to-fuchsia-500', icon: 'fas fa-users' },
-  'Tutoría y Psicología': { gradient: 'bg-gradient-to-br from-red-400 to-pink-500',   icon: 'fas fa-hands-helping' },
-  'Mantenimiento y Limpieza': { gradient: 'bg-gradient-to-br from-gray-400 to-gray-700',   icon: 'fas fa-broom' },
-  'Seguridad':            { gradient: 'bg-gradient-to-br from-cyan-400 to-cyan-600',     icon: 'fas fa-shield-alt' },
-  'Biblioteca':           { gradient: 'bg-gradient-to-br from-yellow-400 to-amber-500', icon: 'fas fa-book' },
-  'Laboratorio':          { gradient: 'bg-gradient-to-br from-green-400 to-lime-500',   icon: 'fas fa-flask' },
-  'Coordinación Académica': { gradient: 'bg-gradient-to-br from-teal-400 to-cyan-500', icon: 'fas fa-graduation-cap' },
-  'Servicio Médico':      { gradient: 'bg-gradient-to-br from-red-400 to-rose-500',     icon: 'fas fa-medkit' },
-  'Juegos':               { gradient: 'bg-gradient-to-br from-indigo-400 to-purple-500', icon: 'fas fa-gamepad' },
-  'Prueba':               { gradient: 'bg-gradient-to-br from-gray-400 to-gray-500',     icon: 'fas fa-vial' },
-};
-const defaultStyle = { gradient: 'bg-gradient-to-br from-slate-400 to-slate-600', icon: 'fas fa-layer-group' };
-const getAreaStyle = (nombre) => styleCatalog[nombre] ?? defaultStyle;
 </script>
+
+<style scoped>
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out forwards;
+}
+</style>

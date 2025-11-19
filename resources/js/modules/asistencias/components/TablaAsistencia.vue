@@ -47,12 +47,9 @@
         <table class="w-full text-left">
           <thead :class="theme('tableHeader').value">
             <tr class="border-b" :class="isDark ? 'border-white/20' : 'border-gray-200'">
-              <th class="px-6 py-4 font-bold text-sm uppercase" :class="theme('cardSubtitle').value">Nombre</th>
+              <th class="px-6 py-4 font-bold text-sm uppercase min-w-[250px]" :class="theme('cardSubtitle').value">Nombre</th>
               <th class="px-6 py-4 font-bold text-sm uppercase" :class="theme('cardSubtitle').value">Cargo / Grado</th>
               
-              <!-- ====================================================== -->
-              <!-- CABECERA DINÁMICA (LUN - SAB/DOM)                    -->
-              <!-- ====================================================== -->
               <th 
                 v-for="dia in diasMostrados" 
                 :key="dia" 
@@ -61,7 +58,6 @@
               >
                 {{ diasHeader[dia] }}
               </th>
-              <!-- ====================================================== -->
             </tr>
           </thead>
           <tbody class="divide-y" :class="isDark ? 'divide-white/10' : 'divide-gray-200'">
@@ -72,34 +68,43 @@
               </td>
             </tr>
             <tr 
-              v-for="asistencia in filteredAsistencias" 
+              v-for="(asistencia, index) in filteredAsistencias" 
               :key="asistencia.id_persona"
               class="transition-colors"
-              :class="theme('tableRow').value"
+              :class="[
+                theme('tableRow').value,
+                index % 2 === 0 ? (isDark ? 'bg-white/[0.03]' : 'bg-gray-50/50') : ''
+              ]"
             >
               <td class="px-6 py-4">
-                <span class="font-semibold" :class="theme('cardTitle').value">{{ asistencia.persona?.nombre_completo || 'Sin nombre' }}</span>
+                <div class="flex items-center gap-3">
+                  <div 
+                    class="w-10 h-10 rounded-xl object-cover shadow-md flex items-center justify-center text-white font-bold text-sm flex-shrink-0"
+                    :class="getAvatarGradient(asistencia.id_persona)"
+                  >
+                    {{ getInitials(asistencia.persona?.nombre_completo) }}
+                  </div>
+                  
+                  <div>
+                    <span class="font-semibold block" :class="theme('cardTitle').value">
+                      {{ asistencia.persona?.nombre_completo || 'Sin nombre' }}
+                    </span>
+                    </div>
+                </div>
               </td>
+
               <td class="px-6 py-4" :class="theme('cardSubtitle').value">
                 {{ asistencia.persona?.cargo_grado || '-' }}
               </td>
               
-              <!-- ====================================================== -->
-              <!-- CELDAS DINÁMICAS (LUN - SAB/DOM)                     -->
-              <!-- ====================================================== -->
               <td v-for="dia in diasMostrados"
                   :key="dia"
                   class="text-center px-4 py-4 cursor-pointer group/cell relative hover:bg-gray-700/30"
                   @click="$emit('editar-asistencia', {asistencia, dia: dia, estado: asistencia[dia]})"
               >
-                <!-- 
-                  AQUÍ ESTÁ TU LÓGICA DE GUIÓN:
-                  Si asistencia[dia] es 'null' (del backend), se mostrará '-'
-                -->
                 <span :class="estadoClase(asistencia[dia])">{{ asistencia[dia] || '-' }}</span>
                 <i class="fas fa-edit absolute top-0 right-0 text-xs text-blue-500 opacity-0 group-hover/cell:opacity-100 p-1"></i>
               </td>
-              <!-- ====================================================== -->
             </tr>
           </tbody>
         </table>
@@ -137,9 +142,31 @@ const filteredAsistencias = computed(() =>
   )
 )
 
-// ======================================================
-// LÓGICA DE DÍAS DINÁMICOS
-// ======================================================
+// --- Lógica Visual de Avatares ---
+const gradients = [
+  'bg-gradient-to-br from-blue-400 to-blue-600',
+  'bg-gradient-to-br from-purple-400 to-purple-600',
+  'bg-gradient-to-br from-green-400 to-green-600',
+  'bg-gradient-to-br from-orange-400 to-orange-600',
+  'bg-gradient-to-br from-red-400 to-red-600',
+  'bg-gradient-to-br from-pink-400 to-pink-600',
+  'bg-gradient-to-br from-cyan-400 to-cyan-600'
+]
+
+const getAvatarGradient = (id) => {
+  const safeId = id || 0
+  return gradients[safeId % gradients.length]
+}
+
+const getInitials = (name) => {
+  if (name) {
+    const matches = name.match(/\b\w/g) || []
+    return ((matches.shift() || '') + (matches.shift() || '')).toUpperCase()
+  }
+  return '?'
+}
+
+// --- Lógica de Días Dinámicos ---
 const diasHeader = {
   lunes: 'Lun',
   martes: 'Mar',
@@ -150,41 +177,35 @@ const diasHeader = {
   domingo: 'Dom'
 }
 
-// Revisa si CUALQUIER persona en la lista es 'empleado'
 const mostrarDomingo = computed(() => {
   return props.asistencias.some(a => 
     a.persona?.tipo_persona === 'empleado' ||
-    a.persona?.tipo_persona === 'docente' // (Añade otros tipos de empleado si los tienes)
+    a.persona?.tipo_persona === 'docente' ||
+    a.persona?.tipo_persona === 'administrativo'
   )
 })
 
-// Devuelve el array de días a mostrar
 const diasMostrados = computed(() => {
   if (mostrarDomingo.value) {
     return ['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado', 'domingo'];
   }
-  // Por defecto (si solo hay estudiantes)
   return ['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado'];
 })
-// ======================================================
 
-
-// Tu lógica de clases. 'null' (que se convierte en '') 
-// caerá en el 'return' final, mostrando el guion gris.
 const estadoClase = (valor) => {
   const v = (valor || '').toUpperCase()
-  const base = 'inline-flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold'
+  const base = 'inline-flex items-center justify-center w-8 h-8 rounded-full text-xs font-bold shadow-sm transition-transform hover:scale-110'
   
   if (v === 'P') {
-    return [base, isDark.value ? 'bg-green-500/20 text-green-300' : 'bg-green-100 text-green-800']
+    return [base, isDark.value ? 'bg-green-500/20 text-green-300 border border-green-500/30' : 'bg-green-100 text-green-800 border border-green-200']
   }
   if (v === 'T') {
-    return [base, isDark.value ? 'bg-yellow-500/20 text-yellow-300' : 'bg-yellow-100 text-yellow-800']
+    return [base, isDark.value ? 'bg-yellow-500/20 text-yellow-300 border border-yellow-500/30' : 'bg-yellow-100 text-yellow-800 border border-yellow-200']
   }
   if (v === 'F') {
-    return [base, isDark.value ? 'bg-red-500/20 text-red-300' : 'bg-red-100 text-red-800']
+    return [base, isDark.value ? 'bg-red-500/20 text-red-300 border border-red-500/30' : 'bg-red-100 text-red-800 border border-red-200']
   }
-  // Estado por defecto (para 'null' o guion)
-  return [base, isDark.value ? 'bg-white/5 text-gray-500' : 'bg-gray-100 text-gray-400']
+  // Estado por defecto (null/-)
+  return [base, isDark.value ? 'bg-white/5 text-gray-500 border border-white/5' : 'bg-gray-50 text-gray-400 border border-gray-100']
 }
 </script>

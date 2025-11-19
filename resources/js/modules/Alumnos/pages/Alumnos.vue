@@ -96,7 +96,7 @@ import api from '@/axiosConfig'
 import { useTheme } from '@/composables/useTheme'
 import { useAlumnos } from '@/composables/useAlumnos' 
 import { useGrupos } from '@/composables/useGrupos'
-import GrupoCard from '@/modules/empleados/components/GrupoCard.vue'
+import GrupoCard from '@/modules/personal/components/GrupoCard.vue'
 import TablaAlumnos from '../components/TablaAlumnos.vue'
 import FormularioAlumnoModal from '../components/FormularioAlumnoModal.vue'
 

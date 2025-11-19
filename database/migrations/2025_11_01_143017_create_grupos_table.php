@@ -12,9 +12,9 @@ return new class extends Migration
             $table->id('id_grupo');
             $table->foreignId('id_area')->constrained('areas', 'id_area');
             $table->unsignedBigInteger('id_tutor')->nullable(); // La FK se añade al final
-            $table->string('nivel', 20)->nullable(); // Inicial, Primaria, Secundaria
-            $table->string('grado', 20)->nullable();
-            $table->string('seccion', 5)->nullable();
+            $table->string('nivel', 50)->nullable(); // Inicial, Primaria, Secundaria
+            $table->string('grado', 50)->nullable();
+            $table->string('seccion', 20)->nullable();
             $table->timestamps();
         });
     }

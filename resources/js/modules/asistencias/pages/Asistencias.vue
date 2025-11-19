@@ -49,7 +49,7 @@
         v-else
         :asistencias="asistenciasDelGrupo"
         :nombreGrupo="getNombreGrupo(grupoSeleccionado)"
-        @volver="grupoSeleccionado = null"
+        @volver="handleVolver"
         @editar-asistencia="abrirModalEdicion"
       />
     </div>
@@ -69,7 +69,7 @@ import api from '@/axiosConfig'
 import { useTheme } from '@/composables/useTheme'
 import { useAsistencias } from '@/composables/useAsistencias'
 import { useGrupos } from '@/composables/useGrupos'
-import GrupoCard from '@/modules/empleados/components/GrupoCard.vue'
+import GrupoCard from '@/modules/personal/components/GrupoCard.vue'
 import TablaAsistencia from '../components/TablaAsistencia.vue'
 import FormularioAsistenciaModal from '../components/FormularioAsistenciaModal.vue'
 
@@ -104,7 +104,7 @@ onMounted(async () => {
   loadingAreas.value = true
   try {
     await Promise.all([
-      fetchAsistenciasSemana(), // carga semanal
+      fetchAsistenciasSemana(),
       fetchGrupos(),
       api.get('/areas').then(res => areas.value = res.data)
     ])
@@ -146,18 +146,26 @@ const gruposFiltrados = computed(() => {
 
 const asistenciasDelGrupo = computed(() => {
   if (!grupoSeleccionado.value) return []
-  // retornamos un array de resúmenes (lunes..viernes) para el grupo seleccionado
   return asistencias.value.filter(a => a.persona?.id_grupo === grupoSeleccionado.value.id_grupo)
 })
 
 const seleccionarGrupo = async (grupo) => {
   grupoSeleccionado.value = grupo;
   await fetchAsistenciasSemana({ group_id: grupo.id_grupo });
-};
+}
 
+// ------------------------------------------------
+// NUEVO: función para volver a la vista de grupos
+// ------------------------------------------------
+const handleVolver = async () => {
+  grupoSeleccionado.value = null
+  await fetchAsistenciasSemana()   // recarga TODA la asistencia
+}
+
+// -----------------------------
 // Edición
+// -----------------------------
 const abrirModalEdicion = (data) => {
-  // data = { asistencia, dia, estado }
   registroEditando.value = data
   modalEdicionVisible.value = true
 }
@@ -167,12 +175,15 @@ const cerrarModalEdicion = () => {
   registroEditando.value = null
 }
 
+// ------------------------------------------------
+// NUEVO: manejo correcto al actualizar
+// ------------------------------------------------
 const handleActualizacion = async () => {
   try {
     if (grupoSeleccionado.value) {
-      await refreshWeek({ group_id: grupoSeleccionado.value.id_grupo });
+      await refreshWeek({ group_id: grupoSeleccionado.value.id_grupo })
     } else {
-      await refreshWeek({ group_id: grupoSeleccionado.value.id_grupo });
+      await fetchAsistenciasSemana()   // recarga todo si no hay grupo seleccionado
     }
   } catch (e) {
     console.error('Error recargando semana después de actualizar:', e)

@@ -79,7 +79,7 @@ import { useTheme } from '@/composables/useTheme'
 const { theme, isDark } = useTheme()
 
 const props = defineProps({
-  usuario: {
+  usuario: { // Corregido: La prop ahora es 'usuario'
     type: Object,
     required: true
   }
@@ -96,11 +96,10 @@ const initials = computed(() => {
   return props.usuario.email.substring(0, 2).toUpperCase()
 })
 
-// ✅ Colores por rol ahora es un computed reactivo al tema
+// Clases por rol (copiado del original)
 const roleClasses = computed(() => {
   const role = props.usuario.rol
   if (isDark.value) {
-    // Estilos Modo Oscuro
     switch (role) {
       case 'administrador': return 'bg-blue-500/20 text-blue-300'
       case 'docente': return 'bg-purple-500/20 text-purple-300'
@@ -108,7 +107,6 @@ const roleClasses = computed(() => {
       default: return 'bg-gray-500/20 text-gray-300'
     }
   } else {
-    // Estilos Modo Claro
     switch (role) {
       case 'administrador': return 'bg-blue-100 text-blue-800'
       case 'docente': return 'bg-purple-100 text-purple-800'
@@ -118,13 +116,12 @@ const roleClasses = computed(() => {
   }
 })
 
-// Colores por estado (adaptado a tus estados)
+// Colores por estado
 const statusColors = {
   'activo': 'bg-green-500',
   'inactivo': 'bg-gray-500',
 }
 
-// Genera un gradiente simple y consistente basado en el ID
 const gradients = [
   'from-blue-400 to-blue-600',
   'from-purple-400 to-purple-600',

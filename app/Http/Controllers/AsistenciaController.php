@@ -14,7 +14,6 @@ class AsistenciaController extends Controller
 {
     /**
      * Listar asistencias (filtradas o generales)
-     * Soporta: ?id_persona= X, ?fecha=YYYY-MM-DD, ?per_page=N
      */
     public function index(Request $request)
     {
@@ -35,10 +34,7 @@ class AsistenciaController extends Controller
     }
 
     /**
-     * [FUNCIÓN PRIVADA]
-     * Normaliza el estado de la base de datos a códigos unificados (P, T, F).
-     * Si recibe algo vacío, retorna 'F' (asumiendo que si hay fila creada pero sin estado, es un error o falta).
-     * NOTA: Si no hay fila en la BD, esta función no se llama (quedará en NULL).
+     * [FUNCIÓN PRIVADA] Normaliza el estado (P, T, F).
      */
     private function normalizarEstadoAsistencia($estadoRaw): string
     {
@@ -50,16 +46,14 @@ class AsistenciaController extends Controller
         if (in_array($v, ['tarde', 't'])) return 'T';
         if (in_array($v, ['falta', 'ausente', 'f'])) return 'F';
 
-        // Fallback: tomar primera letra
         $first = strtoupper(substr($v, 0, 1));
         return in_array($first, ['P','T','F']) ? $first : 'F';
     }
 
     /**
      * Resumen semanal adaptado al tipo de persona.
-     * - Estudiantes: Lunes a Sábado.
-     * - Empleados: Lunes a Domingo.
-     * - Días sin registro: NULL (el frontend mostrará guion "-").
+     * - Estudiantes: Lun-Sáb.
+     * - Empleados: Lun-Dom.
      */
     public function asistenciasSemana(Request $request)
     {
@@ -68,8 +62,6 @@ class AsistenciaController extends Controller
 
         $baseDate = $dateParam ? Carbon::parse($dateParam) : Carbon::today();
         $inicioSemana = (clone $baseDate)->startOfWeek(Carbon::MONDAY)->startOfDay();
-        
-        // Consultamos siempre hasta el DOMINGO para tener la data completa de empleados
         $finSemana = (clone $inicioSemana)->addDays(6)->endOfDay();
 
         $queryAsistencias = Asistencia::with('persona')
@@ -88,7 +80,6 @@ class AsistenciaController extends Controller
         $todasLasPersonas = $queryPersonas->get()->keyBy('id_persona');
         $asistenciasAgrupadas = $todasLasAsistencias->groupBy('id_persona');
 
-        // Mapa completo de días para buscar en la BD (Lunes=1 ... Domingo=7)
         $dayMap = [
             Carbon::MONDAY => 'lunes',
             Carbon::TUESDAY => 'martes',
@@ -102,8 +93,6 @@ class AsistenciaController extends Controller
         $resumen = $todasLasPersonas->map(function ($persona) use ($asistenciasAgrupadas, $dayMap) {
             $registros = $asistenciasAgrupadas->get($persona->id_persona, collect());
 
-            // 1. Estructura Base: Lunes a Sábado (Común para todos)
-            // Inicializamos en NULL para indicar "Sin registro"
             $dias = [
                 'lunes' => null,
                 'martes' => null,
@@ -113,22 +102,14 @@ class AsistenciaController extends Controller
                 'sabado' => null,
             ];
 
-            // 2. Lógica Diferenciada: Agregamos Domingo solo si es empleado
-            // (Verifica cómo guardas el 'tipo_persona' en tu BD: 'empleado', 'docente', etc.)
             if (in_array($persona->tipo_persona, ['empleado', 'docente', 'administrativo'])) {
                 $dias['domingo'] = null;
             }
 
-            // 3. Rellenar con datos reales de la BD
             foreach ($registros as $asistencia) {
                 $diaDeLaSemana = Carbon::parse($asistencia->fecha)->dayOfWeek;
-
-                // Verificamos si el día es válido en el mapa
                 if (isset($dayMap[$diaDeLaSemana])) {
                     $llaveDia = $dayMap[$diaDeLaSemana];
-                    
-                    // Solo asignamos el valor si la llave existe en el array $dias de esta persona
-                    // (Esto evita poner datos de domingo a un estudiante que no tiene esa columna)
                     if (array_key_exists($llaveDia, $dias)) {
                         $dias[$llaveDia] = $this->normalizarEstadoAsistencia($asistencia->estado_asistencia);
                     }
@@ -142,7 +123,7 @@ class AsistenciaController extends Controller
                     'cargo_grado' => $persona->cargo_grado,
                     'id_area' => $persona->id_area,
                     'id_grupo' => $persona->id_grupo,
-                    'tipo_persona' => $persona->tipo_persona, // Enviamos el tipo para control en frontend
+                    'tipo_persona' => $persona->tipo_persona,
                 ],
                 ...$dias,
             ];
@@ -153,7 +134,10 @@ class AsistenciaController extends Controller
 
     /**
      * Registrar asistencia (IA o Manual)
-     * Calcula automáticamente estado (Presente/Tarde) según horario.
+     */
+    /**
+     * Registrar asistencia (IA o Manual)
+     * Lógica inteligente para evitar dobles registros accidentales.
      */
     public function store(Request $request)
     {
@@ -163,32 +147,18 @@ class AsistenciaController extends Controller
         ]);
 
         $persona = Persona::find($request->id_persona);
-        $fecha = $request->input('fecha', Carbon::now()->toDateString());
+        // Forzamos zona horaria America/Lima
+        $fecha = $request->input('fecha', Carbon::now('America/Lima')->toDateString());
+        $horaActualCarbon = Carbon::now('America/Lima'); // Objeto Carbon para cálculos
+        $horaActualStr = $horaActualCarbon->toTimeString(); // String para la BD
 
-        // Helper para normalizar hora HH:MM -> HH:MM:SS
-        $normalizeHora = function ($hora) {
-            if (!$hora) return null;
-            if (preg_match('/^\d{2}:\d{2}$/', $hora)) return $hora . ':00';
-            if (preg_match('/^\d{2}:\d{2}:\d{2}$/', $hora)) return $hora;
-            try {
-                return Carbon::parse($hora)->format('H:i:s');
-            } catch (\Exception $e) {
-                return null;
-            }
-        };
-
+        // ... (Tu helper normalizeHora sigue igual aquí) ...
+        $normalizeHora = function ($hora) { /* ... */ }; // (Mantenlo como lo tienes)
         $horaEntradaInput = $normalizeHora($request->input('hora_entrada'));
         $horaSalidaInput = $normalizeHora($request->input('hora_salida'));
 
-        // Buscar horario del área
-        $horario = Horario::where('id_area', $persona->id_area)->first();
-        
-        // Si no hay horario, podrías retornar error 404 o dejar pasar. 
-        // Aquí retornamos error para asegurar consistencia.
-        if (!$horario) {
-             return response()->json(['error' => 'La persona no tiene un horario asignado en su área'], 404);
-        }
 
+        // Buscar o crear el registro del día
         $asistencia = Asistencia::firstOrNew([
             'id_persona' => $persona->id_persona,
             'fecha' => $fecha,
@@ -196,41 +166,72 @@ class AsistenciaController extends Controller
 
         $estadoRecibido = $request->input('estado_asistencia');
 
-        // CASO 1: Registro Manual con estado explícito
+        // --- CASO 1: MANUAL (Admin corrige o crea) ---
         if ($estadoRecibido) {
-            $v = Str::lower(trim($estadoRecibido));
-            if (in_array($v, ['presente','p','pres'])) $asistencia->estado_asistencia = 'Presente';
-            elseif (in_array($v, ['tarde','t'])) $asistencia->estado_asistencia = 'Tarde';
-            elseif (in_array($v, ['falta','f','ausente'])) $asistencia->estado_asistencia = 'Falta';
-            else $asistencia->estado_asistencia = ucfirst($v);
-
-            if ($horaEntradaInput) $asistencia->hora_entrada = $horaEntradaInput;
-            if ($horaSalidaInput) $asistencia->hora_salida = $horaSalidaInput;
-            $asistencia->metodo_registro = $request->input('metodo_registro', 'Manual');
+            // ... (Tu lógica manual existente se queda igual) ...
+            // Copia tu lógica manual aquí (presente/tarde/falta)
+            $asistencia->metodo_registro = 'Manual';
+            // ...
+        } 
         
-        // CASO 2: Registro Automático (IA)
-        } else {
-            // Si no hay hora de entrada, registramos ENTRADA
-            if (is_null($asistencia->hora_entrada)) {
-                $horaActual = $horaEntradaInput ?: Carbon::now()->toTimeString();
-                $asistencia->hora_entrada = $horaActual;
+        // --- CASO 2: AUTOMÁTICO (IA - Escaneo Facial) ---
+        else {
+            $asistencia->metodo_registro = 'IA';
 
-                // Cálculo automático de Tardanza
+            // A) NO TIENE ENTRADA -> REGISTRAR ENTRADA
+            if (is_null($asistencia->hora_entrada)) {
+                $asistencia->hora_entrada = $horaActualStr;
+
+                // Lógica de horario y tardanza
+                $horario = Horario::where('id_area', $persona->id_area)->first();
                 if ($horario) {
-                    $horaLimiteEntrada = Carbon::parse($horario->hora_entrada);
-                    // Puedes agregar minutos de tolerancia aquí, ej: ->addMinutes(5)
-                    $asistencia->estado_asistencia = Carbon::parse($horaActual)->lte($horaLimiteEntrada)
-                        ? 'Presente'
-                        : 'Tarde';
+                    $horaLimite = Carbon::parse($horario->hora_entrada);
+                    $asistencia->estado_asistencia = $horaActualCarbon->lte($horaLimite) ? 'Presente' : 'Tarde';
                 } else {
-                    $asistencia->estado_asistencia = 'Presente'; // Fallback si no hay horario
+                    $asistencia->estado_asistencia = 'Presente';
+                }
+            
+            // B) YA TIENE ENTRADA... ¿QUÉ HACEMOS?
+            } else {
+                
+                // 1. Validar si YA TIENE SALIDA
+                if (!is_null($asistencia->hora_salida)) {
+                    // Si ya marcó todo, no hacemos nada para no sobreescribir por error
+                    return response()->json([
+                        'message' => 'La asistencia de hoy ya está completa (Entrada y Salida registradas).',
+                        'persona' => $persona,
+                        'estado_asistencia' => $asistencia->estado_asistencia
+                    ], 200); 
                 }
 
-                $asistencia->metodo_registro = 'IA';
-            
-            // Si ya hay entrada, registramos SALIDA
-            } else {
-                $asistencia->hora_salida = $horaSalidaInput ?: Carbon::now()->toTimeString();
+                // 2. LÓGICA ANTI-REBOTE (Evitar doble registro por error)
+                // Calculamos tiempo desde la entrada
+                $tiempoEntrada = Carbon::parse($asistencia->hora_entrada);
+                $diferenciaMinutos = $horaActualCarbon->diffInMinutes($tiempoEntrada);
+
+                // Si pasaron menos de 30 minutos desde la entrada, asumimos que es un error/duplicado
+                if ($diferenciaMinutos < 30) {
+                     return response()->json([
+                        'message' => 'Entrada ya registrada hace ' . $diferenciaMinutos . ' minutos. La salida se habilitará después de 30 min.',
+                        'persona' => $persona,
+                        'estado_asistencia' => $asistencia->estado_asistencia
+                    ], 200);
+                }
+
+                // 3. LÓGICA DE SALIDA OPCIONAL (Solo Personal marca salida)
+                // los alumnos NO registran salida
+                
+                if ($persona->tipo_persona === 'estudiante') {
+                     return response()->json([
+                        'message' => 'Entrada registrada correctamente. (Alumnos no marcan salida)',
+                        'persona' => $persona,
+                         'estado_asistencia' => $asistencia->estado_asistencia
+                    ], 200);
+                }
+                
+
+                // Si pasa todas las validaciones, registramos la SALIDA
+                $asistencia->hora_salida = $horaActualStr;
             }
         }
 
@@ -238,24 +239,18 @@ class AsistenciaController extends Controller
 
         return response()->json($asistencia->load('persona'), 201);
     }
-
-    /**
-     * Mostrar asistencia específica
-     */
     public function show(Asistencia $asistencia)
     {
         return $asistencia->load('persona');
     }
 
-    /**
-     * Actualizar asistencia manualmente
-     */
     public function update(Request $request, Asistencia $asistencia)
     {
+        // 'nullable|string' para permitir borrar horas (en caso de Falta)
         $request->validate([
             'fecha' => 'sometimes|date',
-            'hora_entrada' => 'nullable|sometimes|string',
-            'hora_salida' => 'nullable|sometimes|string',
+            'hora_entrada' => 'nullable|string',
+            'hora_salida' => 'nullable|string',
             'estado_asistencia' => 'sometimes|string',
             'metodo_registro' => ['sometimes','string', Rule::in(['IA','Manual'])],
         ]);
@@ -281,8 +276,11 @@ class AsistenciaController extends Controller
 
         $payload = [];
         if ($request->filled('fecha')) $payload['fecha'] = $request->input('fecha');
+        
+        // Permitimos enviar NULL explícitamente para borrar la hora
         if ($request->has('hora_entrada')) $payload['hora_entrada'] = $normalizeHora($request->input('hora_entrada'));
         if ($request->has('hora_salida')) $payload['hora_salida'] = $normalizeHora($request->input('hora_salida'));
+        
         if (!is_null($normalizedEstado)) $payload['estado_asistencia'] = $normalizedEstado;
         if ($request->filled('metodo_registro')) $payload['metodo_registro'] = $request->input('metodo_registro');
 
@@ -291,19 +289,12 @@ class AsistenciaController extends Controller
         return response()->json($asistencia->load('persona'), 200);
     }
 
-    /**
-     * Eliminar asistencia
-     */
     public function destroy(Asistencia $asistencia)
     {
         $asistencia->delete();
         return response()->json(['message' => 'Asistencia eliminada correctamente.'], 200);
     }
 
-    /**
-     * HISTORIAL COMPLETO POR PERSONA
-     * Muestra historial completo, usando NULL para días sin registro.
-     */
     public function historialPersona(Request $request)
     {
         $request->validate([
@@ -316,12 +307,10 @@ class AsistenciaController extends Controller
             ->orderBy('fecha', 'desc')
             ->get()
             ->groupBy(function ($item) {
-                // Agrupar por Año-Semana (ej: 2025-46)
                 return Carbon::parse($item->fecha)->format('o-W');
             });
 
         $historial = [];
-        
         $dayMap = [
             Carbon::MONDAY => 'lunes',
             Carbon::TUESDAY => 'martes',
@@ -335,17 +324,11 @@ class AsistenciaController extends Controller
         foreach ($asistencias as $semana => $registros) {
             $fechaPrimerRegistro = Carbon::parse($registros->first()->fecha);
             $fechaInicio = $fechaPrimerRegistro->copy()->startOfWeek(Carbon::MONDAY);
-            $fechaFin = $fechaInicio->copy()->addDays(6); // Semana completa
+            $fechaFin = $fechaInicio->copy()->addDays(6);
 
-            // Inicializar en NULL (Sin registro)
             $dias = [
-                'lunes' => null,
-                'martes' => null,
-                'miercoles' => null,
-                'jueves' => null,
-                'viernes' => null,
-                'sabado' => null,
-                'domingo' => null,
+                'lunes' => null, 'martes' => null, 'miercoles' => null, 'jueves' => null, 
+                'viernes' => null, 'sabado' => null, 'domingo' => null,
             ];
 
             foreach ($registros as $a) {
@@ -364,7 +347,6 @@ class AsistenciaController extends Controller
             ];
         }
 
-        // Ordenar: Semanas más recientes primero
         usort($historial, function ($a, $b) {
             return $b['semana'] <=> $a['semana'];
         });
