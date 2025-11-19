@@ -105,11 +105,23 @@ onMounted(fetchDashboardData)
     </div>
 
     <div v-else class="space-y-6">
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+        
         <Card title="Empleados" :value="stats.empleados" icon="users" gradient-class="bg-gradient-to-br from-blue-500 to-blue-700"/>
+        
+        <Card 
+          title="Tasa Asistencia Hoy" 
+          :value="stats.asistenciaRateHoy + '%'" 
+          icon="chart-line" 
+          gradient-class="bg-gradient-to-br from-indigo-500 to-indigo-700"
+        />
+
         <Card title="Alumnos" :value="stats.alumnos" icon="user-graduate" gradient-class="bg-gradient-to-br from-cyan-500 to-cyan-600"/>
+        
         <Card title="Asistencias Hoy" :value="stats.asistenciasHoy" icon="calendar-check" gradient-class="bg-gradient-to-br from-green-500 to-emerald-600"/>
+        
         <Card title="Horarios" :value="stats.horariosActivos" icon="clock" gradient-class="bg-gradient-to-br from-purple-500 to-pink-600"/>
+        
         <Card title="Usuarios" :value="stats.usuarios" icon="user-shield" gradient-class="bg-gradient-to-br from-orange-500 to-red-600"/>
       </div>
 

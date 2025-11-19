@@ -7,10 +7,10 @@ use App\Models\Asistencia;
 use App\Models\Persona;
 use App\Models\Horario;
 use App\Models\Usuario;
-use App\Models\Area; // ¡Importante! Asegúrate de importar Area
+use App\Models\Area;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB; // ¡Importante! Asegúrate de importar DB
+use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
@@ -22,7 +22,8 @@ class DashboardController extends Controller
         // --- 1. Estadísticas Principales (Tarjetas) ---
         $stats = [
             'empleados' => Persona::where('tipo_persona', 'empleado')->count(),
-            'alumnos' => Persona::where('tipo_persona', 'alumno')->count(),
+            // CORRECCIÓN 1: Usar 'estudiante' en lugar de 'alumno'
+            'alumnos' => Persona::where('tipo_persona', 'estudiante')->count(),
             'asistenciasHoy' => Asistencia::whereDate('fecha', today())->count(),
             'horariosActivos' => Horario::count(),
             'usuarios' => Usuario::count()
@@ -33,7 +34,7 @@ class DashboardController extends Controller
         $asistenciaData = [];
         for ($i = 6; $i >= 0; $i--) {
             $day = Carbon::today()->subDays($i);
-            $asistenciaLabels[] = $day->isoFormat('ddd'); // Formato: Lun, Mar, Mié...
+            $asistenciaLabels[] = $day->isoFormat('ddd');
             $asistenciaData[] = Asistencia::whereDate('fecha', $day)->count();
         }
         $asistenciaChart = [
@@ -58,7 +59,7 @@ class DashboardController extends Controller
         for ($i = 5; $i >= 0; $i--) {
             $mesIterado = $fechaActual->copy()->subMonths($i);
             $mesFormato = $mesIterado->format('Y-m');
-            $empleadosLabels[] = $mesIterado->isoFormat('MMM'); // Formato: Ene, Feb, Mar...
+            $empleadosLabels[] = $mesIterado->isoFormat('MMM');
 
             $registro = $empleadosPorMes->firstWhere('mes', $mesFormato);
             $empleadosData[] = $registro ? $registro->total : 0;
@@ -74,8 +75,8 @@ class DashboardController extends Controller
             ->groupBy('estado_asistencia')
             ->pluck('total', 'estado_asistencia');
 
-        // Contar total de personas relevantes (empleados + alumnos)
-        $totalPersonas = Persona::whereIn('tipo_persona', ['empleado', 'alumno'])->count();
+        // CORRECCIÓN 2: Usar 'estudiante' en el cálculo de totalPersonas
+        $totalPersonas = Persona::whereIn('tipo_persona', ['empleado', 'estudiante'])->count();
         $presentesHoy = $asistenciasHoy->get('Presente', 0);
         $tardesHoy = $asistenciasHoy->get('Tarde', 0);
         
@@ -83,12 +84,16 @@ class DashboardController extends Controller
         $asistieronHoy = $presentesHoy + $tardesHoy;
         $faltasHoy = $totalPersonas - $asistieronHoy;
 
+        // --- KPI: Tasa de Asistencia de Hoy (Porcentaje) ---
+        $asistenciaRate = $totalPersonas > 0 ? round(($asistieronHoy / $totalPersonas) * 100, 1) : 0;
+        $stats['asistenciaRateHoy'] = $asistenciaRate;
+
         $estadoHoyChart = [
             'labels' => ['Presente', 'Tarde', 'Falta'],
             'data' => [
                 $presentesHoy,
                 $tardesHoy,
-                $faltasHoy < 0 ? 0 : $faltasHoy // Asegura que no sea negativo
+                $faltasHoy < 0 ? 0 : $faltasHoy
             ]
         ];
 

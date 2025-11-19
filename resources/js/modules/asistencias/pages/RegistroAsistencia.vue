@@ -13,10 +13,9 @@
         class="w-full md:w-1/2 p-8 sm:p-12 flex flex-col justify-center items-center text-center"
         :class="isDark ? 'bg-gray-800' : 'bg-gradient-to-br from-blue-500 to-purple-600'"
       >
-        <div class="w-20 h-20 bg-gradient-to-br from-blue-400 to-cyan-400 rounded-full flex items-center justify-center mb-6 shadow-lg">
-          <img src="@/images/logo1.png" alt="Logo" class="w-12 h-12" />
+        <div class="w-20 h-20 bg-white rounded-full flex items-center justify-center mb-6 shadow-lg p-1">
+          <img src="@/images/logo1.png" alt="Logo 4scan" class="object-contain w-full h-full" />
         </div>
-        
         <h1 class="text-3xl font-bold mb-4 text-white">
           Registro de Asistencia
         </h1>
@@ -49,9 +48,9 @@
           <video ref="videoEl" autoplay muted playsinline class="w-full h-full object-cover" v-show="cameraActive"></video>
           
           <div v-show="!cameraActive" class="text-gray-500 flex flex-col items-center">
-             <i class="fas fa-video-slash text-4xl mb-2"></i>
-             <p class="mt-2 font-medium">Cámara desactivada</p>
-             <p class="text-xs opacity-70">Active la cámara para registrar asistencia</p>
+              <i class="fas fa-video-slash text-4xl mb-2"></i>
+              <p class="mt-2 font-medium">Cámara desactivada</p>
+              <p class="text-xs opacity-70">Active la cámara para registrar asistencia</p>
           </div>
 
           <div 
@@ -71,19 +70,19 @@
         </div>
         
         <div class="flex gap-4 w-full justify-center mb-6">
-           <button 
-             @click="toggleCamera"
-             :disabled="!modelosCargados"
-             class="px-8 py-3 rounded-xl font-bold transition-all shadow-lg flex items-center gap-2 text-lg transform hover:scale-105 active:scale-95"
-             :class="[
+            <button 
+              @click="toggleCamera"
+              :disabled="!modelosCargados"
+              class="px-8 py-3 rounded-xl font-bold transition-all shadow-lg flex items-center gap-2 text-lg transform hover:scale-105 active:scale-95"
+              :class="[
                !modelosCargados ? 'opacity-50 cursor-not-allowed bg-gray-400 text-gray-700' :
                cameraActive ? 'bg-red-500 hover:bg-red-600 text-white ring-2 ring-red-300' : 
-                              'bg-blue-600 hover:bg-blue-700 text-white ring-2 ring-blue-300'
-             ]"
-           >
-             <i :class="cameraActive ? 'fas fa-power-off' : 'fas fa-video'"></i>
-             {{ cameraActive ? 'Desactivar Cámara' : 'Activar Cámara' }}
-           </button>
+                                 'bg-blue-600 hover:bg-blue-700 text-white ring-2 ring-blue-300'
+              ]"
+            >
+              <i :class="cameraActive ? 'fas fa-power-off' : 'fas fa-video'"></i>
+              {{ cameraActive ? 'Desactivar Cámara' : 'Activar Cámara' }}
+            </button>
         </div>
         
         <div class="text-center" v-if="cameraActive">
@@ -92,12 +91,12 @@
           </p>
         </div>
         
-         <router-link 
-            to="/login"
-            class="text-sm font-medium mt-6 text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
-          >
-            Ir a Iniciar Sesión <i class="fas fa-arrow-right ml-1"></i>
-          </router-link>
+          <router-link 
+             to="/login"
+             class="text-sm font-medium mt-6 text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
+           >
+             Ir a Iniciar Sesión <i class="fas fa-arrow-right ml-1"></i>
+           </router-link>
       </div>
     </div>
   </div>
@@ -178,7 +177,7 @@ const iniciarCamara = async () => {
     videoEl.value.onplaying = async () => {
         const matcher = await cargarDescriptores()
         if (matcher) {
-           iniciarDeteccion(matcher)
+          iniciarDeteccion(matcher)
         } else {
           // Si falla la carga de descriptores, detenemos para no dejar la cámara en el limbo
           detenerCamara()
@@ -244,8 +243,8 @@ const cargarDescriptores = async () => {
     })
 
     if (labeled.length === 0) {
-       estado.message = "Error: Datos de rostros inválidos en BD."
-       return null
+        estado.message = "Error: Datos de rostros inválidos en BD."
+        return null
     }
 
     estado.message = 'Escaneando...'
