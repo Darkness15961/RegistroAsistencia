@@ -25,12 +25,12 @@
       >
         <Header @toggle-sidebar="toggleSidebar" />
         
-        <main class="flex-1 overflow-y-auto">
+        <main class="flex-1 overflow-y-auto flex flex-col">
           <!-- Contenido de la página actual (Home, Alumnos, Personal, etc.) -->
-          <div class="p-6">
+          <div class="flex-1 p-6">
             <router-view />
           </div>
-          <!-- Asumiendo que Footer se importa y usa aquí -->
+          <!-- Footer siempre al final -->
           <Footer />
         </main>
       </div>

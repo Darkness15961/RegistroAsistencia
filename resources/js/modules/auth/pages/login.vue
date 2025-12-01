@@ -47,31 +47,42 @@
         
         <form @submit.prevent="login" class="space-y-5">
           <div>
-            <label class="block text-sm font-medium mb-1.5" :class="theme('cardSubtitle').value">
+            <label class="block text-sm font-medium mb-2" :class="theme('cardSubtitle').value">
               Correo Electrónico
             </label>
             <input 
               v-model="form.email"
               type="email" 
               placeholder="tu@correo.com"
-              class="w-full rounded-xl"
+              class="w-full rounded-xl px-4 py-3"
               :class="theme('input').value"
               required
             >
           </div>
           
           <div>
-            <label class="block text-sm font-medium mb-1.5" :class="theme('cardSubtitle').value">
+            <label class="block text-sm font-medium mb-2" :class="theme('cardSubtitle').value">
               Contraseña
             </label>
-            <input 
-              v-model="form.password"
-              type="password" 
-              placeholder="••••••••"
-              class="w-full rounded-xl"
-              :class="theme('input').value"
-              required
-            >
+            <div class="relative">
+              <input 
+                v-model="form.password"
+                :type="showPassword ? 'text' : 'password'" 
+                placeholder="••••••••"
+                class="w-full rounded-xl px-4 py-3 pr-10"
+                :class="theme('input').value"
+                required
+              >
+              <button 
+                type="button" 
+                @click="showPassword = !showPassword"
+                class="absolute inset-y-0 right-0 px-3 flex items-center text-sm"
+                :class="theme('cardSubtitle').value"
+                title="Mostrar/Ocultar contraseña"
+              >
+                <i class="fas" :class="showPassword ? 'fa-eye-slash' : 'fa-eye'"></i>
+              </button>
+            </div>
           </div>
 
           <div 
@@ -120,11 +131,14 @@ import { useRouter } from 'vue-router'
 import axios from 'axios'
 
 import { useTheme } from '@/composables/useTheme'
+import { useAuth } from '@/composables/useAuth'
 
 const { theme, isDark, toggleTheme } = useTheme()
+const { fetchUsuarioActual } = useAuth()
 const router = useRouter()
 
 const form = ref({ email: '', password: '' })
+const showPassword = ref(false)
 const loading = ref(false)
 const error = ref(null)
 
@@ -136,7 +150,15 @@ const login = async () => {
     const response = await axios.post('/login', form.value)
     localStorage.setItem('auth_token', response.data.access_token)
     localStorage.setItem('user_data', JSON.stringify(response.data.user))
-    router.push('/home')
+    // Force refresh user data
+    await fetchUsuarioActual(true)
+    
+    const user = response.data.user
+    if (user.rol === 'secretaria') {
+      router.push('/personal')
+    } else {
+      router.push('/home')
+    }
   } catch (err) {
     loading.value = false
     if (err.response && err.response.status === 422) {

@@ -60,9 +60,10 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useTheme } from '@/composables/useTheme.js'
+import { useAuth } from '@/composables/useAuth'
 
 defineProps({
   isCollapsed: {
@@ -73,20 +74,31 @@ defineProps({
 
 const { theme } = useTheme()
 const route = useRoute()
+const { isAdmin, isSupervisor, isDocente, isSecretaria, fetchUsuarioActual } = useAuth()
 
 const isActive = (path) => route.path === path
 
-const menu = ref([
-  { path: '/home', label: 'Inicio', icon: 'fa-home' },
-  { path: '/usuarios', label: 'Usuarios', icon: 'fa-user-cog' },
-  { path: '/areas', label: 'Áreas', icon: 'fa-building' },
-  { path: '/horarios', label: 'Horarios', icon: 'fa-clock' },
-  { path: '/personal', label: 'Personal', icon: 'fa-users' },
-  { path: '/alumnos', label: 'Alumnos', icon: 'fa-user-graduate' },
-  { path: '/asistencias', label: 'Asistencias', icon: 'fa-calendar-check' },
-
-
-
-
+const allMenuItems = ref([
+  { path: '/home', label: 'Inicio', icon: 'fa-home', roles: ['admin', 'supervisor', 'docente'] },
+  { path: '/usuarios', label: 'Usuarios', icon: 'fa-user-cog', roles: ['admin'] },
+  { path: '/areas', label: 'Áreas', icon: 'fa-building', roles: ['admin', 'secretaria'] },
+  { path: '/horarios', label: 'Horarios', icon: 'fa-clock', roles: ['admin', 'secretaria'] },
+  { path: '/personal', label: 'Personal', icon: 'fa-users', roles: ['admin', 'supervisor', 'secretaria'] },
+  { path: '/alumnos', label: 'Alumnos', icon: 'fa-user-graduate', roles: ['admin', 'secretaria'] },
+  { path: '/asistencias', label: 'Asistencias', icon: 'fa-calendar-check', roles: ['admin', 'supervisor', 'docente'] },
 ])
+
+const menu = computed(() => {
+  return allMenuItems.value.filter(item => {
+    if (isAdmin.value) return item.roles.includes('admin')
+    if (isSupervisor.value) return item.roles.includes('supervisor')
+    if (isDocente.value) return item.roles.includes('docente')
+    if (isSecretaria.value) return item.roles.includes('secretaria')
+    return false
+  })
+})
+
+onMounted(() => {
+  fetchUsuarioActual()
+})
 </script>

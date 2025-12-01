@@ -3,17 +3,39 @@
 namespace App\Http\Controllers;
 
 use App\Models\Persona;
+use App\Models\Grupo;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class PersonaController extends Controller
 {
     public function index(Request $request)
     {
-        // Permite filtrar por tipo, ej: /api/personas?tipo=estudiante
-        if ($request->has('tipo')) {
-            return Persona::where('tipo_persona', $request->tipo)->get();
+        $usuario = Auth::user();
+        $persona = $usuario ? $usuario->persona : null;
+        
+        $query = Persona::query();
+        
+        if ($usuario && $usuario->rol === 'supervisor') {
+            // Solo personal
+            $query->whereIn('tipo_persona', ['empleado', 'docente', 'administrativo']);
         }
-        return Persona::all();
+        
+        if ($usuario && $usuario->rol === 'docente' && $persona) {
+            // Solo estudiantes de sus grupos
+            $gruposIds = Grupo::where('id_tutor', $persona->id_persona)->pluck('id_grupo');
+            $query->whereIn('id_grupo', $gruposIds)
+                  ->where('tipo_persona', 'estudiante');
+        }
+        
+        // Admin ve todos
+        
+        // Aplicar filtros adicionales del request
+        if ($request->has('tipo')) {
+            $query->where('tipo_persona', $request->tipo);
+        }
+        
+        return response()->json($query->get());
     }
 
     public function store(Request $request)

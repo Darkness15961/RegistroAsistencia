@@ -4,11 +4,11 @@
       <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <div>
           <h1 class="text-2xl sm:text-3xl font-bold mb-2" :class="theme('cardTitle').value">
-            <i class="fas fa-calendar-check mr-2"></i>
-            {{ nombreGrupo }}
+            <i class="fas fa-clock mr-2"></i>
+            Registro de Salidas - {{ nombreGrupo }}
           </h1>
           <p :class="theme('cardSubtitle').value" class="text-sm">
-            Resumen de asistencias semanales para este grupo
+            Horas de salida del personal
           </p>
         </div>
         
@@ -19,17 +19,7 @@
             :class="theme('buttonSecondary').value" 
           >
             <i class="fas fa-arrow-left"></i>
-            Volver a Grupos
-          </button>
-          
-          <button 
-            v-if="esGrupoPersonal"
-            @click="$emit('ver-salidas')"
-            class="flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-semibold shadow-lg"
-            :class="theme('buttonPrimary').value" 
-          >
-            <i class="fas fa-clock"></i>
-            Ver Salidas
+            Volver a Asistencias
           </button>
         </div>
       </div>
@@ -58,7 +48,7 @@
           <thead :class="theme('tableHeader').value">
             <tr class="border-b" :class="isDark ? 'border-white/20' : 'border-gray-200'">
               <th class="px-6 py-4 font-bold text-sm uppercase min-w-[250px]" :class="theme('cardSubtitle').value">Nombre</th>
-              <th class="px-6 py-4 font-bold text-sm uppercase" :class="theme('cardSubtitle').value">Cargo / Grado</th>
+              <th class="px-6 py-4 font-bold text-sm uppercase" :class="theme('cardSubtitle').value">Cargo</th>
               
               <th 
                 v-for="dia in diasMostrados" 
@@ -71,15 +61,15 @@
             </tr>
           </thead>
           <tbody class="divide-y" :class="isDark ? 'divide-white/10' : 'divide-gray-200'">
-            <tr v-if="filteredAsistencias.length === 0">
+            <tr v-if="filteredSalidas.length === 0">
               <td :colspan="diasMostrados.length + 2" class="text-center p-8" :class="theme('cardSubtitle').value">
-                <i class="fas fa-calendar-times text-5xl mb-3 opacity-50"></i>
-                <p>No se encontraron asistencias para este grupo</p>
+                <i class="fas fa-clock text-5xl mb-3 opacity-50"></i>
+                <p>No se encontraron registros de salida para este grupo</p>
               </td>
             </tr>
             <tr 
-              v-for="(asistencia, index) in filteredAsistencias" 
-              :key="asistencia.id_persona"
+              v-for="(salida, index) in filteredSalidas" 
+              :key="salida.id_persona"
               class="transition-colors"
               :class="[
                 theme('tableRow').value,
@@ -90,32 +80,41 @@
                 <div class="flex items-center gap-3">
                   <div 
                     class="w-10 h-10 rounded-xl object-cover shadow-md flex items-center justify-center text-white font-bold text-sm flex-shrink-0"
-                    :class="getAvatarGradient(asistencia.id_persona)"
+                    :class="getAvatarGradient(salida.id_persona)"
                   >
-                    {{ getInitials(asistencia.persona?.nombre_completo) }}
+                    {{ getInitials(salida.persona?.nombre_completo) }}
                   </div>
                   
                   <div>
                     <span class="font-semibold block" :class="theme('cardTitle').value">
-                      {{ asistencia.persona?.nombre_completo || 'Sin nombre' }}
+                      {{ salida.persona?.nombre_completo || 'Sin nombre' }}
                     </span>
                   </div>
                 </div>
               </td>
 
               <td class="px-6 py-4" :class="theme('cardSubtitle').value">
-                {{ asistencia.persona?.cargo_grado || '-' }}
+                {{ salida.persona?.cargo_grado || '-' }}
               </td>
               
               <td v-for="dia in diasMostrados"
                   :key="dia"
-                  class="text-center px-4 py-4 cursor-pointer group/cell relative hover:bg-gray-700/30"
-                  @click="$emit('editar-asistencia', {asistencia, dia: dia, estado: asistencia[dia]?.estado})"
+                  class="text-center px-4 py-4"
               >
-                <div class="flex flex-col items-center justify-center gap-1">
-                  <span :class="estadoClase(asistencia[dia]?.estado)">{{ asistencia[dia]?.estado || '-' }}</span>
+                <div v-if="salida[dia]?.hora_salida" class="flex flex-col items-center justify-center gap-1">
+                  <span class="font-semibold text-sm" :class="theme('cardTitle').value">
+                    {{ salida[dia].hora_salida }}
+                  </span>
+                  <span 
+                    v-if="salida[dia].fuera_tiempo" 
+                    class="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full"
+                    :class="isDark ? 'bg-orange-500/20 text-orange-300' : 'bg-orange-100 text-orange-800'"
+                  >
+                    <i class="fas fa-exclamation-triangle"></i>
+                    Fuera de tiempo
+                  </span>
                 </div>
-                <i class="fas fa-edit absolute top-0 right-0 text-xs text-blue-500 opacity-0 group-hover/cell:opacity-100 p-1"></i>
+                <span v-else :class="theme('cardSubtitle').value">-</span>
               </td>
             </tr>
           </tbody>
@@ -132,27 +131,23 @@ import { useTheme } from '@/composables/useTheme'
 const { theme, isDark } = useTheme()
 
 const props = defineProps({
-  asistencias: {
+  salidas: {
     type: Array,
     required: true
   },
   nombreGrupo: {
     type: String,
-    default: 'Asistencias'
-  },
-  esGrupoPersonal: {
-    type: Boolean,
-    default: false
+    default: 'Personal'
   }
 })
 
-defineEmits(['volver', 'editar-asistencia', 'ver-salidas'])
+defineEmits(['volver'])
 
 const search = ref('')
 
-const filteredAsistencias = computed(() =>
-  props.asistencias.filter(a =>
-    (a.persona?.nombre_completo || '')
+const filteredSalidas = computed(() =>
+  props.salidas.filter(s =>
+    (s.persona?.nombre_completo || '')
       .toLowerCase()
       .includes(search.value.toLowerCase())
   )
@@ -182,7 +177,7 @@ const getInitials = (name) => {
   return '?'
 }
 
-// --- Lógica de Días Dinámicos ---
+// --- Lógica de Días ---
 const diasHeader = {
   lunes: 'Lun',
   martes: 'Mar',
@@ -193,35 +188,8 @@ const diasHeader = {
   domingo: 'Dom'
 }
 
-const mostrarDomingo = computed(() => {
-  return props.asistencias.some(a => 
-    a.persona?.tipo_persona === 'empleado' ||
-    a.persona?.tipo_persona === 'docente' ||
-    a.persona?.tipo_persona === 'administrativo'
-  )
-})
-
 const diasMostrados = computed(() => {
-  if (mostrarDomingo.value) {
-    return ['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado', 'domingo'];
-  }
-  return ['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado'];
+  // Personal siempre muestra todos los días
+  return ['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado', 'domingo'];
 })
-
-const estadoClase = (valor) => {
-  const v = (valor || '').toUpperCase()
-  const base = 'inline-flex items-center justify-center w-8 h-8 rounded-full text-xs font-bold shadow-sm transition-transform hover:scale-110'
-  
-  if (v === 'P') {
-    return [base, isDark.value ? 'bg-green-500/20 text-green-300 border border-green-500/30' : 'bg-green-100 text-green-800 border border-green-200']
-  }
-  if (v === 'T') {
-    return [base, isDark.value ? 'bg-yellow-500/20 text-yellow-300 border border-yellow-500/30' : 'bg-yellow-100 text-yellow-800 border border-yellow-200']
-  }
-  if (v === 'F') {
-    return [base, isDark.value ? 'bg-red-500/20 text-red-300 border border-red-500/30' : 'bg-red-100 text-red-800 border border-red-200']
-  }
-  // Estado por defecto (null/-)
-  return [base, isDark.value ? 'bg-white/5 text-gray-500 border border-white/5' : 'bg-gray-50 text-gray-400 border border-gray-100']
-}
 </script>

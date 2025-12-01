@@ -10,7 +10,7 @@ class Area extends Model
     use HasFactory;
     
     protected $primaryKey = 'id_area';
-    protected $fillable = ['nombre_area', 'descripcion'];
+    protected $fillable = ['nombre_area', 'descripcion', 'tipo_area'];
 
     // Un Área tiene muchos Horarios
     public function horarios()

@@ -4,13 +4,29 @@ namespace App\Http\Controllers;
 
 use App\Models\Grupo;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class GrupoController extends Controller
 {
     public function index()
     {
-        // Traemos los grupos con su área y la persona que es tutora
-        return Grupo::with(['area', 'tutor'])->get();
+        $usuario = Auth::user();
+        $persona = $usuario ? $usuario->persona : null;
+        
+        $query = Grupo::with(['area', 'tutor']);
+        
+        if ($usuario && $usuario->rol === 'supervisor') {
+            // Supervisores no ven grupos de estudiantes
+            return response()->json([]);
+        }
+        
+        if ($usuario && $usuario->rol === 'docente' && $persona) {
+            // Solo grupos donde es tutor
+            $query->where('id_tutor', $persona->id_persona);
+        }
+        
+        // Admin ve todos
+        return response()->json($query->get());
     }
 
     public function store(Request $request)

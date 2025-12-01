@@ -24,19 +24,19 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label class="block text-sm font-medium mb-1.5" :class="theme('cardSubtitle').value">Nombre Completo</label>
-            <input v-model="userForm.nombre_completo" type="text" :readonly="!isEditing" :class="[theme('input').value, !isEditing && 'opacity-70']" class="w-full rounded-xl"/>
+            <input v-model="userForm.nombre_completo" type="text" :readonly="!isEditing" :class="[theme('input').value, !isEditing && 'opacity-70']" class="w-full rounded-xl px-4 py-3"/>
           </div>
           <div>
             <label class="block text-sm font-medium mb-1.5" :class="theme('cardSubtitle').value">DNI</label>
-            <input v-model="userForm.dni" type="text" :readonly="!isEditing" :class="[theme('input').value, !isEditing && 'opacity-70']" class="w-full rounded-xl"/>
+            <input v-model="userForm.dni" type="text" :readonly="!isEditing" :class="[theme('input').value, !isEditing && 'opacity-70']" class="w-full rounded-xl px-4 py-3"/>
           </div>
           <div>
             <label class="block text-sm font-medium mb-1.5" :class="theme('cardSubtitle').value">Correo</label>
-            <input v-model="userForm.correo" type="email" :readonly="!isEditing" :class="[theme('input').value, !isEditing && 'opacity-70']" class="w-full rounded-xl"/>
+            <input v-model="userForm.correo" type="email" :readonly="!isEditing" :class="[theme('input').value, !isEditing && 'opacity-70']" class="w-full rounded-xl px-4 py-3"/>
           </div>
           <div>
             <label class="block text-sm font-medium mb-1.5" :class="theme('cardSubtitle').value">Teléfono</label>
-            <input v-model="userForm.telefono" type="tel" :readonly="!isEditing" :class="[theme('input').value, !isEditing && 'opacity-70']" class="w-full rounded-xl"/>
+            <input v-model="userForm.telefono" type="tel" :readonly="!isEditing" :class="[theme('input').value, !isEditing && 'opacity-70']" class="w-full rounded-xl px-4 py-3"/>
           </div>
         </div>
         
@@ -72,7 +72,7 @@
                 :type="showCurrentPassword ? 'text' : 'password'" 
                 required 
                 :class="theme('input').value" 
-                class="w-full rounded-xl pr-10"
+                class="w-full rounded-xl px-4 py-3 pr-10"
               />
               <button 
                 type="button" 
@@ -94,7 +94,7 @@
                 :type="showNewPassword ? 'text' : 'password'" 
                 required 
                 :class="theme('input').value" 
-                class="w-full rounded-xl pr-10"
+                class="w-full rounded-xl px-4 py-3 pr-10"
               />
               <button 
                 type="button" 
@@ -116,7 +116,7 @@
                 :type="showConfirmPassword ? 'text' : 'password'" 
                 required 
                 :class="theme('input').value" 
-                class="w-full rounded-xl pr-10"
+                class="w-full rounded-xl px-4 py-3 pr-10"
               />
               <button 
                 type="button" 
@@ -138,21 +138,6 @@
           </button>
         </div>
       </form>
-    </div>
-
-    <div class="p-6 rounded-2xl border border-red-500/30" :class="theme('card').value">
-      <h2 class="text-xl font-bold mb-2 text-red-400">
-        Zona de Peligro
-      </h2>
-      <p class="mb-4 text-sm" :class="theme('cardSubtitle').value">
-        Esta acción no se puede deshacer. Esto eliminará permanentemente tu cuenta y todos tus datos asociados.
-      </p>
-      <div class="flex justify-start">
-        <button @click="deleteAccount" :disabled="loading.delete" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-xl font-semibold transition-colors disabled:opacity-50">
-          <i v-if="loading.delete" class="fas fa-spinner animate-spin mr-2"></i>
-          Eliminar mi cuenta
-        </button>
-      </div>
     </div>
   </div>
 </template>
@@ -185,7 +170,6 @@ const showConfirmPassword = ref(false)
 const loading = reactive({
   profile: false,
   password: false,
-  delete: false,
 })
 const successMessage = ref('')
 const errorMessage = ref('')
@@ -257,18 +241,5 @@ async function changePassword() {
   }
 }
 
-async function deleteAccount() {
-  if (confirm('¿Estás seguro de que quieres eliminar tu cuenta? Esta acción es irreversible.')) {
-    loading.delete = true
-    try {
-      await axios.delete('/perfil') 
-      localStorage.removeItem('auth_token')
-      localStorage.removeItem('user_data')
-      router.push('/login')
-    } catch (error) {
-      setNotification('error', 'No se pudo eliminar la cuenta.')
-      loading.delete = false
-    }
-  }
-}
+
 </script>

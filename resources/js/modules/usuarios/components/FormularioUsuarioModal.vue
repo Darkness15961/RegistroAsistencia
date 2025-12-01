@@ -4,185 +4,172 @@
     @click.self="$emit('close')"
   >
     <div 
-      class="w-full max-w-xl rounded-3xl border shadow-2xl p-6" 
+      class="w-full max-w-2xl rounded-3xl border shadow-2xl px-8 sm:px-10 py-6 sm:py-8" 
       :class="theme('card').value"
     >
-      <h3 class="text-xl font-bold mb-6" :class="theme('cardTitle').value">
+      <h2 class="text-xl font-bold mb-6 text-left" :class="theme('cardTitle').value">
         {{ isEditing ? 'Editar Usuario' : 'Nuevo Usuario' }}
-      </h3>
+      </h2>
 
-      <form @submit.prevent="submit" class="space-y-4">
+      <form @submit.prevent="submit" class="space-y-5">
         
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- Row 1: Email y Persona -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+          <!-- Email -->
           <div>
-            <label class="block text-sm font-medium mb-1.5" :class="theme('cardSubtitle').value">
+            <label class="block text-sm font-medium mb-2" :class="theme('cardSubtitle').value">
               Email de Acceso
             </label>
             <input 
-              v-model="form.email" 
-              type="email"
-              placeholder="usuario@dominio.com" 
+              type="email" 
+              v-model="form.email"
               required
-              class="w-full rounded-xl border px-3 py-2 outline-none transition-colors"
-              :class="isDark ? 'bg-gray-800 border-gray-600 text-white placeholder-gray-500 focus:border-blue-500' : 'bg-white border-gray-200 text-gray-900 focus:border-blue-500'"
+              class="w-full rounded-xl border px-4 py-2.5 outline-none transition-colors"
+              :class="isDark ? 'bg-gray-800 border-gray-600 text-white focus:border-blue-500' : 'bg-white border-gray-200 text-gray-900 focus:border-blue-500'"
+              placeholder="usuario@dominio.com"
             />
           </div>
-          
-          <div class="relative">
-            <label class="block text-sm font-medium mb-1.5" :class="theme('cardSubtitle').value">
+
+          <!-- Buscador de Personas -->
+          <div>
+            <label class="block text-sm font-medium mb-2" :class="theme('cardSubtitle').value">
               Vincular a Persona
             </label>
-            
             <div class="relative">
               <input 
-                v-model="busquedaPersona" 
-                type="text"
-                placeholder="Buscar por nombre..." 
+                type="text" 
+                v-model="busquedaPersona"
                 @input="buscarPersonas"
-                @focus="mostrarResultados = true"
-                class="w-full rounded-xl border px-3 py-2 pr-8 outline-none transition-colors"
+                class="w-full rounded-xl border px-4 py-2.5 pr-10 outline-none transition-colors"
                 :class="[
                   isDark ? 'bg-gray-800 border-gray-600 text-white placeholder-gray-500 focus:border-blue-500' : 'bg-white border-gray-200 text-gray-900 focus:border-blue-500',
-                  personaSeleccionada ? 'border-green-500 focus:border-green-500' : ''
+                  isEditing ? 'opacity-75 cursor-not-allowed bg-gray-100 dark:bg-gray-700' : ''
                 ]"
+                placeholder="Buscar por nombre..."
+                :disabled="isEditing" 
               />
-              
-              <div class="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none">
-                <i v-if="personaSeleccionada" class="fas fa-check text-green-500"></i>
-                <i v-else class="fas fa-search" :class="theme('cardSubtitle').value"></i>
+              <div class="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none" :class="isDark ? 'text-white' : 'text-gray-600'">
+                 <i class="fas fa-search opacity-70"></i>
               </div>
-            </div>
 
-            <div v-if="mostrarResultados && resultadosPersonas.length > 0" 
-                 class="absolute z-10 w-full mt-1 rounded-xl shadow-lg max-h-60 overflow-auto border"
-                 :class="isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'">
-              
+              <!-- Resultados de búsqueda -->
               <div 
-                v-for="persona in resultadosPersonas" 
-                :key="persona.id_persona"
-                @click="seleccionarPersona(persona)"
-                class="px-4 py-2 cursor-pointer transition-colors flex justify-between items-center"
-                :class="isDark ? 'hover:bg-gray-700 text-gray-200' : 'hover:bg-blue-50 text-gray-800'"
+                v-if="mostrarResultados && resultadosPersonas.length > 0"
+                class="absolute z-20 w-full mt-1 rounded-xl shadow-xl max-h-48 overflow-auto border"
+                :class="isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'"
               >
-                <span class="font-medium">{{ persona.nombre_completo }}</span>
-                <span class="text-xs opacity-70">{{ persona.cargo_grado }}</span>
+                <div 
+                  v-for="persona in resultadosPersonas" 
+                  :key="persona.id_persona"
+                  @mousedown.prevent="seleccionarPersona(persona)"
+                  class="px-4 py-2.5 cursor-pointer transition-colors flex justify-between items-center border-b last:border-0"
+                  :class="isDark ? 'border-white/5 hover:bg-gray-700 text-gray-200' : 'border-gray-100 hover:bg-blue-50 text-gray-800'"
+                >
+                  <div>
+                    <span class="font-medium block">{{ persona.nombre_completo }}</span>
+                    <span class="text-xs opacity-70">{{ persona.dni }}</span>
+                  </div>
+                </div>
               </div>
             </div>
-            
-            <div v-if="mostrarResultados && busquedaPersona && resultadosPersonas.length === 0 && !personaSeleccionada" 
-                 class="absolute z-10 w-full mt-1 p-2 text-sm text-center rounded-xl border"
-                 :class="isDark ? 'bg-gray-800 border-gray-700 text-gray-400' : 'bg-white border-gray-200 text-gray-500'">
-              No se encontraron personas.
-            </div>
-            
-            <input type="hidden" v-model="form.id_persona">
           </div>
+        </div>
 
+        <!-- Row 2: Rol y Estado -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
           <div>
-            <label class="block text-sm font-medium mb-1.5" :class="theme('cardSubtitle').value">
+            <label class="block text-sm font-medium mb-2" :class="theme('cardSubtitle').value">
               Rol del Usuario
             </label>
             <div class="relative">
               <select 
-                v-model="form.rol" 
-                class="w-full rounded-xl appearance-none border px-3 py-2 pr-8 outline-none transition-colors"
+                v-model="form.rol"
+                class="w-full rounded-xl appearance-none border px-4 py-2.5 pr-10 outline-none transition-colors"
                 :class="isDark ? 'bg-gray-800 border-gray-600 text-white focus:border-blue-500' : 'bg-white border-gray-200 text-gray-900 focus:border-blue-500'"
               >
-                <option value="administrador" :class="isDark ? 'bg-gray-800' : 'bg-white'">Administrador</option>
-                <option value="empleado" :class="isDark ? 'bg-gray-800' : 'bg-white'">Empleado</option>
-                <option value="docente" :class="isDark ? 'bg-gray-800' : 'bg-white'">Docente</option>
+                <option value="docente">Docente</option>
+                <option value="secretaria">Secretaria</option>
+                <option value="supervisor">Supervisor</option>
+                <option value="empleado">Otros</option>
               </select>
-              <div class="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none" 
-                   :class="isDark ? 'text-white' : 'text-gray-600'">
+              <div class="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none" :class="isDark ? 'text-white' : 'text-gray-600'">
                 <i class="fas fa-chevron-down text-xs"></i>
               </div>
             </div>
           </div>
-
           <div>
-            <label class="block text-sm font-medium mb-1.5" :class="theme('cardSubtitle').value">
+            <label class="block text-sm font-medium mb-2" :class="theme('cardSubtitle').value">
               Estado
             </label>
             <div class="relative">
               <select 
-                v-model="form.estado" 
-                class="w-full rounded-xl appearance-none border px-3 py-2 pr-8 outline-none transition-colors"
+                v-model="form.estado"
+                class="w-full rounded-xl appearance-none border px-4 py-2.5 pr-10 outline-none transition-colors"
                 :class="isDark ? 'bg-gray-800 border-gray-600 text-white focus:border-blue-500' : 'bg-white border-gray-200 text-gray-900 focus:border-blue-500'"
               >
-                <option value="activo" :class="isDark ? 'bg-gray-800' : 'bg-white'">Activo</option>
-                <option value="inactivo" :class="isDark ? 'bg-gray-800' : 'bg-white'">Inactivo</option>
+                <option value="activo">Activo</option>
+                <option value="inactivo">Inactivo</option>
               </select>
-              <div class="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none" 
-                   :class="isDark ? 'text-white' : 'text-gray-600'">
+              <div class="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none" :class="isDark ? 'text-white' : 'text-gray-600'">
                 <i class="fas fa-chevron-down text-xs"></i>
               </div>
             </div>
           </div>
         </div>
 
-        <div v-if="!isEditing" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- Row 3: Password (solo crear) -->
+        <div v-if="!isEditing" class="grid grid-cols-1 sm:grid-cols-2 gap-5">
           <div>
-            <label class="block text-sm font-medium mb-1.5" :class="theme('cardSubtitle').value">
+            <label class="block text-sm font-medium mb-2" :class="theme('cardSubtitle').value">
               Contraseña
             </label>
             <div class="relative">
-              <input 
-                v-model="form.password" 
-                :type="showPassword ? 'text' : 'password'" 
-                placeholder="••••••••" 
-                required
-                class="w-full rounded-xl border px-3 py-2 pr-10 outline-none transition-colors"
-                :class="isDark ? 'bg-gray-800 border-gray-600 text-white placeholder-gray-500 focus:border-blue-500' : 'bg-white border-gray-200 text-gray-900 focus:border-blue-500'"
-              />
-              <button 
-                type="button" 
-                @click="showPassword = !showPassword"
-                class="absolute inset-y-0 right-0 px-3 flex items-center text-sm"
-                :class="theme('cardSubtitle').value"
-              >
-                <i class="fas" :class="showPassword ? 'fa-eye-slash' : 'fa-eye'"></i>
-              </button>
+                <input 
+                    :type="showPassword ? 'text' : 'password'" 
+                    v-model="form.password"
+                    required
+                    class="w-full rounded-xl border px-4 py-2.5 pr-10 outline-none transition-colors"
+                    :class="isDark ? 'bg-gray-800 border-gray-600 text-white focus:border-blue-500' : 'bg-white border-gray-200 text-gray-900 focus:border-blue-500'"
+                    placeholder="••••••••"
+                />
+                <button type="button" @click="showPassword = !showPassword" class="absolute inset-y-0 right-0 flex items-center px-3 text-gray-400 hover:text-gray-600 transition-colors">
+                    <i :class="showPassword ? 'fas fa-eye-slash' : 'fas fa-eye'"></i>
+                </button>
             </div>
           </div>
           <div>
-            <label class="block text-sm font-medium mb-1.5" :class="theme('cardSubtitle').value">
+            <label class="block text-sm font-medium mb-2" :class="theme('cardSubtitle').value">
               Confirmar Contraseña
             </label>
             <div class="relative">
-              <input 
-                v-model="form.password_confirmation" 
-                :type="showConfirmPassword ? 'text' : 'password'" 
-                placeholder="••••••••" 
-                required
-                class="w-full rounded-xl border px-3 py-2 pr-10 outline-none transition-colors"
-                :class="isDark ? 'bg-gray-800 border-gray-600 text-white placeholder-gray-500 focus:border-blue-500' : 'bg-white border-gray-200 text-gray-900 focus:border-blue-500'"
-              />
-              <button 
-                type="button" 
-                @click="showConfirmPassword = !showConfirmPassword"
-                class="absolute inset-y-0 right-0 px-3 flex items-center text-sm"
-                :class="theme('cardSubtitle').value"
-              >
-                <i class="fas" :class="showConfirmPassword ? 'fa-eye-slash' : 'fa-eye'"></i>
-              </button>
+                <input 
+                    :type="showConfirmPassword ? 'text' : 'password'" 
+                    v-model="form.password_confirmation"
+                    required
+                    class="w-full rounded-xl border px-4 py-2.5 pr-10 outline-none transition-colors"
+                    :class="isDark ? 'bg-gray-800 border-gray-600 text-white focus:border-blue-500' : 'bg-white border-gray-200 text-gray-900 focus:border-blue-500'"
+                    placeholder="••••••••"
+                />
+                <button type="button" @click="showConfirmPassword = !showConfirmPassword" class="absolute inset-y-0 right-0 flex items-center px-3 text-gray-400 hover:text-gray-600 transition-colors">
+                    <i :class="showConfirmPassword ? 'fas fa-eye-slash' : 'fas fa-eye'"></i>
+                </button>
             </div>
           </div>
         </div>
 
-        <div class="flex gap-3 justify-end pt-4">
+        <!-- Botones -->
+        <div class="flex justify-end gap-3 pt-6">
           <button 
-            type="button" 
-            @click="$emit('close')" 
-            class="px-5 py-2 rounded-xl font-semibold"
-            :class="theme('buttonSecondary').value"
+            type="button"
+            @click="$emit('close')"
+            class="px-6 py-2.5 rounded-xl font-semibold transition-colors bg-gray-700 text-white hover:bg-gray-600"
           >
             Cancelar
           </button>
           <button 
             type="submit" 
             :disabled="loading"
-            class="px-5 py-2 rounded-xl font-semibold flex items-center gap-2"
-            :class="[theme('buttonPrimary').value, loading && 'opacity-50']"
+            class="px-6 py-2.5 rounded-xl font-semibold shadow-lg flex items-center gap-2 transition-transform active:scale-95 bg-fuchsia-600 hover:bg-fuchsia-500 text-white"
           >
             <i v-if="loading" class="fas fa-spinner animate-spin"></i>
             {{ isEditing ? 'Guardar Cambios' : 'Crear Usuario' }}

@@ -1,22 +1,51 @@
 <template>
   <div class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4"
        @click.self="onCerrar">
-    <div class="rounded-3xl w-full max-w-lg shadow-2xl border p-6"
+    <div class="rounded-3xl w-full max-w-lg shadow-2xl border px-8 sm:px-10 py-6 sm:py-8 max-h-[90vh] overflow-y-auto"
          :class="theme('card').value">
       
-      <h2 class="text-xl font-bold mb-6" :class="theme('cardTitle').value">
+      <h2 class="text-xl font-bold mb-8 text-center" :class="theme('cardTitle').value">
         <i class="fas fa-user-plus mr-2"></i>
         {{ empleado ? 'Editar Personal' : 'Registrar Personal' }}
       </h2>
 
       <form @submit.prevent="guardar">
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+          
+          <!-- Grupo (Moved to top) -->
+          <div class="sm:col-span-2">
             <label class="block text-sm font-medium mb-1.5" :class="theme('cardSubtitle').value">
+              Grupo
+            </label>
+            <div v-if="grupo" class="w-full rounded-xl border px-4 py-3 bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 font-medium">
+               {{ getNombreGrupo(grupo) }}
+            </div>
+            <div v-else class="relative">
+              <select v-model="form.id_grupo"
+                      class="w-full rounded-xl appearance-none border px-4 py-3 pr-12 outline-none transition-colors"
+                      :class="isDark ? 'bg-gray-800 border-gray-600 text-white focus:border-blue-500' : 'bg-white border-gray-200 text-gray-900 focus:border-blue-500'"
+                      required>
+                <option value="" :class="isDark ? 'bg-gray-800' : 'bg-white'">Seleccionar grupo</option>
+                <option v-for="g in gruposDePersonal" 
+                        :key="g.id_grupo" 
+                        :value="g.id_grupo"
+                        :class="isDark ? 'bg-gray-800 text-white' : 'bg-white text-gray-900'">
+                  {{ getNombreGrupo(g) }} (Área: {{ g.area.nombre_area }})
+                </option>
+              </select>
+              <div class="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none" 
+                   :class="isDark ? 'text-white' : 'text-gray-600'">
+                <i class="fas fa-chevron-down text-xs"></i>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium mb-2" :class="theme('cardSubtitle').value">
               Nombre Completo
             </label>
             <input v-model="form.nombre_completo" placeholder="Nombre completo"
-                   class="w-full rounded-xl border px-3 py-2 outline-none transition-colors" 
+                   class="w-full rounded-xl border px-4 py-3 outline-none transition-colors" 
                    :class="isDark ? 'bg-gray-800 border-gray-600 text-white placeholder-gray-500 focus:border-blue-500' : 'bg-white border-gray-200 text-gray-900 focus:border-blue-500'"
                    required />
           </div>
@@ -25,7 +54,9 @@
             <label class="block text-sm font-medium mb-1.5" :class="theme('cardSubtitle').value">
               DNI
             </label>
-            <input v-model="form.dni" placeholder="DNI"
+            <input v-model="form.dni" placeholder="DNI (8 dígitos)"
+                   @input="validarDNI"
+                   maxlength="8"
                    class="w-full rounded-xl border px-3 py-2 outline-none transition-colors" 
                    :class="isDark ? 'bg-gray-800 border-gray-600 text-white placeholder-gray-500 focus:border-blue-500' : 'bg-white border-gray-200 text-gray-900 focus:border-blue-500'"
                    required />
@@ -55,30 +86,17 @@
             <label class="block text-sm font-medium mb-1.5" :class="theme('cardSubtitle').value">
               Cargo
             </label>
-            <input v-model="form.cargo_grado" placeholder="Cargo o puesto"
-                   class="w-full rounded-xl border px-3 py-2 outline-none transition-colors" 
-                   :class="isDark ? 'bg-gray-800 border-gray-600 text-white placeholder-gray-500 focus:border-blue-500' : 'bg-white border-gray-200 text-gray-900 focus:border-blue-500'"
-                   />
-          </div>
-
-          <div>
-            <label class="block text-sm font-medium mb-1.5" :class="theme('cardSubtitle').value">
-              Grupo
-            </label>
             <div class="relative">
-              <select v-model="form.id_grupo"
-                      class="w-full rounded-xl appearance-none border px-3 py-2 pr-8 outline-none transition-colors"
+              <select v-model="form.cargo_grado"
+                      class="w-full rounded-xl appearance-none border px-4 py-3 pr-12 outline-none transition-colors"
                       :class="isDark ? 'bg-gray-800 border-gray-600 text-white focus:border-blue-500' : 'bg-white border-gray-200 text-gray-900 focus:border-blue-500'"
                       required>
-                <option value="" :class="isDark ? 'bg-gray-800' : 'bg-white'">Seleccionar grupo</option>
-                <option v-for="grupo in gruposDePersonal" 
-                        :key="grupo.id_grupo" 
-                        :value="grupo.id_grupo"
-                        :class="isDark ? 'bg-gray-800 text-white' : 'bg-white text-gray-900'">
-                  {{ getNombreGrupo(grupo) }} (Área: {{ grupo.area.nombre_area }})
+                <option value="" disabled>Seleccionar cargo</option>
+                <option v-for="cargo in cargosDisponibles" :key="cargo" :value="cargo">
+                  {{ cargo }}
                 </option>
               </select>
-              <div class="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none" 
+              <div class="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none" 
                    :class="isDark ? 'text-white' : 'text-gray-600'">
                 <i class="fas fa-chevron-down text-xs"></i>
               </div>
@@ -87,10 +105,11 @@
         </div>
 
         <div class="mt-4">
-          <p class="text-sm mb-2" :class="theme('cardSubtitle').value">Fotografía para reconocimiento facial</p>
+          <p class="text-sm mb-2" :class="theme('cardSubtitle').value">Fotografía</p>
 
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
+              <p class="text-sm mb-2" :class="theme('cardSubtitle').value">Cámara</p>
               <div class="aspect-video rounded-2xl overflow-hidden border p-2" :class="theme('input').value">
                 <video ref="videoEl" autoplay muted playsinline class="w-full h-full object-cover bg-black" v-show="cameraActive"></video>
                 <div v-show="!cameraActive" class="w-full h-full flex items-center justify-center text-sm" :class="theme('cardSubtitle').value">
@@ -161,15 +180,18 @@
 <script setup>
 import { ref, watch, onMounted, onUnmounted, computed, reactive } from 'vue'
 import { useTheme } from '@/composables/useTheme'
-import { usePersonal } from '../composables/usePersonal' // Usamos usePersonal
+import { usePersonal } from '../composables/usePersonal'
 import api from '@/axiosConfig'
 import * as faceapi from 'face-api.js'
 
-const props = defineProps({ empleado: Object })
+const props = defineProps({ 
+  empleado: Object,
+  grupo: Object // Prop para el grupo preseleccionado
+})
 const emit = defineEmits(['cerrar', 'actualizado'])
 
 const { theme, isDark } = useTheme()
-const { crearPersonal, actualizarPersonal } = usePersonal() // Funciones renombradas
+const { crearPersonal, actualizarPersonal } = usePersonal()
 
 const loading = ref(false)
 const areas = ref([])
@@ -185,7 +207,17 @@ const form = ref({
   id_grupo: '',
 })
 
-/* --------------------- Cámara y face-api (Idéntico) --------------------- */
+const cargosDisponibles = [
+  'Director',
+  'Docente',
+  'Administrativo',
+  'Auxiliar',
+  'Seguridad',
+  'Limpieza',
+  'Otro'
+]
+
+/* --------------------- Cámara y face-api --------------------- */
 const videoEl = ref(null)
 const previewImgEl = ref(null)
 const previewCanvasEl = ref(null)
@@ -287,6 +319,11 @@ const clearCapture = () => {
 }
 
 /* --------------------- Lógica Formulario --------------------- */
+const validarDNI = (event) => {
+  const value = event.target.value.replace(/\D/g, '').slice(0, 8)
+  form.value.dni = value
+}
+
 watch(() => props.empleado, (nuevo) => {
   if (nuevo) {
     form.value = { 
@@ -304,7 +341,16 @@ watch(() => props.empleado, (nuevo) => {
     }
     clearCapture()
   } else {
-    form.value = { nombre_completo: '', dni: '', correo: '', telefono: '', cargo_grado: '', id_area: '', id_grupo: '' }
+    // Nuevo registro
+    form.value = { 
+      nombre_completo: '', 
+      dni: '', 
+      correo: '', 
+      telefono: '', 
+      cargo_grado: '', 
+      id_area: props.grupo ? props.grupo.id_area : '', // Pre-llenar área
+      id_grupo: props.grupo ? props.grupo.id_grupo : '' // Pre-llenar grupo
+    }
     clearCapture()
   }
 }, { immediate: true })
@@ -327,6 +373,11 @@ const getNombreGrupo = (grupo) => {
 }
 
 const guardar = async () => {
+  if (form.value.dni.length !== 8) {
+    alert('El DNI debe tener exactamente 8 dígitos.')
+    return
+  }
+
   loading.value = true
   try {
     const grupoSel = grupos.value.find(g => g.id_grupo === form.value.id_grupo)

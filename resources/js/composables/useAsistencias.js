@@ -28,20 +28,38 @@ export function useAsistencias() {
       const copy = { ...item }
       // Normalizar persona
       copy.persona = copy.persona || {}
-      // Asegurar claves de días (lunes..viernes)
-      ['lunes','martes','miercoles','jueves','viernes'].forEach(d => {
+      // Asegurar claves de días (lunes..domingo)
+      ['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado', 'domingo'].forEach(d => {
         let val = copy[d]
-        if (val === undefined || val === null || val === '') {
-          // si backend marca faltas por defecto quizá sea 'F' o '-' -> uniformizamos
-          copy[d] = 'F' // por defecto asumimos falta si no viene
-        } else {
-          // si viene 'Presente' / 'presente' -> convertir a 'P', etc
-          const v = String(val).trim().toLowerCase()
-          if (v === 'presente' || v === 'p') copy[d] = 'P'
-          else if (v === 'tarde' || v === 't') copy[d] = 'T'
-          else if (v === 'falta' || v === 'f') copy[d] = 'F'
-          else copy[d] = String(val).toUpperCase().substring(0,1)
+
+        // Estructura base por defecto (Falta)
+        let normalized = {
+          estado: 'F',
+          hora_entrada: null
         }
+
+        if (val) {
+          // Si viene objeto (nuevo backend)
+          if (typeof val === 'object') {
+            normalized = { ...val }
+            // Normalizar estado
+            let v = String(normalized.estado || '').trim().toLowerCase()
+            if (v === 'presente' || v === 'p') normalized.estado = 'P'
+            else if (v === 'tarde' || v === 't') normalized.estado = 'T'
+            else if (v === 'falta' || v === 'f') normalized.estado = 'F'
+            else normalized.estado = String(normalized.estado || 'F').toUpperCase().substring(0, 1)
+          }
+          // Si viene string (viejo backend o fallback)
+          else {
+            let v = String(val).trim().toLowerCase()
+            if (v === 'presente' || v === 'p') normalized.estado = 'P'
+            else if (v === 'tarde' || v === 't') normalized.estado = 'T'
+            else if (v === 'falta' || v === 'f') normalized.estado = 'F'
+            else normalized.estado = String(val).toUpperCase().substring(0, 1)
+          }
+        }
+
+        copy[d] = normalized
       })
       return copy
     })

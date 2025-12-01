@@ -1,7 +1,7 @@
 <template>
   <div class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4"
        @click.self="onCerrar">
-    <div class="bg-white rounded-3xl w-full max-w-lg shadow-2xl border p-6" :class="theme('card').value">
+    <div class="rounded-3xl w-full max-w-lg shadow-2xl border px-8 sm:px-10 py-6 sm:py-8 max-h-[90vh] overflow-y-auto" :class="theme('card').value">
       
       <h2 class="text-xl font-bold mb-6" :class="theme('cardTitle').value">
         <i class="fas fa-user-graduate mr-2"></i>
@@ -11,6 +11,34 @@
       <form @submit.prevent="guardar">
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           
+          <!-- Grupo (Moved to top) -->
+          <div class="sm:col-span-2">
+            <label class="block text-sm font-medium mb-1.5" :class="theme('cardSubtitle').value">
+              Grupo
+            </label>
+            <div v-if="grupo" class="w-full rounded-xl border px-4 py-3 bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 font-medium">
+               {{ getNombreGrupo(grupo) }}
+            </div>
+            <div v-else class="relative">
+              <select v-model="form.id_grupo" 
+                      class="w-full rounded-xl appearance-none border px-4 py-3 pr-12 outline-none transition-colors"
+                      :class="isDark ? 'bg-gray-800 border-gray-600 text-white focus:border-blue-500' : 'bg-white border-gray-200 text-gray-900 focus:border-blue-500'"
+                      required>
+                <option value="" :class="isDark ? 'bg-gray-800' : 'bg-white'">Seleccionar grupo</option>
+                <option v-for="grupo in gruposDeAlumnos" 
+                        :key="grupo.id_grupo" 
+                        :value="grupo.id_grupo" 
+                        :class="isDark ? 'bg-gray-800 text-white' : 'bg-white text-gray-900'">
+                  {{ getNombreGrupo(grupo) }}
+                </option>
+              </select>
+              <div class="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none" 
+                   :class="isDark ? 'text-white' : 'text-gray-600'">
+                <i class="fas fa-chevron-down text-xs"></i>
+              </div>
+            </div>
+          </div>
+
           <div>
             <label class="block text-sm font-medium mb-1.5" :class="theme('cardSubtitle').value">
               Nombre Completo
@@ -60,30 +88,6 @@
                    :class="isDark ? 'bg-gray-800 border-gray-600 text-white placeholder-gray-500 focus:border-blue-500' : 'bg-white border-gray-200 text-gray-900 focus:border-blue-500'"
                    />
           </div>
-
-          <div>
-            <label class="block text-sm font-medium mb-1.5" :class="theme('cardSubtitle').value">
-              Grupo
-            </label>
-            <div class="relative">
-              <select v-model="form.id_grupo" 
-                      class="w-full rounded-xl appearance-none border px-3 py-2 pr-8 outline-none transition-colors"
-                      :class="isDark ? 'bg-gray-800 border-gray-600 text-white focus:border-blue-500' : 'bg-white border-gray-200 text-gray-900 focus:border-blue-500'"
-                      required>
-                <option value="" :class="isDark ? 'bg-gray-800' : 'bg-white'">Seleccionar grupo</option>
-                <option v-for="grupo in gruposDeAlumnos" 
-                        :key="grupo.id_grupo" 
-                        :value="grupo.id_grupo" 
-                        :class="isDark ? 'bg-gray-800 text-white' : 'bg-white text-gray-900'">
-                  {{ getNombreGrupo(grupo) }}
-                </option>
-              </select>
-              <div class="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none" 
-                   :class="isDark ? 'text-white' : 'text-gray-600'">
-                <i class="fas fa-chevron-down text-xs"></i>
-              </div>
-            </div>
-          </div>
         </div>
 
         <div class="mt-4">
@@ -91,6 +95,7 @@
 
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
+              <p class="text-sm mb-2" :class="theme('cardSubtitle').value">Cámara</p>
               <div class="aspect-video rounded-2xl overflow-hidden border p-2" :class="theme('input').value">
                 <video ref="videoEl" autoplay muted playsinline class="w-full h-full object-cover bg-black" v-show="cameraActive"></video>
                 <div v-show="!cameraActive" class="w-full h-full flex items-center justify-center text-sm" :class="theme('cardSubtitle').value">
@@ -168,7 +173,10 @@ import api from '@/axiosConfig'
 import * as faceapi from 'face-api.js'
 
 /* Props / Emits */
-const props = defineProps({ alumno: Object })
+const props = defineProps({ 
+  alumno: Object,
+  grupo: Object // Prop para el grupo preseleccionado
+})
 const emit = defineEmits(['cerrar', 'actualizado'])
 
 /* Theme */
@@ -381,7 +389,15 @@ watch(() => props.alumno, (nuevo) => {
     clearCapture()
   } else {
     // Resetear formulario
-    form.value = { nombre_completo: '', dni: '', correo: '', telefono: '', cargo_grado: '', id_area: '', id_grupo: '' }
+    form.value = { 
+      nombre_completo: '', 
+      dni: '', 
+      correo: '', 
+      telefono: '', 
+      cargo_grado: '', 
+      id_area: props.grupo ? props.grupo.id_area : '', // Pre-llenar área
+      id_grupo: props.grupo ? props.grupo.id_grupo : '' // Pre-llenar grupo
+    }
     clearCapture()
   }
 }, { immediate: true })
@@ -410,8 +426,7 @@ const gruposConArea = computed(() => {
 
 const gruposDeAlumnos = computed(() => {
   return gruposConArea.value.filter(g => 
-    // Usamos nombre_area, que es el campo correcto y seguro
-    g.area && g.area.nombre_area && String(g.area.nombre_area).toLowerCase().includes('alumno')
+    g.area && g.area.tipo_area === 'alumnado'
   )
 })
 

@@ -5,9 +5,11 @@ namespace App\Http\Controllers;
 use App\Models\Asistencia;
 use App\Models\Persona;
 use App\Models\Horario;
+use App\Models\Grupo;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 
 class AsistenciaController extends Controller
@@ -57,6 +59,9 @@ class AsistenciaController extends Controller
      */
     public function asistenciasSemana(Request $request)
     {
+        $usuario = Auth::user();
+        $persona = $usuario ? $usuario->persona : null;
+        
         $groupId = $request->query('group_id');
         $dateParam = $request->query('date');
 
@@ -66,6 +71,11 @@ class AsistenciaController extends Controller
 
         $queryAsistencias = Asistencia::with('persona')
             ->whereBetween('fecha', [$inicioSemana->toDateString(), $finSemana->toDateString()]);
+
+        // Aplicar filtros de acceso basados en rol
+        if ($usuario) {
+            $queryAsistencias = $this->aplicarFiltrosDeAcceso($queryAsistencias, $usuario, $persona);
+        }
 
         $queryPersonas = Persona::query();
 
@@ -111,7 +121,11 @@ class AsistenciaController extends Controller
                 if (isset($dayMap[$diaDeLaSemana])) {
                     $llaveDia = $dayMap[$diaDeLaSemana];
                     if (array_key_exists($llaveDia, $dias)) {
-                        $dias[$llaveDia] = $this->normalizarEstadoAsistencia($asistencia->estado_asistencia);
+                        $dias[$llaveDia] = [
+                            'estado' => $this->normalizarEstadoAsistencia($asistencia->estado_asistencia),
+                            'hora_entrada' => $asistencia->hora_entrada ? Carbon::parse($asistencia->hora_entrada)->format('H:i') : null,
+                            'hora_salida' => $asistencia->hora_salida ? Carbon::parse($asistencia->hora_salida)->format('H:i') : null,
+                        ];
                     }
                 }
             }
@@ -180,15 +194,46 @@ class AsistenciaController extends Controller
 
             // A) NO TIENE ENTRADA -> REGISTRAR ENTRADA
             if (is_null($asistencia->hora_entrada)) {
+                // Obtener horario del área
+                $horario = Horario::where('id_area', $persona->id_area)->first();
+                
+                if (!$horario) {
+                    return response()->json([
+                        'message' => 'No hay horario configurado para esta área',
+                        'persona' => $persona
+                    ], 400);
+                }
+
+                $horaEntradaProgramada = Carbon::parse($horario->hora_entrada);
+                
+                // Determinar ventana según tipo de persona
+                $minutosAntes = $persona->tipo_persona === 'estudiante' ? 60 : 30;
+                $ventanaInicio = $horaEntradaProgramada->copy()->subMinutes($minutosAntes);
+                $ventanaFin = $horaEntradaProgramada->copy()->addMinutes(15);
+
+                // Validar que esté dentro de la ventana
+                if ($horaActualCarbon->lt($ventanaInicio)) {
+                    return response()->json([
+                        'message' => 'Aún no puede marcar asistencia. Intente después de las ' . $ventanaInicio->format('H:i'),
+                        'persona' => $persona
+                    ], 400);
+                }
+
+                if ($horaActualCarbon->gt($ventanaFin)) {
+                    return response()->json([
+                        'message' => 'Tiempo de marcado expirado. Se registrará como falta automática.',
+                        'persona' => $persona
+                    ], 400);
+                }
+
+                // Registrar entrada
                 $asistencia->hora_entrada = $horaActualStr;
 
-                // Lógica de horario y tardanza
-                $horario = Horario::where('id_area', $persona->id_area)->first();
-                if ($horario) {
-                    $horaLimite = Carbon::parse($horario->hora_entrada);
-                    $asistencia->estado_asistencia = $horaActualCarbon->lte($horaLimite) ? 'Presente' : 'Tarde';
-                } else {
+                // Determinar estado
+                if ($horaActualCarbon->lte($horaEntradaProgramada)) {
                     $asistencia->estado_asistencia = 'Presente';
+                } else {
+                    $asistencia->estado_asistencia = 'Tarde';
                 }
             
             // B) YA TIENE ENTRADA... ¿QUÉ HACEMOS?
@@ -196,7 +241,6 @@ class AsistenciaController extends Controller
                 
                 // 1. Validar si YA TIENE SALIDA
                 if (!is_null($asistencia->hora_salida)) {
-                    // Si ya marcó todo, no hacemos nada para no sobreescribir por error
                     return response()->json([
                         'message' => 'La asistencia de hoy ya está completa (Entrada y Salida registradas).',
                         'persona' => $persona,
@@ -205,11 +249,9 @@ class AsistenciaController extends Controller
                 }
 
                 // 2. LÓGICA ANTI-REBOTE (Evitar doble registro por error)
-                // Calculamos tiempo desde la entrada
                 $tiempoEntrada = Carbon::parse($asistencia->hora_entrada);
                 $diferenciaMinutos = $horaActualCarbon->diffInMinutes($tiempoEntrada);
 
-                // Si pasaron menos de 30 minutos desde la entrada, asumimos que es un error/duplicado
                 if ($diferenciaMinutos < 30) {
                      return response()->json([
                         'message' => 'Entrada ya registrada hace ' . $diferenciaMinutos . ' minutos. La salida se habilitará después de 30 min.',
@@ -218,9 +260,7 @@ class AsistenciaController extends Controller
                     ], 200);
                 }
 
-                // 3. LÓGICA DE SALIDA OPCIONAL (Solo Personal marca salida)
-                // los alumnos NO registran salida
-                
+                // 3. LÓGICA DE SALIDA (Solo Personal marca salida)
                 if ($persona->tipo_persona === 'estudiante') {
                      return response()->json([
                         'message' => 'Entrada registrada correctamente. (Alumnos no marcan salida)',
@@ -228,10 +268,29 @@ class AsistenciaController extends Controller
                          'estado_asistencia' => $asistencia->estado_asistencia
                     ], 200);
                 }
-                
 
-                // Si pasa todas las validaciones, registramos la SALIDA
+                // Obtener horario para validar salida
+                $horario = Horario::where('id_area', $persona->id_area)->first();
+                
+                if (!$horario) {
+                    return response()->json([
+                        'message' => 'No hay horario configurado para validar la salida',
+                        'persona' => $persona
+                    ], 400);
+                }
+
+                $horaSalidaProgramada = Carbon::parse($horario->hora_salida);
+                $ventanaSalidaFin = $horaSalidaProgramada->copy()->addMinutes(15);
+
+                // Registrar salida
                 $asistencia->hora_salida = $horaActualStr;
+
+                // Marcar si está fuera de tiempo
+                if ($horaActualCarbon->gt($ventanaSalidaFin)) {
+                    $asistencia->salida_fuera_tiempo = true;
+                } else {
+                    $asistencia->salida_fuera_tiempo = false;
+                }
             }
         }
 
@@ -352,5 +411,129 @@ class AsistenciaController extends Controller
         });
 
         return response()->json($historial);
+    }
+
+    /**
+     * Resumen semanal de salidas (solo personal)
+     */
+    public function asistenciasSalidaSemana(Request $request)
+    {
+        $usuario = Auth::user();
+        $persona = $usuario ? $usuario->persona : null;
+        
+        // Docentes no ven salidas
+        if ($usuario && $usuario->rol === 'docente') {
+            return response()->json([]);
+        }
+        
+        $groupId = $request->query('group_id');
+        $dateParam = $request->query('date');
+
+        $baseDate = $dateParam ? Carbon::parse($dateParam) : Carbon::today();
+        $inicioSemana = (clone $baseDate)->startOfWeek(Carbon::MONDAY)->startOfDay();
+        $finSemana = (clone $inicioSemana)->addDays(6)->endOfDay();
+
+        $queryAsistencias = Asistencia::with('persona')
+            ->whereBetween('fecha', [$inicioSemana->toDateString(), $finSemana->toDateString()])
+            ->whereNotNull('hora_salida'); // Solo con salida registrada
+
+        // Aplicar filtros de acceso basados en rol
+        if ($usuario) {
+            $queryAsistencias = $this->aplicarFiltrosDeAcceso($queryAsistencias, $usuario, $persona);
+        }
+
+        $queryPersonas = Persona::query()
+            ->whereIn('tipo_persona', ['empleado', 'docente', 'administrativo']);
+
+        if ($groupId) {
+            $queryAsistencias->whereHas('persona', function ($q) use ($groupId) {
+                $q->where('id_grupo', $groupId)
+                  ->whereIn('tipo_persona', ['empleado', 'docente', 'administrativo']);
+            });
+            $queryPersonas->where('id_grupo', $groupId);
+        }
+
+        $todasLasAsistencias = $queryAsistencias->get();
+        $todasLasPersonas = $queryPersonas->get()->keyBy('id_persona');
+        $asistenciasAgrupadas = $todasLasAsistencias->groupBy('id_persona');
+
+        $dayMap = [
+            Carbon::MONDAY => 'lunes',
+            Carbon::TUESDAY => 'martes',
+            Carbon::WEDNESDAY => 'miercoles',
+            Carbon::THURSDAY => 'jueves',
+            Carbon::FRIDAY => 'viernes',
+            Carbon::SATURDAY => 'sabado',
+            Carbon::SUNDAY => 'domingo',
+        ];
+
+        $resumen = $todasLasPersonas->map(function ($persona) use ($asistenciasAgrupadas, $dayMap) {
+            $registros = $asistenciasAgrupadas->get($persona->id_persona, collect());
+
+            $dias = [
+                'lunes' => null,
+                'martes' => null,
+                'miercoles' => null,
+                'jueves' => null,
+                'viernes' => null,
+                'sabado' => null,
+                'domingo' => null,
+            ];
+
+            foreach ($registros as $asistencia) {
+                $diaDeLaSemana = Carbon::parse($asistencia->fecha)->dayOfWeek;
+                if (isset($dayMap[$diaDeLaSemana])) {
+                    $llaveDia = $dayMap[$diaDeLaSemana];
+                    if (array_key_exists($llaveDia, $dias)) {
+                        $dias[$llaveDia] = [
+                            'hora_salida' => $asistencia->hora_salida ? Carbon::parse($asistencia->hora_salida)->format('H:i') : null,
+                            'fuera_tiempo' => $asistencia->salida_fuera_tiempo ?? false,
+                        ];
+                    }
+                }
+            }
+
+            return [
+                'id_persona' => $persona->id_persona,
+                'persona' => [
+                    'nombre_completo' => $persona->nombre_completo,
+                    'cargo_grado' => $persona->cargo_grado,
+                    'id_area' => $persona->id_area,
+                    'id_grupo' => $persona->id_grupo,
+                    'tipo_persona' => $persona->tipo_persona,
+                ],
+                ...$dias,
+            ];
+        })->values();
+
+        return response()->json($resumen);
+    }
+
+    /**
+     * Aplicar filtros de acceso según rol del usuario
+     */
+    private function aplicarFiltrosDeAcceso($query, $usuario, $persona)
+    {
+        if ($usuario->rol === 'admin') {
+            return $query; // Sin filtros
+        }
+        
+        if ($usuario->rol === 'supervisor') {
+            // Solo personal
+            $query->whereHas('persona', function($q) {
+                $q->whereIn('tipo_persona', ['empleado', 'docente', 'administrativo']);
+            });
+        }
+        
+        if ($usuario->rol === 'docente') {
+            // Solo estudiantes de sus grupos
+            $gruposIds = Grupo::where('id_tutor', $persona->id_persona)->pluck('id_grupo');
+            $query->whereHas('persona', function($q) use ($gruposIds) {
+                $q->whereIn('id_grupo', $gruposIds)
+                  ->where('tipo_persona', 'estudiante');
+            });
+        }
+        
+        return $query;
     }
 }

@@ -45,13 +45,24 @@
         </div>
       </div>
 
-      <TablaAsistencia
-        v-else
-        :asistencias="asistenciasDelGrupo"
-        :nombreGrupo="getNombreGrupo(grupoSeleccionado)"
-        @volver="handleVolver"
-        @editar-asistencia="abrirModalEdicion"
-      />
+      <div v-else>
+        <TablaAsistencia
+          v-if="vistaActual === 'asistencias'"
+          :asistencias="asistenciasDelGrupo"
+          :nombreGrupo="getNombreGrupo(grupoSeleccionado)"
+          :esGrupoPersonal="esGrupoPersonal"
+          @volver="handleVolver"
+          @editar-asistencia="abrirModalEdicion"
+          @ver-salidas="handleVerSalidas"
+        />
+
+        <TablaSalidas
+          v-else
+          :salidas="salidas"
+          :nombreGrupo="getNombreGrupo(grupoSeleccionado)"
+          @volver="handleVolverAsistencias"
+        />
+      </div>
     </div>
 
     <FormularioAsistenciaModal
@@ -69,11 +80,14 @@ import api from '@/axiosConfig'
 import { useTheme } from '@/composables/useTheme'
 import { useAsistencias } from '@/composables/useAsistencias'
 import { useGrupos } from '@/composables/useGrupos'
+import { useAuth } from '@/composables/useAuth'
 import GrupoCard from '@/modules/personal/components/GrupoCard.vue'
 import TablaAsistencia from '../components/TablaAsistencia.vue'
+import TablaSalidas from '../components/TablaSalidas.vue'
 import FormularioAsistenciaModal from '../components/FormularioAsistenciaModal.vue'
 
 const { theme } = useTheme()
+const { isDocente, canViewExitTimes, fetchUsuarioActual } = useAuth()
 
 // --- Lógica de Datos ---
 const {
@@ -99,15 +113,25 @@ const loadingAreas = ref(true)
 const modalEdicionVisible = ref(false)
 const registroEditando = ref(null)
 
+// Vista de salidas
+const vistaActual = ref('asistencias')
+const salidas = ref([])
+
 // Carga inicial
 onMounted(async () => {
   loadingAreas.value = true
   try {
     await Promise.all([
+      fetchUsuarioActual(),
       fetchAsistenciasSemana(),
       fetchGrupos(),
       api.get('/areas').then(res => areas.value = res.data)
     ])
+    
+    // Auto-seleccionar grupo si docente tiene solo uno
+    if (isDocente.value && grupos.value.length === 1) {
+      await seleccionarGrupo(grupos.value[0])
+    }
   } catch (e) {
     console.error(e)
     errorAsistencias.value = 'No se pudieron cargar los datos.'
@@ -151,15 +175,47 @@ const asistenciasDelGrupo = computed(() => {
 
 const seleccionarGrupo = async (grupo) => {
   grupoSeleccionado.value = grupo;
+  vistaActual.value = 'asistencias';
   await fetchAsistenciasSemana({ group_id: grupo.id_grupo });
 }
+
+// Detectar si el grupo es de personal Y si el usuario tiene permiso
+const esGrupoPersonal = computed(() => {
+  if (!grupoSeleccionado.value) return false
+  if (!canViewExitTimes.value) return false // Solo admin y supervisor
+  const tiposPersonal = ['empleado', 'docente', 'administrativo']
+  return asistenciasDelGrupo.value.some(a => 
+    tiposPersonal.includes(a.persona?.tipo_persona)
+  )
+})
 
 // ------------------------------------------------
 // NUEVO: función para volver a la vista de grupos
 // ------------------------------------------------
 const handleVolver = async () => {
   grupoSeleccionado.value = null
-  await fetchAsistenciasSemana()   // recarga TODA la asistencia
+  vistaActual.value = 'asistencias'
+  await fetchAsistenciasSemana()
+}
+
+const handleVerSalidas = async () => {
+  vistaActual.value = 'salidas'
+  await fetchSalidasSemana({ group_id: grupoSeleccionado.value.id_grupo })
+}
+
+const handleVolverAsistencias = () => {
+  vistaActual.value = 'asistencias'
+}
+
+const fetchSalidasSemana = async (opts = {}) => {
+  try {
+    const res = await api.get('/asistencias-salida-semana', {
+      params: { date: weekRange.value.apiDate, group_id: opts.group_id }
+    })
+    salidas.value = res.data
+  } catch (err) {
+    console.error('Error cargando salidas:', err)
+  }
 }
 
 // -----------------------------

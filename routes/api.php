@@ -29,6 +29,9 @@ Route::get('/reconocimientos/descriptores', [ReconocimientoController::class, 'i
 // Resumen semanal público o para dashboard
 Route::get('/asistencias-semana', [AsistenciaController::class, 'asistenciasSemana']);
 
+// Resumen semanal de salidas (solo personal)
+Route::get('/asistencias-salida-semana', [AsistenciaController::class, 'asistenciasSalidaSemana']);
+
 // Historial por persona (público)
 Route::get('/asistencias/historial', [AsistenciaController::class, 'historialPersona']);
 
@@ -36,6 +39,7 @@ Route::get('/asistencias/historial', [AsistenciaController::class, 'historialPer
 Route::middleware('auth:sanctum')->group(function () {
 
     Route::post('/logout', [AuthController::class, 'logout']);
+    Route::get('/usuario-actual', [AuthController::class, 'usuarioActual']);
     Route::put('/perfil', [AuthController::class, 'update']);
     Route::delete('/perfil', [AuthController::class, 'destroy']);
     Route::post('/perfil/cambiar-password', [AuthController::class, 'cambiarPassword']);

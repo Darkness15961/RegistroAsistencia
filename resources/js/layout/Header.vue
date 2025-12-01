@@ -53,12 +53,15 @@
               class="flex items-center gap-3 px-3 py-2 rounded-xl transition-all cursor-pointer"
               :class="theme('headerUserInfo').value"
             >
-              <div class="w-9 h-9 bg-gradient-to-br from-purple-400 to-pink-400 rounded-full flex items-center justify-center">
-                <span class="text-white font-semibold text-sm">U</span> 
+              <div 
+                class="w-9 h-9 rounded-full flex items-center justify-center"
+                :style="{ background: userGradient }"
+              >
+                <span class="text-white font-semibold text-sm">{{ userInitials }}</span> 
               </div>
               <div class="hidden md:block">
-                <p class="text-sm font-medium" :class="theme('cardTitle').value">Usuario</p>
-                <p class="text-xs" :class="theme('headerUserRole').value">Admin</p>
+                <p class="text-sm font-medium" :class="theme('cardTitle').value">{{ userName }}</p>
+                <p class="text-xs" :class="theme('headerUserRole').value">{{ userRole }}</p>
               </div>
             </button>
 
@@ -76,16 +79,20 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { useRoute, useRouter } from 'vue-router' // Importa useRouter
+import { useRoute, useRouter } from 'vue-router'
 import { useTheme } from '@/composables/useTheme.js' 
+import { useAuth } from '@/composables/useAuth'
 import DesplegableUsuario from '@/layout/DesplegableUsuario.vue' 
 
 // === THEME ===
 const { isDark, toggleTheme, theme } = useTheme()
 
+// === AUTH ===
+const { usuario, persona, fetchUsuarioActual } = useAuth()
+
 // === ROUTER ===
 const route = useRoute()
-const router = useRouter() // Inicializa useRouter
+const router = useRouter()
 defineEmits(['toggle-sidebar'])
 
 // === DROPDOWN ===
@@ -104,6 +111,7 @@ const handleClickOutside = (event) => {
 
 onMounted(() => {
   document.addEventListener('click', handleClickOutside)
+  fetchUsuarioActual()
 })
 
 onUnmounted(() => {
@@ -112,15 +120,45 @@ onUnmounted(() => {
 
 const handleLogout = () => {
   isDropdownOpen.value = false
-  // La lógica de logout ya está en DesplegableUsuario.vue
-  // Pero si la moviéramos aquí, la llamaríamos desde el emit.
-  // Por ahora, solo cerramos el dropdown.
 }
+
+// === USER INFO ===
+const userName = computed(() => {
+  return persona.value?.nombre_completo || 'Usuario'
+})
+
+const userRole = computed(() => {
+  const roles = {
+    'admin': 'Administrador',
+    'supervisor': 'Supervisor',
+    'docente': 'Docente',
+    'secretaria': 'Secretaria'
+  }
+  return roles[usuario.value?.rol] || 'Usuario'
+})
+
+const userInitials = computed(() => {
+  if (!persona.value?.nombre_completo) return 'U'
+  const names = persona.value.nombre_completo.split(' ')
+  if (names.length >= 2) {
+    return (names[0][0] + names[1][0]).toUpperCase()
+  }
+  return names[0][0].toUpperCase()
+})
+
+const userGradient = computed(() => {
+  const gradients = {
+    'admin': 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+    'supervisor': 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+    'docente': 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+    'secretaria': 'linear-gradient(135deg, #ff9a9e 0%, #fecfef 99%, #fecfef 100%)'
+  }
+  return gradients[usuario.value?.rol] || 'linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)'
+})
 
 // === BREADCRUMB TITLE ===
 const titulo = computed(() => {
   const titles = {
-    // ✅ Claves corregidas (Mayúsculas) para coincidir con 'name' en index.js
     'Home': 'Dashboard',
     'Horarios': 'Horarios',
     'Asistencias': 'Asistencias',
@@ -129,9 +167,9 @@ const titulo = computed(() => {
     'Areas': 'Áreas',
     'Alumnos': 'Alumnos',
     'MiPerfil': 'Mi Perfil',
-    'configuracion': 'Configuración'
+    'configuracion': 'Configuración',
+    'Personal': 'Personal'
   }
-  // 'route.name' viene de tu archivo 'index.js'
   return titles[route.name] || 'Página' 
 })
 </script>

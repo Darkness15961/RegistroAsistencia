@@ -1,30 +1,34 @@
 <template>
   <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
        @click.self="$emit('cerrar')">
-    <div class="rounded-3xl w-full max-w-lg shadow-2xl border p-6" :class="theme('card').value">
+    <div class="rounded-3xl w-full max-w-lg shadow-2xl border px-8 sm:px-10 py-6 sm:py-8" :class="theme('card').value">
       
-      <h2 class="text-xl font-bold mb-6" :class="theme('cardTitle').value">
+      <h2 class="text-xl font-bold mb-8 text-center" :class="theme('cardTitle').value">
         <i class="fas fa-layer-group mr-2"></i>
         {{ grupo ? 'Editar Grupo' : 'Nuevo Grupo' }}
       </h2>
 
       <form @submit.prevent="guardarGrupo">
-        <div class="space-y-5">
+        <div class="space-y-6">
           
           <div>
-            <label class="block text-sm font-medium mb-1.5" :class="theme('cardSubtitle').value">
+            <label class="block text-sm font-medium mb-2" :class="theme('cardSubtitle').value">
               Área de Pertenencia
             </label>
             <div class="relative">
               <select 
                 v-model="form.id_area"
-                class="w-full rounded-xl appearance-none border px-3 py-2 pr-8 outline-none transition-colors"
-                :class="isDark ? 'bg-gray-800 border-gray-600 text-white focus:border-blue-500' : 'bg-white border-gray-200 text-gray-900 focus:border-blue-500'"
+                class="w-full rounded-xl appearance-none border px-4 py-3 pr-10 outline-none transition-colors"
+                :class="[
+                  isDark ? 'bg-gray-800 border-gray-600 text-white focus:border-blue-500' : 'bg-white border-gray-200 text-gray-900 focus:border-blue-500',
+                  area ? 'opacity-75 cursor-not-allowed bg-gray-100 dark:bg-gray-700' : ''
+                ]"
                 required
+                :disabled="!!area"
               >
                 <option value="" disabled>Seleccionar área</option>
-                <option v-for="area in areas" :key="area.id_area" :value="area.id_area">
-                  {{ area.nombre_area }}
+                <option v-for="areaItem in areas" :key="areaItem.id_area" :value="areaItem.id_area">
+                  {{ areaItem.nombre_area }}
                 </option>
               </select>
               <div class="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none" :class="isDark ? 'text-white' : 'text-gray-600'">
@@ -34,14 +38,14 @@
           </div>
 
           <div>
-            <label class="block text-sm font-medium mb-1.5" :class="theme('cardSubtitle').value">
+            <label class="block text-sm font-medium mb-2" :class="theme('cardSubtitle').value">
               Tipo de Gestión
             </label>
             <div class="relative">
               <select 
                 v-model="tipoGestion"
                 @change="onTipoGestionChange"
-                class="w-full rounded-xl appearance-none border px-3 py-2 pr-8 outline-none transition-colors"
+                class="w-full rounded-xl appearance-none border px-4 py-3 pr-10 outline-none transition-colors"
                 :class="isDark ? 'bg-gray-800 border-gray-600 text-white focus:border-blue-500' : 'bg-white border-gray-200 text-gray-900 focus:border-blue-500'"
                 required
               >
@@ -58,13 +62,13 @@
           </div>
 
           <div v-if="tipoGestion" class="animate-fade-in">
-            <label class="block text-sm font-medium mb-1.5" :class="theme('cardSubtitle').value">
+            <label class="block text-sm font-medium mb-2" :class="theme('cardSubtitle').value">
               Nombre del Grupo / Nivel
             </label>
             <input 
               v-model="form.nivel" 
               :placeholder="placeholderNivel"
-              class="w-full rounded-xl border px-3 py-2 outline-none transition-colors"
+              class="w-full rounded-xl border px-4 py-3 outline-none transition-colors"
               :class="isDark ? 'bg-gray-800 border-gray-600 text-white placeholder-gray-500 focus:border-blue-500' : 'bg-white border-gray-200 text-gray-900 focus:border-blue-500'"
               required
             />
@@ -72,25 +76,25 @@
 
           <div v-if="tipoGestion === 'alumnos'" class="grid grid-cols-2 gap-4 animate-fade-in">
             <div>
-              <label class="block text-sm font-medium mb-1.5" :class="theme('cardSubtitle').value">
+              <label class="block text-sm font-medium mb-2" :class="theme('cardSubtitle').value">
                 Grado
               </label>
               <input 
                 v-model="form.grado" 
                 placeholder="Ej: 5to"
-                class="w-full rounded-xl border px-3 py-2 outline-none transition-colors"
+                class="w-full rounded-xl border px-4 py-3 outline-none transition-colors"
                 :class="isDark ? 'bg-gray-800 border-gray-600 text-white focus:border-blue-500' : 'bg-white border-gray-200 text-gray-900 focus:border-blue-500'"
                 required
               />
             </div>
             <div>
-              <label class="block text-sm font-medium mb-1.5" :class="theme('cardSubtitle').value">
+              <label class="block text-sm font-medium mb-2" :class="theme('cardSubtitle').value">
                 Sección
               </label>
               <input 
                 v-model="form.seccion" 
                 placeholder="Ej: A"
-                class="w-full rounded-xl border px-3 py-2 outline-none transition-colors"
+                class="w-full rounded-xl border px-4 py-3 outline-none transition-colors"
                 :class="isDark ? 'bg-gray-800 border-gray-600 text-white focus:border-blue-500' : 'bg-white border-gray-200 text-gray-900 focus:border-blue-500'"
                 required
               />
@@ -98,7 +102,7 @@
           </div>
 
           <div class="relative md:col-span-2">
-            <label class="block text-sm font-medium mb-1.5" :class="theme('cardSubtitle').value">
+            <label class="block text-sm font-medium mb-2" :class="theme('cardSubtitle').value">
               {{ tipoGestion === 'alumnos' ? 'Tutor de Aula' : 'Encargado del Grupo' }} (Opcional)
             </label>
             
@@ -109,7 +113,7 @@
                 :placeholder="tipoGestion === 'alumnos' ? 'Buscar docente tutor...' : 'Buscar encargado...'"
                 @input="buscarTutores"
                 @focus="mostrarResultados = true"
-                class="w-full rounded-xl border px-3 py-2 pr-10 outline-none transition-colors"
+                class="w-full rounded-xl border px-4 py-3 pr-12 outline-none transition-colors"
                 :class="[
                   isDark ? 'bg-gray-800 border-gray-600 text-white placeholder-gray-500 focus:border-blue-500' : 'bg-white border-gray-200 text-gray-900 focus:border-blue-500',
                   tutorSeleccionado ? 'border-green-500 focus:border-green-500' : ''
@@ -172,7 +176,8 @@ import { useTheme } from '@/composables/useTheme'
 import api from '@/axiosConfig'
 
 const props = defineProps({
-  grupo: { type: [Object, null], default: null }
+  grupo: { type: [Object, null], default: null },
+  area: { type: [Object, null], default: null }
 })
 const emit = defineEmits(['cerrar', 'actualizado'])
 const { theme, isDark } = useTheme()
@@ -208,7 +213,7 @@ const placeholderNivel = computed(() => {
 
 // --- Funciones Helpers (Definidas antes de usarse) ---
 const resetForm = () => {
-  form.id_area = ''
+  form.id_area = props.area ? props.area.id_area : ''
   form.nivel = ''
   form.grado = ''
   form.seccion = ''

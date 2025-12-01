@@ -22,14 +22,7 @@
               Selecciona un grupo para ver los alumnos
             </p>
           </div>
-          <button 
-            @click="abrirModalNuevo"
-            class="flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-semibold shadow-lg"
-            :class="theme('buttonPrimary').value"
-          >
-            <i class="fas fa-plus"></i>
-            Nuevo Alumno
-          </button>
+
         </div>
         
         <div class="relative w-full sm:max-w-md">
@@ -84,6 +77,7 @@
     <FormularioAlumnoModal
       v-if="mostrarModal"
       :alumno="alumnoSeleccionado"
+      :grupo="grupoSeleccionado"
       @cerrar="cerrarModal"
       @actualizado="handleGuardado"
     />
@@ -154,7 +148,7 @@ const gruposConArea = computed(() => {
 
 const gruposDeAlumnos = computed(() => {
   return gruposConArea.value
-    .filter(g => g.area && g.area.nombre_area.toLowerCase().includes('alumno'))
+    .filter(g => g.area && g.area.tipo_area === 'alumnado')
     .map(g => ({
       ...g,
       cantidadPersonas: alumnos.value.filter(e => e.id_grupo === g.id_grupo).length

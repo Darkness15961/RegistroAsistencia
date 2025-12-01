@@ -5,17 +5,7 @@
       ? 'bg-gradient-to-br from-gray-800 to-gray-900 border-gray-700' 
       : 'bg-white border-gray-200'"
   >
-    <div class="flex items-center gap-3 pb-4 border-b" :class="isDark ? 'border-white/10' : 'border-gray-200'">
-      <div class="w-10 h-10 bg-gradient-to-br from-purple-400 to-pink-400 rounded-full flex items-center justify-center">
-        <span class="text-white font-semibold">U</span>
-      </div>
-      <div>
-        <p class="text-sm font-semibold" :class="theme('cardTitle').value">Usuario</p>
-        <p class="text-xs" :class="theme('cardSubtitle').value">admin@4scan.com</p>
-      </div>
-    </div>
-
-    <nav class="mt-4">
+    <nav>
       <ul>
         <li>
           <router-link 
@@ -28,7 +18,7 @@
             <span class="text-sm font-medium">Mi Perfil</span>
           </router-link>
         </li>
-        <li>
+        <li v-if="isAdmin">
           <router-link 
             to="/configuracion"
             @click="emit('close')" 
@@ -59,17 +49,18 @@
 import { computed } from 'vue'
 import { useTheme } from '@/composables/useTheme'
 import { useRouter } from 'vue-router'
+import { useAuth } from '@/composables/useAuth'
 import axios from '@/axiosConfig'
 
 // Define el emit 'close'
 const emit = defineEmits(['close'])
 
-// isDark se usa en el template, así que es necesario
 const { theme, isDark } = useTheme()
+const { isAdmin } = useAuth()
 const router = useRouter()
 
 const handleLogout = async () => {
-  emit('close') // Cierra el dropdown
+  emit('close')
   try {
     await axios.post('/logout')
   } catch (error) {

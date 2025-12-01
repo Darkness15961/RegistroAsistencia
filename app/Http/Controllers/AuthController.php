@@ -184,4 +184,23 @@ class AuthController extends Controller
             'message' => 'Cuenta eliminada exitosamente',
         ], 200);
     }
+
+    /**
+     * OBTENER USUARIO ACTUAL
+     */
+    public function usuarioActual()
+    {
+        $usuario = Auth::user();
+        $persona = $usuario->persona;
+        
+        return response()->json([
+            'usuario' => [
+                'id_usuario' => $usuario->id_usuario,
+                'email' => $usuario->email,
+                'rol' => $usuario->rol,
+                'estado' => $usuario->estado
+            ],
+            'persona' => $persona
+        ]);
+    }
 }

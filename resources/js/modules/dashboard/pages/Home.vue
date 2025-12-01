@@ -1,8 +1,8 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import api from '@/axiosConfig'
-// ✅ ¡Importa tu composable de tema!
 import { useTheme } from '@/composables/useTheme'
+import { useAuth } from '@/composables/useAuth'
 
 // --- Componentes del Dashboard ---
 import Card from '../components/Card.vue'
@@ -11,8 +11,8 @@ import EmpleadosPorMesChart from '../components/EmpleadosPorMesChart.vue'
 import EstadoHoyChart from '../components/EstadoHoyChart.vue'
 import AsistenciaAreaChart from '../components/AsistenciaAreaChart.vue'
 
-// ✅ Inicializa tu tema
 const { theme } = useTheme()
+const { isAdmin, isSupervisor, isDocente, fetchUsuarioActual } = useAuth()
 
 const loading = ref(true)
 const error = ref(null)
@@ -48,11 +48,11 @@ const fetchDashboardData = async () => {
       }],
     }
 
-    // 3. Gráfico de Empleados por Mes
+    // 3. Gráfico de Empleados/Estudiantes por Mes
     empleadosChartData.value = {
       labels: data.empleadosChart.labels || [],
       datasets: [{
-        label: 'Nuevos Empleados',
+        label: isDocente.value ? 'Nuevos Estudiantes' : 'Nuevos Empleados',
         borderColor: '#4ade80',
         pointBackgroundColor: '#4ade80',
         data: data.empleadosChart.data || [],
@@ -86,7 +86,10 @@ const fetchDashboardData = async () => {
   }
 }
 
-onMounted(fetchDashboardData)
+onMounted(async () => {
+  await fetchUsuarioActual()
+  await fetchDashboardData()
+})
 </script>
 
 <template>
@@ -105,52 +108,59 @@ onMounted(fetchDashboardData)
     </div>
 
     <div v-else class="space-y-6">
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
-        
+      <!-- Cards para Admin -->
+      <div v-if="isAdmin" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
         <Card title="Empleados" :value="stats.empleados" icon="users" gradient-class="bg-gradient-to-br from-blue-500 to-blue-700"/>
-        
-        <Card 
-          title="Tasa Asistencia Hoy" 
-          :value="stats.asistenciaRateHoy + '%'" 
-          icon="chart-line" 
-          gradient-class="bg-gradient-to-br from-indigo-500 to-indigo-700"
-        />
-
+        <Card title="Tasa Asistencia Hoy" :value="stats.asistenciaRateHoy + '%'" icon="chart-line" gradient-class="bg-gradient-to-br from-indigo-500 to-indigo-700"/>
         <Card title="Alumnos" :value="stats.alumnos" icon="user-graduate" gradient-class="bg-gradient-to-br from-cyan-500 to-cyan-600"/>
-        
         <Card title="Asistencias Hoy" :value="stats.asistenciasHoy" icon="calendar-check" gradient-class="bg-gradient-to-br from-green-500 to-emerald-600"/>
-        
         <Card title="Horarios" :value="stats.horariosActivos" icon="clock" gradient-class="bg-gradient-to-br from-purple-500 to-pink-600"/>
-        
         <Card title="Usuarios" :value="stats.usuarios" icon="user-shield" gradient-class="bg-gradient-to-br from-orange-500 to-red-600"/>
       </div>
 
-      <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
-        <div class="lg:col-span-3 p-4 sm:p-6 rounded-2xl border" :class="theme('card').value">
-          <h3 class="text-lg font-semibold mb-4" :class="theme('cardTitle').value">
-            Asistencias Semanales
-          </h3>
-          <div class="h-80">
-            <AsistenciaSemanalChart :chart-data="asistenciaChartData" />
-          </div>
-        </div>
-        <div class="lg:col-span-2 p-4 sm:p-6 rounded-2xl border" :class="theme('card').value">
-          <h3 class="text-lg font-semibold mb-4" :class="theme('cardTitle').value">
-            Empleados Registrados por Mes
-          </h3>
-          <div class="h-80">
-            <EmpleadosPorMesChart :chart-data="empleadosChartData" />
-          </div>
-        </div>
+      <!-- Cards para Supervisor -->
+      <div v-else-if="isSupervisor" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card title="Personal" :value="stats.empleados" icon="users" gradient-class="bg-gradient-to-br from-blue-500 to-blue-700"/>
+        <Card title="Tasa Asistencia Hoy" :value="stats.asistenciaRateHoy + '%'" icon="chart-line" gradient-class="bg-gradient-to-br from-indigo-500 to-indigo-700"/>
+        <Card title="Asistencias Hoy" :value="stats.asistenciasHoy" icon="calendar-check" gradient-class="bg-gradient-to-br from-green-500 to-emerald-600"/>
+        <Card title="Horarios Activos" :value="stats.horariosActivos" icon="clock" gradient-class="bg-gradient-to-br from-purple-500 to-pink-600"/>
       </div>
-      
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+      <!-- Cards para Docente -->
+      <div v-else-if="isDocente" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <Card title="Mis Alumnos" :value="stats.alumnos" icon="user-graduate" gradient-class="bg-gradient-to-br from-cyan-500 to-cyan-600"/>
+        <Card title="Asistencias Hoy" :value="stats.asistenciasHoy" icon="calendar-check" gradient-class="bg-gradient-to-br from-green-500 to-emerald-600"/>
+        <Card title="Tasa Asistencia" :value="stats.asistenciaRateHoy + '%'" icon="chart-line" gradient-class="bg-gradient-to-br from-indigo-500 to-indigo-700"/>
+      </div>
+
+      <!-- Gráficos para Admin -->
+      <template v-if="isAdmin">
+        <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
+          <div class="lg:col-span-3 p-4 sm:p-6 rounded-2xl border" :class="theme('card').value">
+            <h3 class="text-lg font-semibold mb-4" :class="theme('cardTitle').value">
+              Asistencias Semanales
+            </h3>
+            <div class="h-80">
+              <AsistenciaSemanalChart :chart-data="asistenciaChartData" />
+            </div>
+          </div>
+          <div class="lg:col-span-2 p-4 sm:p-6 rounded-2xl border" :class="theme('card').value">
+            <h3 class="text-lg font-semibold mb-4" :class="theme('cardTitle').value">
+              Empleados Registrados por Mes
+            </h3>
+            <div class="h-80">
+              <EmpleadosPorMesChart :chart-data="empleadosChartData" />
+            </div>
+          </div>
+        </div>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div class="p-4 sm:p-6 rounded-2xl border" :class="theme('card').value">
             <h3 class="text-lg font-semibold mb-4" :class="theme('cardTitle').value">
               Estado de Asistencia (Hoy)
             </h3>
             <div class="h-72 flex items-center justify-center">
-                <EstadoHoyChart :chart-data="estadoHoyChartData" />
+              <EstadoHoyChart :chart-data="estadoHoyChartData" />
             </div>
           </div>
           <div class="p-4 sm:p-6 rounded-2xl border" :class="theme('card').value">
@@ -158,10 +168,74 @@ onMounted(fetchDashboardData)
               Asistencias de Hoy por Área
             </h3>
             <div class="h-72 flex items-center justify-center">
-                <AsistenciaAreaChart :chart-data="asistenciaAreaChartData" />
+              <AsistenciaAreaChart :chart-data="asistenciaAreaChartData" />
             </div>
           </div>
-      </div>
+        </div>
+      </template>
+
+      <!-- Gráficos para Supervisor -->
+      <template v-else-if="isSupervisor">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div class="p-4 sm:p-6 rounded-2xl border" :class="theme('card').value">
+            <h3 class="text-lg font-semibold mb-4" :class="theme('cardTitle').value">
+              Asistencias Semanales del Personal
+            </h3>
+            <div class="h-80">
+              <AsistenciaSemanalChart :chart-data="asistenciaChartData" />
+            </div>
+          </div>
+          <div class="p-4 sm:p-6 rounded-2xl border" :class="theme('card').value">
+            <h3 class="text-lg font-semibold mb-4" :class="theme('cardTitle').value">
+              Estado de Asistencia (Hoy)
+            </h3>
+            <div class="h-80 flex items-center justify-center">
+              <EstadoHoyChart :chart-data="estadoHoyChartData" />
+            </div>
+          </div>
+        </div>
+      </template>
+
+      <!-- Gráficos para Docente -->
+      <template v-else-if="isDocente">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div class="p-4 sm:p-6 rounded-2xl border" :class="theme('card').value">
+            <h3 class="text-lg font-semibold mb-4" :class="theme('cardTitle').value">
+              Asistencias Semanales de Mis Alumnos
+            </h3>
+            <div class="h-80">
+              <AsistenciaSemanalChart :chart-data="asistenciaChartData" />
+            </div>
+          </div>
+          <div class="p-4 sm:p-6 rounded-2xl border" :class="theme('card').value">
+            <h3 class="text-lg font-semibold mb-4" :class="theme('cardTitle').value">
+              Estado de Asistencia Hoy
+            </h3>
+            <div class="h-80 flex items-center justify-center">
+              <EstadoHoyChart :chart-data="estadoHoyChartData" />
+            </div>
+          </div>
+        </div>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div class="p-4 sm:p-6 rounded-2xl border" :class="theme('card').value">
+            <h3 class="text-lg font-semibold mb-4" :class="theme('cardTitle').value">
+              Estudiantes Registrados por Mes
+            </h3>
+            <div class="h-72">
+              <EmpleadosPorMesChart :chart-data="empleadosChartData" />
+            </div>
+          </div>
+          <div class="p-4 sm:p-6 rounded-2xl border" :class="theme('card').value">
+            <h3 class="text-lg font-semibold mb-4" :class="theme('cardTitle').value">
+              Asistencias por Grupo
+            </h3>
+            <div class="h-72 flex items-center justify-center">
+              <AsistenciaAreaChart :chart-data="asistenciaAreaChartData" />
+            </div>
+          </div>
+        </div>
+      </template>
     </div>
   </div>
 </template>

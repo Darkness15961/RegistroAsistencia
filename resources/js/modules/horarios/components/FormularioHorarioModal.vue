@@ -1,24 +1,24 @@
 <template>
   <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
        @click.self="$emit('cerrar')">
-    <div class="rounded-3xl w-full max-w-lg shadow-2xl border p-6" :class="theme('card').value">
+    <div class="rounded-3xl w-full max-w-lg shadow-2xl border px-8 sm:px-10 py-6 sm:py-8" :class="theme('card').value">
       
-      <h2 class="text-xl font-bold mb-6" :class="theme('cardTitle').value">
+      <h2 class="text-xl font-bold mb-8 text-center" :class="theme('cardTitle').value">
         <i class="fas fa-clock mr-2"></i>
         {{ horario ? 'Editar Horario' : 'Registrar Horario' }}
       </h2>
 
       <form @submit.prevent="guardarHorario">
-        <div class="space-y-4">
+        <div class="space-y-5">
           
           <div>
-            <label class="block text-sm font-medium mb-1.5" :class="theme('cardSubtitle').value">
+            <label class="block text-sm font-medium mb-2" :class="theme('cardSubtitle').value">
               Área
             </label>
             <div class="relative">
               <select 
                 v-model="form.id_area"
-                class="w-full rounded-xl appearance-none border px-3 py-2 pr-8 outline-none transition-colors"
+                class="w-full rounded-xl appearance-none border px-4 py-3 pr-10 outline-none transition-colors"
                 :class="isDark ? 'bg-gray-800 border-gray-600 text-white focus:border-blue-500' : 'bg-white border-gray-200 text-gray-900 focus:border-blue-500'"
                 required
               >
@@ -35,13 +35,13 @@
           </div>
 
           <div>
-            <label class="block text-sm font-medium mb-1.5" :class="theme('cardSubtitle').value">
+            <label class="block text-sm font-medium mb-2" :class="theme('cardSubtitle').value">
               Turno
             </label>
             <div class="relative">
               <select 
                 v-model="form.turno"
-                class="w-full rounded-xl appearance-none border px-3 py-2 pr-8 outline-none transition-colors"
+                class="w-full rounded-xl appearance-none border px-4 py-3 pr-10 outline-none transition-colors"
                 :class="isDark ? 'bg-gray-800 border-gray-600 text-white focus:border-blue-500' : 'bg-white border-gray-200 text-gray-900 focus:border-blue-500'"
                 required
               >
@@ -59,26 +59,26 @@
 
           <div class="grid grid-cols-2 gap-4">
             <div>
-              <label class="block text-sm font-medium mb-1.5" :class="theme('cardSubtitle').value">
+              <label class="block text-sm font-medium mb-2" :class="theme('cardSubtitle').value">
                 Hora Entrada
               </label>
               <input 
                 v-model="form.hora_entrada" 
                 type="time" 
-                class="w-full rounded-xl border px-3 py-2 outline-none transition-colors"
+                class="w-full rounded-xl border px-4 py-3 outline-none transition-colors"
                 :class="isDark ? 'bg-gray-800 border-gray-600 text-white focus:border-blue-500 time-dark' : 'bg-white border-gray-200 text-gray-900 focus:border-blue-500'"
                 required
               />
             </div>
 
             <div>
-              <label class="block text-sm font-medium mb-1.5" :class="theme('cardSubtitle').value">
+              <label class="block text-sm font-medium mb-2" :class="theme('cardSubtitle').value">
                 Hora Salida
               </label>
               <input 
                 v-model="form.hora_salida" 
                 type="time" 
-                class="w-full rounded-xl border px-3 py-2 outline-none transition-colors"
+                class="w-full rounded-xl border px-4 py-3 outline-none transition-colors"
                 :class="isDark ? 'bg-gray-800 border-gray-600 text-white focus:border-blue-500 time-dark' : 'bg-white border-gray-200 text-gray-900 focus:border-blue-500'"
                 required
               />

@@ -1,23 +1,23 @@
 <template>
   <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
        @click.self="$emit('cerrar')">
-    <div class="rounded-3xl w-full max-w-lg shadow-2xl border p-6" :class="theme('card').value">
+    <div class="rounded-3xl w-full max-w-lg shadow-2xl border px-8 sm:px-10 py-6 sm:py-8" :class="theme('card').value">
       
-      <h2 class="text-xl font-bold mb-1 capitalize" :class="theme('cardTitle').value">
+      <h2 class="text-xl font-bold mb-2 text-center capitalize" :class="theme('cardTitle').value">
         Corregir Asistencia: {{ registro.dia }}
       </h2>
       
-      <p class="text-sm mb-6 font-mono opacity-80" :class="theme('cardSubtitle').value">
+      <p class="text-sm mb-6 font-mono opacity-80 text-center" :class="theme('cardSubtitle').value">
         Fecha: {{ form.fecha || 'Cargando...' }}
       </p>
 
-      <p class="text-sm mb-4" :class="theme('cardSubtitle').value">
+      <p class="text-sm mb-6" :class="theme('cardSubtitle').value">
         Persona: <span class="font-semibold">{{ registro.asistencia.persona.nombre_completo }}</span>
       </p>
 
       <form @submit.prevent="guardarCorreccion">
         <div class="mb-4">
-          <label class="block text-sm font-medium mb-1.5" :class="theme('cardSubtitle').value">
+          <label class="block text-sm font-medium mb-2" :class="theme('cardSubtitle').value">
             Estado
           </label>
           <div class="relative">
@@ -43,7 +43,7 @@
 
         <div v-if="form.estado_asistencia !== null">
           <div class="mb-4">
-            <label class="block text-sm font-medium mb-1.5" :class="theme('cardSubtitle').value">
+            <label class="block text-sm font-medium mb-2" :class="theme('cardSubtitle').value">
               Hora de Entrada (Manual)
             </label>
             <input 
@@ -57,7 +57,7 @@
           </div>
 
           <div class="mb-6">
-            <label class="block text-sm font-medium mb-1.5" :class="theme('cardSubtitle').value">
+            <label class="block text-sm font-medium mb-2" :class="theme('cardSubtitle').value">
               Hora de Salida (Opcional)
             </label>
             <input 

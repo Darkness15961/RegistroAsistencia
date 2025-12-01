@@ -23,14 +23,7 @@
               Selecciona un grupo para ver el personal
             </p>
           </div>
-          <button 
-            @click="abrirModalNuevo"
-            class="flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-semibold shadow-lg"
-            :class="theme('buttonPrimary').value"
-          >
-            <i class="fas fa-plus"></i>
-            Nuevo Personal
-          </button>
+
         </div>
         
         <div class="relative w-full sm:max-w-md">
@@ -84,6 +77,7 @@
     <FormularioPersonalModal
       v-if="mostrarModal"
       :empleado="personalSeleccionado"
+      :grupo="grupoSeleccionado"
       @cerrar="cerrarModal"
       @actualizado="handleGuardado"
     />
@@ -163,10 +157,10 @@ const gruposConArea = computed(() => {
   }))
 })
 
-// Filtra grupos que NO son de alumnos y cuenta su personal
+// Filtra grupos de tipo 'personal'
 const gruposDePersonal = computed(() => {
   return gruposConArea.value
-    .filter(g => g.area && g.area.nombre_area && !g.area.nombre_area.toLowerCase().includes('alumno'))
+    .filter(g => g.area && g.area.tipo_area === 'personal')
     .map(g => ({
       ...g,
       cantidadPersonas: personal.value.filter(p => p.id_grupo === g.id_grupo).length
