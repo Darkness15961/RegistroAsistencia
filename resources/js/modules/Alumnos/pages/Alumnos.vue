@@ -41,12 +41,7 @@
 
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           
-          <GrupoCard
-            v-if="gruposDeAlumnosFiltrados.length > 0 || alumnosSinGrupo.length > 0"
-            :grupo="grupoSinAsignar"
-            :cantidadPersonas="alumnosSinGrupo.length"
-            @click="seleccionarGrupo(grupoSinAsignar)"
-          />
+          <!-- Grupo Sin Asignar eliminado -->
           
           <GrupoCard
             v-for="grupo in gruposDeAlumnosFiltrados"
@@ -57,8 +52,8 @@
           />
         </div>
 
-        <p v-if="!gruposDeAlumnosFiltrados.length && alumnosSinGrupo.length === 0" class="text-center py-12 text-lg" :class="theme('cardSubtitle').value">
-          No se encontraron grupos ni alumnos sin asignar.
+        <p v-if="!gruposDeAlumnosFiltrados.length" class="text-center py-12 text-lg" :class="theme('cardSubtitle').value">
+          No se encontraron grupos.
         </p>
 
       </div>
@@ -129,15 +124,7 @@ const alumnoSeleccionado = ref(null)
 const grupoSeleccionado = ref(null)
 const busquedaGrupo = ref('')
 
-const grupoSinAsignar = {
-  id_grupo: 'unassigned',
-  nivel: 'Alumnos',
-  grado: 'Sin Asignar',
-  seccion: '',
-  area: {
-    nombre_area: 'Sin Grupo'
-  }
-}
+// Objeto "Falso" para la tarjeta "Sin Asignar" eliminado
 
 const gruposConArea = computed(() => {
   return grupos.value.map(g => ({
@@ -173,9 +160,7 @@ const alumnosSinGrupo = computed(() => {
 
 const alumnosDelGrupo = computed(() => {
   if (!grupoSeleccionado.value) return []
-  if (grupoSeleccionado.value.id_grupo === 'unassigned') {
-    return alumnosSinGrupo.value
-  }
+
   return alumnos.value.filter(a => a.id_grupo === grupoSeleccionado.value.id_grupo)
 })
 

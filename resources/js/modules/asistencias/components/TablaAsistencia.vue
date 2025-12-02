@@ -53,7 +53,7 @@
       class="backdrop-blur-xl border rounded-3xl overflow-hidden shadow-lg"
       :class="theme('card').value"
     >
-      <div class="overflow-x-auto">
+      <div class="overflow-x-auto max-w-[calc(100vw-2rem)] sm:max-w-full">
         <table class="w-full text-left">
           <thead :class="theme('tableHeader').value">
             <tr class="border-b" :class="isDark ? 'border-white/20' : 'border-gray-200'">

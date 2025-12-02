@@ -10,9 +10,8 @@ export function usePersonal() {
     loading.value = true
     error.value = null
     try {
-      // Asumiendo que tu API sigue usando 'tipo=empleado' para filtrar
-      // Si cambiaste el backend a 'personal', actualiza aquí
-      const res = await api.get('/personas?tipo=empleado')
+      // Se actualizó a 'personal' para incluir empleados, docentes y administrativos
+      const res = await api.get('/personas?tipo=personal')
       personal.value = res.data
     } catch (err) {
       console.error(err)

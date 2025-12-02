@@ -11,16 +11,6 @@
     </div>
 
     <div v-else>
-      <div class="flex items-center justify-between p-4 rounded-xl border mb-6" :class="theme('card').value">
-        <button @click="navigateWeek('prev')" class="px-3 py-1.5 rounded-lg" :class="theme('buttonSecondary').value">
-          <i class="fas fa-chevron-left"></i>
-        </button>
-        <span class="font-semibold" :class="theme('cardTitle').value">{{ weekRange.display }}</span>
-        <button @click="navigateWeek('next')" class="px-3 py-1.5 rounded-lg" :class="theme('buttonSecondary').value">
-          <i class="fas fa-chevron-right"></i>
-        </button>
-      </div>
-
       <div v-if="!grupoSeleccionado" class="space-y-6">
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
@@ -46,6 +36,16 @@
       </div>
 
       <div v-else>
+        <div class="flex flex-col sm:flex-row items-center justify-between p-4 rounded-xl border mb-6 gap-4" :class="theme('card').value">
+          <button @click="navigateWeek('prev')" class="w-full sm:w-auto px-3 py-1.5 rounded-lg" :class="theme('buttonSecondary').value">
+            <i class="fas fa-chevron-left"></i>
+          </button>
+          <span class="font-semibold text-center" :class="theme('cardTitle').value">{{ weekRange.display }}</span>
+          <button @click="navigateWeek('next')" class="w-full sm:w-auto px-3 py-1.5 rounded-lg" :class="theme('buttonSecondary').value">
+            <i class="fas fa-chevron-right"></i>
+          </button>
+        </div>
+
         <TablaAsistencia
           v-if="vistaActual === 'asistencias'"
           :asistencias="asistenciasDelGrupo"

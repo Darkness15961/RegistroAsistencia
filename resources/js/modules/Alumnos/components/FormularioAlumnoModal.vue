@@ -16,9 +16,11 @@
             <label class="block text-sm font-medium mb-1.5" :class="theme('cardSubtitle').value">
               Grupo
             </label>
-            <div v-if="grupo" class="w-full rounded-xl border px-4 py-3 bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 font-medium">
+            <!-- Mostrar como texto solo si es registro nuevo desde un grupo específico -->
+            <div v-if="grupo && !alumno" class="w-full rounded-xl border px-4 py-3 bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 font-medium">
                {{ getNombreGrupo(grupo) }}
             </div>
+            <!-- Mostrar como select si es edición o registro sin grupo preseleccionado -->
             <div v-else class="relative">
               <select v-model="form.id_grupo" 
                       class="w-full rounded-xl appearance-none border px-4 py-3 pr-12 outline-none transition-colors"
@@ -54,6 +56,8 @@
               DNI
             </label>
             <input v-model="form.dni" placeholder="DNI" 
+                   @input="validarDNI"
+                   maxlength="8"
                    class="w-full rounded-xl border px-3 py-2 outline-none transition-colors"
                    :class="isDark ? 'bg-gray-800 border-gray-600 text-white placeholder-gray-500 focus:border-blue-500' : 'bg-white border-gray-200 text-gray-900 focus:border-blue-500'"
                    required />
@@ -113,6 +117,13 @@
                   <i class="fas fa-camera"></i>
                   Capturar
                 </button>
+
+                <!-- Botón Subir Foto -->
+                <button type="button" @click="$refs.fileInput.click()" class="px-4 py-2 rounded-xl font-semibold flex-1" :class="theme('buttonSecondary').value">
+                  <i class="fas fa-upload"></i>
+                  Subir
+                </button>
+                <input ref="fileInput" type="file" accept="image/*" class="hidden" @change="handleFileUpload">
               </div>
             </div>
 
@@ -297,6 +308,24 @@ const capturarFoto = async () => {
   estadoIA.isSuccess = true
 }
 
+const handleFileUpload = (event) => {
+  const file = event.target.files[0]
+  if (!file) return
+
+  const reader = new FileReader()
+  reader.onload = (e) => {
+    const dataUrl = e.target.result
+    clearCapture()
+    previewDataUrl.value = dataUrl
+    capturedImage.value = dataUrl
+    estadoIA.message = 'Foto subida. Presione "Usar y Analizar Foto".'
+    estadoIA.isSuccess = true
+  }
+  reader.readAsDataURL(file)
+  // Reset input para permitir subir el mismo archivo si es necesario
+  event.target.value = ''
+}
+
 /**
  * Analiza el rostro al presionar "Usar y Analizar Foto"
  */
@@ -305,9 +334,12 @@ const analizarRostro = async () => {
   
   estadoIA.isLoading = true
   estadoIA.isSuccess = false
-  estadoIA.message = 'Analizando rostro...'
+  estadoIA.message = 'Cargando modelos y analizando...'
 
   try {
+    // Asegurar que los modelos estén cargados antes de inferir
+    await cargarModelos()
+
     // Esperar a que la <img> de preview cargue la dataUrl
     await previewImgEl.value.decode()
 
@@ -364,6 +396,12 @@ const clearCapture = () => {
     const ctx = canvas.getContext('2d')
     ctx.clearRect(0, 0, canvas.width, canvas.height)
   }
+}
+
+const validarDNI = (event) => {
+  const value = event.target.value.replace(/\D/g, '').slice(0, 8)
+  form.value.dni = value
+  event.target.value = value
 }
 
 /* --------------------- Lógica de Carga y Guardado (Formulario) --------------------- */

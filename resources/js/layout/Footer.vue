@@ -10,7 +10,7 @@
       </p>
       
       <div 
-        class="flex flex-col md:flex-row gap-x-6 gap-y-2 text-center md:text-right" 
+        class="flex flex-col md:flex-row gap-x-6 gap-y-2 text-center md:text-right items-center md:items-start" 
         :class="theme('cardSubtitle').value"
       >
         <p>

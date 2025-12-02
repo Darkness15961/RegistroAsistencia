@@ -32,7 +32,12 @@ class PersonaController extends Controller
         
         // Aplicar filtros adicionales del request
         if ($request->has('tipo')) {
-            $query->where('tipo_persona', $request->tipo);
+            $tipo = strtolower($request->tipo);
+            if ($tipo === 'personal') {
+                $query->whereIn('tipo_persona', ['empleado', 'docente', 'administrativo']);
+            } else {
+                $query->where('tipo_persona', $tipo);
+            }
         }
         
         return response()->json($query->get());

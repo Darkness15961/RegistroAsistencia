@@ -6,9 +6,11 @@ import '../css/app.css'
 import '@fortawesome/fontawesome-free/css/all.min.css'
 
 // Importa tu config de Axios para registrar los interceptores
-import './axiosConfig.js' 
+import './axiosConfig.js'
 
 const app = createApp(App)
 app.use(router)
-app.mount('#app')
 
+router.isReady().then(() => {
+    app.mount('#app')
+})

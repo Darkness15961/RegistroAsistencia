@@ -17,9 +17,11 @@
             <label class="block text-sm font-medium mb-1.5" :class="theme('cardSubtitle').value">
               Grupo
             </label>
-            <div v-if="grupo" class="w-full rounded-xl border px-4 py-3 bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 font-medium">
+            <!-- Mostrar como texto solo si es registro nuevo desde un grupo específico -->
+            <div v-if="grupo && !empleado" class="w-full rounded-xl border px-4 py-3 bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 font-medium">
                {{ getNombreGrupo(grupo) }}
             </div>
+            <!-- Mostrar como select si es edición o registro sin grupo preseleccionado -->
             <div v-else class="relative">
               <select v-model="form.id_grupo"
                       class="w-full rounded-xl appearance-none border px-4 py-3 pr-12 outline-none transition-colors"
@@ -31,6 +33,31 @@
                         :value="g.id_grupo"
                         :class="isDark ? 'bg-gray-800 text-white' : 'bg-white text-gray-900'">
                   {{ getNombreGrupo(g) }} (Área: {{ g.area.nombre_area }})
+                </option>
+              </select>
+              <div class="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none" 
+                   :class="isDark ? 'text-white' : 'text-gray-600'">
+                <i class="fas fa-chevron-down text-xs"></i>
+              </div>
+            </div>
+          </div>
+
+          <!-- Area (New Field) -->
+          <div class="sm:col-span-2">
+            <label class="block text-sm font-medium mb-1.5" :class="theme('cardSubtitle').value">
+              Área
+            </label>
+            <div class="relative">
+              <select v-model="form.id_area"
+                      :disabled="isGrupoReal"
+                      class="w-full rounded-xl appearance-none border px-4 py-3 pr-12 outline-none transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
+                      :class="isDark ? 'bg-gray-800 border-gray-600 text-white focus:border-blue-500' : 'bg-white border-gray-200 text-gray-900 focus:border-blue-500'"
+                      required>
+                <option value="" disabled>Seleccionar área</option>
+                <option v-for="area in areas" 
+                        :key="area.id_area" 
+                        :value="area.id_area">
+                  {{ area.nombre_area }}
                 </option>
               </select>
               <div class="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none" 
@@ -127,14 +154,21 @@
                   <i class="fas fa-camera"></i>
                   Capturar
                 </button>
+
+                <!-- Botón Subir Foto -->
+                <button type="button" @click="$refs.fileInput.click()" class="px-4 py-2 rounded-xl font-semibold flex-1" :class="theme('buttonSecondary').value">
+                  <i class="fas fa-upload"></i>
+                  Subir
+                </button>
+                <input ref="fileInput" type="file" accept="image/*" class="hidden" @change="handleFileUpload">
               </div>
             </div>
 
             <div>
               <p class="text-sm mb-2" :class="theme('cardSubtitle').value">Vista previa</p>
               <div class="rounded-2xl overflow-hidden border p-2 bg-gray-50/30 aspect-video flex items-center justify-center relative" :class="theme('input').value">
-                <img v-if="previewDataUrl" :src="previewDataUrl" ref="previewImgEl" class="absolute inset-0 w-full h-full object-cover" />
-                <canvas ref="previewCanvasEl" class="absolute inset-0 w-full h-full"></canvas>
+                <img v-if="previewDataUrl" :src="previewDataUrl" ref="previewImgEl" class="overlay-absolute" />
+                <canvas ref="previewCanvasEl" class="overlay-absolute"></canvas>
                 <div v-if="!previewDataUrl" class="text-sm" :class="theme('cardSubtitle').value">No hay foto</div>
               </div>
               
@@ -288,10 +322,28 @@ const capturarFoto = async () => {
   estadoIA.isSuccess = true
 }
 
+const handleFileUpload = (event) => {
+  const file = event.target.files[0]
+  if (!file) return
+
+  const reader = new FileReader()
+  reader.onload = (e) => {
+    const dataUrl = e.target.result
+    clearCapture()
+    previewDataUrl.value = dataUrl
+    capturedImage.value = dataUrl
+    estadoIA.message = 'Foto subida. Presione "Usar y Analizar Foto".'
+    estadoIA.isSuccess = true
+  }
+  reader.readAsDataURL(file)
+  event.target.value = ''
+}
+
 const analizarRostro = async () => {
   if (!previewImgEl.value) return
-  estadoIA.isLoading = true; estadoIA.isSuccess = false; estadoIA.message = 'Analizando...'
+  estadoIA.isLoading = true; estadoIA.isSuccess = false; estadoIA.message = 'Cargando modelos y analizando...'
   try {
+    await cargarModelos()
     await previewImgEl.value.decode()
     const detection = await faceapi.detectSingleFace(previewImgEl.value, new faceapi.SsdMobilenetv1Options()).withFaceLandmarks().withFaceDescriptor()
     if (!detection) {
@@ -322,6 +374,7 @@ const clearCapture = () => {
 const validarDNI = (event) => {
   const value = event.target.value.replace(/\D/g, '').slice(0, 8)
   form.value.dni = value
+  event.target.value = value
 }
 
 watch(() => props.empleado, (nuevo) => {
@@ -366,6 +419,10 @@ onMounted(async () => {
 const gruposConArea = computed(() => grupos.value.map(g => ({ ...g, area: areas.value.find(a => a.id_area === g.id_area) || {} })))
 const gruposDePersonal = computed(() => gruposConArea.value.filter(g => g.area && g.area.nombre_area && !String(g.area.nombre_area).toLowerCase().includes('alumno')))
 
+const isGrupoReal = computed(() => {
+  return form.value.id_grupo && form.value.id_grupo !== 'unassigned'
+})
+
 const getNombreGrupo = (grupo) => {
   if (!grupo) return ''
   if (grupo.grado || grupo.nivel) return `${grupo.nivel || ''} ${grupo.grado || ''} "${grupo.seccion || ''}"`.trim()
@@ -378,10 +435,23 @@ const guardar = async () => {
     return
   }
 
+  if (!currentDescriptor.value && !props.empleado) {
+    alert('Debe tomar una foto y analizarla para registrar al personal.')
+    return
+  }
+
   loading.value = true
   try {
     const grupoSel = grupos.value.find(g => g.id_grupo === form.value.id_grupo)
-    if (grupoSel) form.value.id_area = grupoSel.id_area
+    // Si seleccionó un grupo real, forzar el área del grupo. Si es 'unassigned' o null, respetar el área seleccionada manualmente.
+    if (grupoSel) {
+      form.value.id_area = grupoSel.id_area
+    }
+    
+    // Si el grupo es 'unassigned', enviarlo como null
+    if (form.value.id_grupo === 'unassigned') {
+      form.value.id_grupo = null
+    }
 
     let personaId = null
     if (props.empleado) {
@@ -412,8 +482,7 @@ const guardar = async () => {
 </script>
 
 <style scoped>
-.relative { position: relative; }
-.absolute { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
-img.absolute { object-fit: cover; }
-canvas.absolute { z-index: 10; }
+.overlay-absolute { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+img.overlay-absolute { object-fit: cover; }
+canvas.overlay-absolute { z-index: 10; }
 </style>
