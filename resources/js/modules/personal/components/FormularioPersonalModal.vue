@@ -312,7 +312,8 @@ const capturarFoto = async () => {
   clearCapture()
   const video = videoEl.value
   const canvas = document.createElement('canvas')
-  canvas.width = video.videoWidth || 640; canvas.height = video.videoHeight || 480
+  canvas.width = video.videoWidth || 640
+  canvas.height = video.videoHeight || 480
   const ctx = canvas.getContext('2d')
   ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
   const dataUrl = canvas.toDataURL('image/jpeg', 0.9)
@@ -465,8 +466,8 @@ const guardar = async () => {
     if (currentDescriptor.value) {
       await api.post('/reconocimientos', {
         id_persona: personaId,
-        face_descriptor: currentDescriptor.value,
-        image_base64: capturedImage.value
+        face_descriptor: currentDescriptor.value
+        // No enviamos image_base64 porque no es necesario para el reconocimiento
       })
     }
 

@@ -52,6 +52,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('/horarios', HorarioController::class);
     Route::apiResource('/grupos', GrupoController::class);
     Route::apiResource('/personas', PersonaController::class);
+    Route::post('/personas/asignar-grupo-masivo', [PersonaController::class, 'asignarGrupoMasivo']);
 
     // Las rutas REST de asistencias (index, show, update, destroy, etc.) protegidas
     Route::apiResource('/asistencias', AsistenciaController::class)->except(['store']);

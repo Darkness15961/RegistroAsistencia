@@ -56,6 +56,14 @@
         <table class="w-full">
           <thead :class="theme('tableHeader').value">
             <tr class="border-b" :class="isDark ? 'border-white/20' : 'border-gray-200'">
+              <th v-if="modoSeleccion" class="text-center p-4 w-12">
+                <input 
+                  type="checkbox" 
+                  :checked="seleccionados.length === alumnosFiltrados.length && alumnosFiltrados.length > 0"
+                  @change="toggleTodos"
+                  class="w-5 h-5 rounded cursor-pointer accent-purple-500"
+                />
+              </th>
               <th class="text-left p-4 font-bold text-sm uppercase min-w-[250px]" :class="theme('cardSubtitle').value">Nombre</th>
               <th class="text-left p-4 font-bold text-sm uppercase" :class="theme('cardSubtitle').value">Grado/Sección</th>
               <th class="text-left p-4 font-bold text-sm uppercase" :class="theme('cardSubtitle').value">Contacto</th>
@@ -81,6 +89,14 @@
                 index % 2 === 0 ? (isDark ? 'bg-white/[0.03]' : 'bg-gray-50/50') : ''
               ]"
             >
+              <td v-if="modoSeleccion" class="p-4 text-center">
+                <input 
+                  type="checkbox" 
+                  :checked="seleccionados.includes(alumno.id_persona)"
+                  @change="toggleSeleccion(alumno.id_persona)"
+                  class="w-5 h-5 rounded cursor-pointer accent-purple-500"
+                />
+              </td>
               <td class="p-4">
                 <div class="flex items-center gap-3">
                   <div 
@@ -244,10 +260,35 @@ const props = defineProps({
   alumnos: {
     type: Array,
     default: () => []
+  },
+  modoSeleccion: {
+    type: Boolean,
+    default: false
   }
 })
 
-defineEmits(['nuevoAlumno', 'editar', 'eliminar', 'volver'])
+const emit = defineEmits(['nuevoAlumno', 'editar', 'eliminar', 'volver', 'seleccionCambiada'])
+
+const seleccionados = ref([])
+
+const toggleSeleccion = (idPersona) => {
+  const index = seleccionados.value.indexOf(idPersona)
+  if (index > -1) {
+    seleccionados.value.splice(index, 1)
+  } else {
+    seleccionados.value.push(idPersona)
+  }
+  emit('seleccionCambiada', seleccionados.value)
+}
+
+const toggleTodos = () => {
+  if (seleccionados.value.length === alumnosFiltrados.value.length && alumnosFiltrados.value.length > 0) {
+    seleccionados.value = []
+  } else {
+    seleccionados.value = alumnosFiltrados.value.map(a => a.id_persona)
+  }
+  emit('seleccionCambiada', seleccionados.value)
+}
 
 const busqueda = ref('')
 

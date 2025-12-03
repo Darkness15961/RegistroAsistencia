@@ -56,6 +56,14 @@
         <table class="w-full text-left">
           <thead :class="theme('tableHeader').value">
             <tr class="border-b" :class="isDark ? 'border-white/20' : 'border-gray-200'">
+              <th v-if="modoSeleccion" class="text-center p-4 w-12">
+                <input 
+                  type="checkbox" 
+                  :checked="seleccionados.length === personalFiltrado.length && personalFiltrado.length > 0"
+                  @change="toggleTodos"
+                  class="w-5 h-5 rounded cursor-pointer accent-purple-500"
+                />
+              </th>
               <th class="p-4 font-bold text-sm uppercase min-w-[250px]" :class="theme('cardSubtitle').value">Nombre</th>
               <th class="p-4 font-bold text-sm uppercase" :class="theme('cardSubtitle').value">Cargo</th>
               <th class="p-4 font-bold text-sm uppercase" :class="theme('cardSubtitle').value">Contacto</th>
@@ -65,7 +73,7 @@
           </thead>
           <tbody>
             <tr v-if="personalFiltrado.length === 0">
-              <td colspan="5" class="text-center p-8" :class="theme('cardSubtitle').value">
+              <td :colspan="modoSeleccion ? 6 : 5" class="text-center p-8" :class="theme('cardSubtitle').value">
                 <i class="fas fa-user-slash text-5xl mb-3 opacity-50"></i>
                 <p>No se encontró personal en este grupo</p>
               </td>
@@ -81,6 +89,14 @@
                 index % 2 === 0 ? (isDark ? 'bg-white/[0.03]' : 'bg-gray-50/50') : ''
               ]"
             >
+              <td v-if="modoSeleccion" class="p-4 text-center">
+                <input 
+                  type="checkbox" 
+                  :checked="seleccionados.includes(persona.id_persona)"
+                  @change="toggleSeleccion(persona.id_persona)"
+                  class="w-5 h-5 rounded cursor-pointer accent-purple-500"
+                />
+              </td>
               <td class="p-4">
                 <div class="flex items-center gap-3">
                   <div 
@@ -244,10 +260,35 @@ const props = defineProps({
   personal: {
     type: Array,
     default: () => []
+  },
+  modoSeleccion: {
+    type: Boolean,
+    default: false
   }
 })
 
-defineEmits(['nuevoPersonal', 'editar', 'eliminar', 'volver'])
+const emit = defineEmits(['nuevoPersonal', 'editar', 'eliminar', 'volver', 'seleccionCambiada'])
+
+const seleccionados = ref([])
+
+const toggleSeleccion = (idPersona) => {
+  const index = seleccionados.value.indexOf(idPersona)
+  if (index > -1) {
+    seleccionados.value.splice(index, 1)
+  } else {
+    seleccionados.value.push(idPersona)
+  }
+  emit('seleccionCambiada', seleccionados.value)
+}
+
+const toggleTodos = () => {
+  if (seleccionados.value.length === personalFiltrado.value.length && personalFiltrado.value.length > 0) {
+    seleccionados.value = []
+  } else {
+    seleccionados.value = personalFiltrado.value.map(p => p.id_persona)
+  }
+  emit('seleccionCambiada', seleccionados.value)
+}
 
 const busqueda = ref('')
 

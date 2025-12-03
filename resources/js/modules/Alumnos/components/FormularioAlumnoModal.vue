@@ -299,7 +299,6 @@ const capturarFoto = async () => {
   const ctx = canvas.getContext('2d')
   ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
   
-  // Usamos jpeg para que coincida con el controlador
   const dataUrl = canvas.toDataURL('image/jpeg', 0.9) 
   
   previewDataUrl.value = dataUrl
@@ -515,8 +514,8 @@ const guardar = async () => {
       
       const payload = {
         id_persona: personaId,
-        face_descriptor: currentDescriptor.value, 
-        image_base64: capturedImage.value      
+        face_descriptor: currentDescriptor.value
+        // No enviamos image_base64 porque no es necesario para el reconocimiento
       }
       
       await api.post('/reconocimientos', payload)

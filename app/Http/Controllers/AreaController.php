@@ -41,7 +41,31 @@ class AreaController extends Controller
 
     public function destroy(Area $area)
     {
-        $area->delete();
-        return response()->json(null, 204);
+        try {
+            // 1. Poner en NULL el id_area e id_grupo de todas las personas asociadas
+            $area->personas()->update([
+                'id_area' => null,
+                'id_grupo' => null
+            ]);
+
+            // 2. Eliminar todos los horarios asociados al área
+            $area->horarios()->delete();
+
+            // 3. Eliminar todos los grupos asociados al área
+            $area->grupos()->delete();
+
+            // 4. Finalmente, eliminar el área
+            $area->delete();
+
+            return response()->json([
+                'message' => 'Área eliminada correctamente. Las personas han sido desasignadas.'
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Error al eliminar el área.',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 }

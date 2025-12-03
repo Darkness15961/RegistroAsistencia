@@ -1,8 +1,8 @@
 import axios from 'axios'
 
 // URL base del backend Laravel
-//axios.defaults.baseURL = 'https://navajowhite-albatross-624410.hostingersite.com/api'
-axios.defaults.baseURL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000/api'
+axios.defaults.baseURL = 'https://navajowhite-albatross-624410.hostingersite.com/api'
+//axios.defaults.baseURL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000/api'
 
 // Permitir el envío de cookies si usas sanctum o sesiones
 axios.defaults.withCredentials = true

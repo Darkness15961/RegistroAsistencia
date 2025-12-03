@@ -42,7 +42,13 @@
 
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           
-          <!-- Grupo Sin Asignar eliminado -->
+          <!-- Card "Sin Asignar" solo visible para admin, secretaria y supervisor -->
+          <GrupoCard
+            v-if="(isAdmin || isSecretaria || isSupervisor) && personalSinGrupo.length > 0"
+            :grupo="grupoSinAsignar"
+            :cantidadPersonas="personalSinGrupo.length"
+            @click="seleccionarGrupo(grupoSinAsignar)"
+          />
           
           <GrupoCard
             v-for="grupo in gruposDePersonalFiltrados"
@@ -62,12 +68,42 @@
         v-else
         :personal="personalDelGrupo"
         :nombreGrupo="getNombreGrupo(grupoSeleccionado)"
+        :modoSeleccion="grupoSeleccionado?.id_grupo === 'unassigned'"
         @volver="grupoSeleccionado = null" 
         @nuevoPersonal="abrirModalNuevo"
         @editar="abrirModalEditar"
         @eliminar="handleEliminarPersonal"
+        @seleccionCambiada="personalSeleccionados = $event"
       />
     </div>
+
+    <!-- Barra flotante estilo Gmail -->
+    <Transition name="slide-up">
+      <div 
+        v-if="personalSeleccionados.length > 0"
+        class="fixed bottom-6 left-1/2 -translate-x-1/2 backdrop-blur-xl border rounded-2xl shadow-2xl p-4 z-50 flex items-center gap-4"
+        :class="isDark ? 'bg-gray-800/95 border-gray-700' : 'bg-white/95 border-gray-200'"
+      >
+        <span class="font-semibold" :class="isDark ? 'text-white' : 'text-gray-900'">
+          {{ personalSeleccionados.length }} seleccionado(s)
+        </span>
+        <button 
+          @click="mostrarModalGrupo = true"
+          class="px-6 py-2 rounded-xl font-semibold shadow-lg hover:scale-105 transition-all duration-200"
+          :class="theme('buttonPrimary').value"
+        >
+          <i class="fas fa-exchange-alt mr-2"></i>
+          Cambiar de Grupo
+        </button>
+        <button 
+          @click="personalSeleccionados = []"
+          class="p-2 rounded-xl hover:bg-red-500/20 transition-colors"
+          :class="isDark ? 'text-red-300' : 'text-red-600'"
+        >
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+    </Transition>
 
     <FormularioPersonalModal
       v-if="mostrarModal"
@@ -76,11 +112,91 @@
       @cerrar="cerrarModal"
       @actualizado="handleGuardado"
     />
+
+    <!-- Modal para seleccionar grupo destino -->
+    <Teleport to="body">
+      <Transition name="fade">
+        <div 
+          v-if="mostrarModalGrupo"
+          class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[100] p-4"
+          @click.self="mostrarModalGrupo = false"
+        >
+          <div 
+            class="backdrop-blur-xl border rounded-3xl shadow-2xl p-6 w-full max-w-md"
+            :class="theme('card').value"
+          >
+            <h2 class="text-2xl font-bold mb-4" :class="theme('cardTitle').value">
+              <i class="fas fa-exchange-alt mr-2"></i>
+              Asignar a Grupo
+            </h2>
+            
+            <p class="mb-4" :class="theme('cardSubtitle').value">
+              Selecciona el grupo al que deseas asignar el personal seleccionado ({{ personalSeleccionados.length }}):
+            </p>
+
+            <div class="space-y-2 max-h-96 overflow-y-auto mb-6">
+              <div v-if="gruposDePersonal.length === 0" class="text-center py-8" :class="theme('cardSubtitle').value">
+                <i class="fas fa-inbox text-4xl mb-2 opacity-50"></i>
+                <p>No hay grupos disponibles</p>
+              </div>
+              <button
+                v-for="grupo in gruposDePersonal"
+                :key="grupo.id_grupo"
+                @click="grupoDestino = grupo"
+                class="w-full p-4 rounded-xl border-2 transition-all text-left"
+                :class="[
+                  grupoDestino?.id_grupo === grupo.id_grupo
+                    ? 'border-purple-500 bg-white shadow-lg'
+                    : (isDark ? 'border-gray-600 bg-gray-700/50 hover:bg-gray-700' : 'border-gray-300 bg-white hover:bg-gray-50')
+                ]"
+              >
+                <div 
+                  class="font-semibold"
+                  :class="grupoDestino?.id_grupo === grupo.id_grupo ? 'text-purple-900' : (isDark ? 'text-gray-100' : 'text-gray-900')"
+                >
+                  {{ grupo.nivel || grupo.grado }}
+                </div>
+                <div 
+                  class="text-sm"
+                  :class="grupoDestino?.id_grupo === grupo.id_grupo ? 'text-purple-700' : (isDark ? 'text-gray-400' : 'text-gray-600')"
+                >
+                  {{ grupo.grado && grupo.nivel ? grupo.grado : (grupo.area?.nombre_area || 'Sin área') }}
+                </div>
+              </button>
+            </div>
+
+            <div class="flex gap-3">
+              <button
+                @click="asignarGrupoMasivo"
+                :disabled="!grupoDestino"
+                class="flex-1 px-6 py-3 rounded-xl font-semibold shadow-lg transition-all duration-200"
+                :class="[
+                  grupoDestino
+                    ? theme('buttonPrimary').value + ' hover:scale-105'
+                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                ]"
+              >
+                <i class="fas fa-check mr-2"></i>
+                Asignar
+              </button>
+              <button
+                @click="mostrarModalGrupo = false"
+                class="px-6 py-3 rounded-xl font-semibold shadow-lg hover:scale-105 transition-all duration-200"
+                :class="theme('buttonSecondary').value"
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { useAuth } from '@/composables/useAuth'
 import api from '@/axiosConfig'
 import { useTheme } from '@/composables/useTheme'
 import { usePersonal } from '../composables/usePersonal' 
@@ -91,6 +207,7 @@ import TablaPersonal from '../components/TablaPersonal.vue'
 import FormularioPersonalModal from '../components/FormularioPersonalModal.vue'
 
 const { theme } = useTheme()
+const { isAdmin, isSecretaria, isSupervisor } = useAuth()
 
 // --- Lógica de Datos ---
 const { 
@@ -133,6 +250,22 @@ const personalSeleccionado = ref(null)
 const grupoSeleccionado = ref(null)
 const busquedaGrupo = ref('')
 
+// Estados para selección múltiple
+const personalSeleccionados = ref([])
+const mostrarModalGrupo = ref(false)
+const grupoDestino = ref(null)
+
+// Objeto para el card "Sin Asignar"
+const grupoSinAsignar = {
+  id_grupo: 'unassigned',
+  grado: 'Sin Asignar',
+  nivel: '',
+  seccion: '',
+  area: {
+    nombre_area: 'Sin Grupo'
+  }
+}
+
 // Objeto "Falso" para la tarjeta "Sin Asignar" eliminado
 
 // Helper para unir grupos con sus áreas
@@ -167,13 +300,17 @@ const gruposDePersonalFiltrados = computed(() => {
 
 // Personal sin grupo asignado
 const personalSinGrupo = computed(() => {
-  return personal.value.filter(p => !p.id_grupo)
+  return personal.value.filter(p => !p.id_grupo && p.tipo_persona !== 'estudiante')
 })
 
 // Personal del grupo seleccionado actualmente
 const personalDelGrupo = computed(() => {
   if (!grupoSeleccionado.value) return []
   
+  // Si es el grupo "Sin Asignar", mostrar personal sin grupo
+  if (grupoSeleccionado.value.id_grupo === 'unassigned') {
+    return personalSinGrupo.value
+  }
 
   return personal.value.filter(p => p.id_grupo === grupoSeleccionado.value.id_grupo)
 })
@@ -202,6 +339,31 @@ const handleGuardado = () => {
 const handleEliminarPersonal = async (id) => {
   if (!confirm('¿Seguro que deseas eliminar este registro?')) return
   await eliminarPersonal(id)
+}
+
+const asignarGrupoMasivo = async () => {
+  if (!grupoDestino.value || personalSeleccionados.value.length === 0) return
+  
+  try {
+    const response = await api.post('/personas/asignar-grupo-masivo', {
+      ids_personas: personalSeleccionados.value,
+      id_grupo: grupoDestino.value.id_grupo
+    })
+    
+    alert(response.data.message || 'Personal asignado correctamente')
+    
+    // Limpiar selecciones y cerrar modal
+    personalSeleccionados.value = []
+    mostrarModalGrupo.value = false
+    grupoDestino.value = null
+    
+    // Recargar datos
+    await fetchPersonal()
+    
+  } catch (error) {
+    console.error('Error asignando personal:', error)
+    alert(error.response?.data?.message || 'Error al asignar personal al grupo')
+  }
 }
 
 // --- Utilidad ---

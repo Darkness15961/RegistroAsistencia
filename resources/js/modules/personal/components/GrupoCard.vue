@@ -9,11 +9,11 @@
     <div class="flex justify-between items-start mb-4 pl-3">
       
       <div class="overflow-hidden">
-        <h3 class="text-lg font-bold leading-tight mb-1 truncate" :class="theme('cardTitle').value" :title="nombreGrupo">
-            {{ nombreGrupo }}
+        <h3 class="text-lg font-bold leading-tight mb-1 truncate" :class="theme('cardTitle').value" :title="grupo.nivel || grupo.grado || 'Sin nombre'">
+            {{ grupo.nivel || grupo.grado || 'Grupo sin nombre' }}
         </h3>
         <p class="text-xs uppercase tracking-wider font-semibold opacity-60 truncate" :class="theme('cardSubtitle').value">
-          {{ grupo.nivel || grupo.area?.nombre_area || 'General' }}
+          {{ grupo.grado && grupo.nivel ? grupo.grado : (grupo.area?.nombre_area || 'Sin área') }}
         </p>
       </div>
       

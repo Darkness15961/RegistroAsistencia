@@ -69,11 +69,24 @@ class GrupoController extends Controller
 
     public function destroy(Grupo $grupo)
     {
-        $grupo->delete();
-        
-        return response()->json([
-            'message' => 'Grupo eliminado correctamente',
-            'id_eliminado' => $grupo->id_grupo
-        ], 200);
+        try {
+            // Desasignar personas del grupo (establecer id_grupo a NULL)
+            \App\Models\Persona::where('id_grupo', $grupo->id_grupo)
+                ->update(['id_grupo' => null]);
+            
+            // Eliminar el grupo
+            $grupo->delete();
+            
+            return response()->json([
+                'message' => 'Grupo eliminado correctamente. Las personas asociadas ahora están sin asignar.',
+                'id_eliminado' => $grupo->id_grupo
+            ], 200);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Error al eliminar el grupo',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 }
