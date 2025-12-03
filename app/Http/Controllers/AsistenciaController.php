@@ -148,10 +148,11 @@ class AsistenciaController extends Controller
 
     /**
      * Registrar asistencia (IA o Manual)
-     */
-    /**
-     * Registrar asistencia (IA o Manual)
-     * Lógica inteligente para evitar dobles registros accidentales.
+     * 
+     * REGLAS DE NEGOCIO:
+     * - ESTUDIANTES: Marcan solo ENTRADA (1h antes hasta 15min después)
+     * - PERSONAL: Marca ENTRADA (30min antes hasta 15min después) y SALIDA (hasta 15min después)
+     * - ANTI-REBOTE: Solo se acepta el primer registro, intentos posteriores muestran "Usuario ya registrado"
      */
     public function store(Request $request)
     {
@@ -161,18 +162,29 @@ class AsistenciaController extends Controller
         ]);
 
         $persona = Persona::find($request->id_persona);
-        // Forzamos zona horaria America/Lima
+        
+        // Forzar zona horaria America/Lima
         $fecha = $request->input('fecha', Carbon::now('America/Lima')->toDateString());
-        $horaActualCarbon = Carbon::now('America/Lima'); // Objeto Carbon para cálculos
-        $horaActualStr = $horaActualCarbon->toTimeString(); // String para la BD
+        $horaActualCarbon = Carbon::now('America/Lima');
+        $horaActualStr = $horaActualCarbon->toTimeString();
 
-        // ... (Tu helper normalizeHora sigue igual aquí) ...
-        $normalizeHora = function ($hora) { /* ... */ }; // (Mantenlo como lo tienes)
+        // Helper para normalizar horas
+        $normalizeHora = function ($hora) {
+            if ($hora === null) return null;
+            $h = trim($hora);
+            if ($h === '') return null;
+            if (preg_match('/^\d{2}:\d{2}$/', $h)) return $h . ':00';
+            try { 
+                return Carbon::parse($h)->format('H:i:s'); 
+            } catch (\Exception $e) { 
+                return null; 
+            }
+        };
+
         $horaEntradaInput = $normalizeHora($request->input('hora_entrada'));
         $horaSalidaInput = $normalizeHora($request->input('hora_salida'));
 
-
-        // Buscar o crear el registro del día
+        // Buscar registro existente del día
         $asistencia = Asistencia::firstOrNew([
             'id_persona' => $persona->id_persona,
             'fecha' => $fecha,
@@ -180,123 +192,168 @@ class AsistenciaController extends Controller
 
         $estadoRecibido = $request->input('estado_asistencia');
 
-        // --- CASO 1: MANUAL (Admin corrige o crea) ---
+        // ========================================
+        // CASO 1: REGISTRO MANUAL (Admin/Docente)
+        // ========================================
         if ($estadoRecibido) {
-            // ... (Tu lógica manual existente se queda igual) ...
-            // Copia tu lógica manual aquí (presente/tarde/falta)
             $asistencia->metodo_registro = 'Manual';
-            // ...
-        } 
-        
-        // --- CASO 2: AUTOMÁTICO (IA - Escaneo Facial) ---
-        else {
-            $asistencia->metodo_registro = 'IA';
-
-            // A) NO TIENE ENTRADA -> REGISTRAR ENTRADA
-            if (is_null($asistencia->hora_entrada)) {
-                // Obtener horario del área
-                $horario = Horario::where('id_area', $persona->id_area)->first();
-                
-                if (!$horario) {
-                    return response()->json([
-                        'message' => 'No hay horario configurado para esta área',
-                        'persona' => $persona
-                    ], 400);
-                }
-
-                $horaEntradaProgramada = Carbon::parse($horario->hora_entrada);
-                
-                // Determinar ventana según tipo de persona
-                $minutosAntes = $persona->tipo_persona === 'estudiante' ? 60 : 30;
-                $ventanaInicio = $horaEntradaProgramada->copy()->subMinutes($minutosAntes);
-                $ventanaFin = $horaEntradaProgramada->copy()->addMinutes(15);
-
-                // Validar que esté dentro de la ventana
-                if ($horaActualCarbon->lt($ventanaInicio)) {
-                    return response()->json([
-                        'message' => 'Aún no puede marcar asistencia. Intente después de las ' . $ventanaInicio->format('H:i'),
-                        'persona' => $persona
-                    ], 400);
-                }
-
-                if ($horaActualCarbon->gt($ventanaFin)) {
-                    return response()->json([
-                        'message' => 'Tiempo de marcado expirado. Se registrará como falta automática.',
-                        'persona' => $persona
-                    ], 400);
-                }
-
-                // Registrar entrada
-                $asistencia->hora_entrada = $horaActualStr;
-
-                // Determinar estado
-                if ($horaActualCarbon->lte($horaEntradaProgramada)) {
-                    $asistencia->estado_asistencia = 'Presente';
-                } else {
-                    $asistencia->estado_asistencia = 'Tarde';
-                }
             
-            // B) YA TIENE ENTRADA... ¿QUÉ HACEMOS?
+            // Normalizar estado
+            $v = Str::lower(trim($estadoRecibido));
+            if (in_array($v, ['presente', 'p', 'pres'])) {
+                $asistencia->estado_asistencia = 'Presente';
+            } elseif (in_array($v, ['tarde', 't'])) {
+                $asistencia->estado_asistencia = 'Tarde';
+            } elseif (in_array($v, ['falta', 'f', 'ausente'])) {
+                $asistencia->estado_asistencia = 'Falta';
             } else {
-                
-                // 1. Validar si YA TIENE SALIDA
-                if (!is_null($asistencia->hora_salida)) {
-                    return response()->json([
-                        'message' => 'La asistencia de hoy ya está completa (Entrada y Salida registradas).',
-                        'persona' => $persona,
-                        'estado_asistencia' => $asistencia->estado_asistencia
-                    ], 200); 
-                }
-
-                // 2. LÓGICA ANTI-REBOTE (Evitar doble registro por error)
-                $tiempoEntrada = Carbon::parse($asistencia->hora_entrada);
-                $diferenciaMinutos = $horaActualCarbon->diffInMinutes($tiempoEntrada);
-
-                if ($diferenciaMinutos < 30) {
-                     return response()->json([
-                        'message' => 'Entrada ya registrada hace ' . $diferenciaMinutos . ' minutos. La salida se habilitará después de 30 min.',
-                        'persona' => $persona,
-                        'estado_asistencia' => $asistencia->estado_asistencia
-                    ], 200);
-                }
-
-                // 3. LÓGICA DE SALIDA (Solo Personal marca salida)
-                if ($persona->tipo_persona === 'estudiante') {
-                     return response()->json([
-                        'message' => 'Entrada registrada correctamente. (Alumnos no marcan salida)',
-                        'persona' => $persona,
-                         'estado_asistencia' => $asistencia->estado_asistencia
-                    ], 200);
-                }
-
-                // Obtener horario para validar salida
-                $horario = Horario::where('id_area', $persona->id_area)->first();
-                
-                if (!$horario) {
-                    return response()->json([
-                        'message' => 'No hay horario configurado para validar la salida',
-                        'persona' => $persona
-                    ], 400);
-                }
-
-                $horaSalidaProgramada = Carbon::parse($horario->hora_salida);
-                $ventanaSalidaFin = $horaSalidaProgramada->copy()->addMinutes(15);
-
-                // Registrar salida
-                $asistencia->hora_salida = $horaActualStr;
-
-                // Marcar si está fuera de tiempo
-                if ($horaActualCarbon->gt($ventanaSalidaFin)) {
-                    $asistencia->salida_fuera_tiempo = true;
-                } else {
-                    $asistencia->salida_fuera_tiempo = false;
-                }
+                $asistencia->estado_asistencia = ucfirst($v);
             }
+
+            // Asignar horas si vienen
+            if ($horaEntradaInput) $asistencia->hora_entrada = $horaEntradaInput;
+            if ($horaSalidaInput) $asistencia->hora_salida = $horaSalidaInput;
+
+            $asistencia->save();
+            return response()->json($asistencia->load('persona'), 201);
+        }
+
+        // ========================================
+        // CASO 2: REGISTRO AUTOMÁTICO (IA - Facial)
+        // ========================================
+        $asistencia->metodo_registro = 'IA';
+
+        // Obtener horario del área
+        $horario = Horario::where('id_area', $persona->id_area)->first();
+        
+        if (!$horario) {
+            return response()->json([
+                'message' => 'No hay horario configurado para esta área',
+                'persona' => $persona
+            ], 400);
+        }
+
+        // ----------------------------------------
+        // A) REGISTRO DE ENTRADA
+        // ----------------------------------------
+        if (is_null($asistencia->hora_entrada)) {
+            
+            // IMPORTANTE: Parsear con la fecha actual para comparaciones correctas
+            $fechaHoy = $horaActualCarbon->toDateString();
+            $horaEntradaProgramada = Carbon::parse($fechaHoy . ' ' . $horario->hora_entrada, 'America/Lima');
+            
+            // Ventanas según tipo de persona
+            if ($persona->tipo_persona === 'estudiante') {
+                // ESTUDIANTES: 1 hora antes hasta 15 min después
+                $ventanaInicio = $horaEntradaProgramada->copy()->subMinutes(60);
+                $ventanaFin = $horaEntradaProgramada->copy()->addMinutes(15);
+            } else {
+                // PERSONAL: 30 min antes hasta 15 min después
+                $ventanaInicio = $horaEntradaProgramada->copy()->subMinutes(30);
+                $ventanaFin = $horaEntradaProgramada->copy()->addMinutes(15);
+            }
+
+            // Validar ventana de entrada
+            if ($horaActualCarbon->lt($ventanaInicio)) {
+                return response()->json([
+                    'message' => 'Aún no puede marcar asistencia. Intente después de las ' . $ventanaInicio->format('H:i'),
+                    'persona' => $persona
+                ], 400);
+            }
+
+            if ($horaActualCarbon->gt($ventanaFin)) {
+                return response()->json([
+                    'message' => 'Tiempo de marcado expirado. Contacte al encargado para registro manual.',
+                    'persona' => $persona
+                ], 400);
+            }
+
+            // Registrar entrada
+            $asistencia->hora_entrada = $horaActualStr;
+
+            // Determinar estado (Presente o Tarde)
+            if ($horaActualCarbon->lte($horaEntradaProgramada)) {
+                $asistencia->estado_asistencia = 'Presente';
+            } else {
+                $asistencia->estado_asistencia = 'Tarde';
+            }
+
+            $asistencia->save();
+
+            return response()->json([
+                'message' => 'Entrada registrada exitosamente',
+                'asistencia' => $asistencia->load('persona'),
+                'estado' => $asistencia->estado_asistencia
+            ], 201);
+        }
+
+        // ----------------------------------------
+        // B) YA TIENE ENTRADA REGISTRADA
+        // ----------------------------------------
+        
+        // 1. ANTI-REBOTE: Verificar si es estudiante intentando marcar de nuevo
+        if ($persona->tipo_persona === 'estudiante') {
+            return response()->json([
+                'message' => 'Usuario ya registrado. Los estudiantes solo marcan entrada.',
+                'persona' => $persona,
+                'estado_asistencia' => $asistencia->estado_asistencia
+            ], 200);
+        }
+
+        // 2. Verificar si ya tiene salida registrada
+        if (!is_null($asistencia->hora_salida)) {
+            return response()->json([
+                'message' => 'Usuario ya registrado. Entrada y salida completas.',
+                'persona' => $persona,
+                'estado_asistencia' => $asistencia->estado_asistencia
+            ], 200);
+        }
+
+        // 3. ANTI-REBOTE: Evitar marcado duplicado muy rápido
+        $tiempoEntrada = Carbon::parse($asistencia->hora_entrada);
+        $diferenciaMinutos = $horaActualCarbon->diffInMinutes($tiempoEntrada);
+
+        if ($diferenciaMinutos < 30) {
+            return response()->json([
+                'message' => 'Usuario ya registrado. La salida se habilitará después de 30 minutos.',
+                'persona' => $persona,
+                'estado_asistencia' => $asistencia->estado_asistencia
+            ], 200);
+        }
+
+        // ----------------------------------------
+        // C) REGISTRO DE SALIDA (Solo Personal)
+        // ----------------------------------------
+        
+        $fechaHoy = $horaActualCarbon->toDateString();
+        $horaSalidaProgramada = Carbon::parse($fechaHoy . ' ' . $horario->hora_salida, 'America/Lima');
+        $ventanaSalidaFin = $horaSalidaProgramada->copy()->addMinutes(15);
+
+        // Validar ventana de salida
+        if ($horaActualCarbon->gt($ventanaSalidaFin)) {
+            return response()->json([
+                'message' => 'Tiempo de marcado de salida expirado. Contacte al encargado.',
+                'persona' => $persona
+            ], 400);
+        }
+
+        // Registrar salida
+        $asistencia->hora_salida = $horaActualStr;
+
+        // Marcar si salió fuera de tiempo
+        if ($horaActualCarbon->gt($ventanaSalidaFin)) {
+            $asistencia->salida_fuera_tiempo = true;
+        } else {
+            $asistencia->salida_fuera_tiempo = false;
         }
 
         $asistencia->save();
 
-        return response()->json($asistencia->load('persona'), 201);
+        return response()->json([
+            'message' => 'Salida registrada exitosamente',
+            'asistencia' => $asistencia->load('persona'),
+            'fuera_tiempo' => $asistencia->salida_fuera_tiempo
+        ], 201);
     }
     public function show(Asistencia $asistencia)
     {

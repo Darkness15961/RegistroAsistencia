@@ -94,7 +94,7 @@ import { useTheme } from '@/composables/useTheme'
 import api from '@/axiosConfig'
 import FormularioUsuarioModal from '../components/FormularioUsuarioModal.vue'
 import UserCard from '../components/UserCard.vue'
-import TablaUsuario from '../components/TablaUsuario.vue' // ✅ Importar el nuevo componente de tabla
+import TablaUsuario from '../components/TablaUsuario.vue' // 
 
 const { theme } = useTheme()
 

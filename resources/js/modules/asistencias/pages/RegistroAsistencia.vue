@@ -267,7 +267,13 @@ const registrarAsistencia = async (idPersona) => {
       id_persona: idPersona
     })
 
-    estado.message = `¡Bienvenido, ${response.data.persona.nombre_completo}!\nEstado: ${response.data.estado_asistencia}`
+    // Mostrar mensaje del backend o construir uno
+    const mensaje = response.data.message || 
+                   `¡Bienvenido, ${response.data.asistencia?.persona?.nombre_completo || response.data.persona?.nombre_completo}!`
+    
+    const estadoTexto = response.data.estado || response.data.asistencia?.estado_asistencia || response.data.estado_asistencia || ''
+    
+    estado.message = estadoTexto ? `${mensaje}\nEstado: ${estadoTexto}` : mensaje
     estado.isRecognized = true
 
     setTimeout(() => {
@@ -278,14 +284,22 @@ const registrarAsistencia = async (idPersona) => {
 
   } catch (e) {
     console.error("Error registro:", e)
-    estado.message = 'Registro procesado.' 
+    
+    // Mostrar el mensaje de error del backend si existe
+    const errorMsg = e.response?.data?.message || 
+                     e.response?.data?.error || 
+                     'Error al procesar registro'
+    
+    estado.message = errorMsg
+    estado.isRecognized = false
+    
     setTimeout(() => {
       estado.message = 'Escaneando...'
-      estado.isRecognized = false
       processing.value = false
-    }, 3000)
+    }, 5000)
   }
 }
+
 
 /* ----------------------------- Inicio detección ----------------------------- */
 const iniciarDeteccion = (matcher) => {

@@ -25,6 +25,53 @@ Route::post('/register', [AuthController::class, 'register']);
 Route::post('/asistencias/registrar', [AsistenciaController::class, 'store']);
 Route::get('/reconocimientos/descriptores', [ReconocimientoController::class, 'index']);
 
+// RUTA TEMPORAL DE PRUEBA
+Route::get('/test-asistencia/{id_persona}', function($id_persona) {
+    $persona = \App\Models\Persona::find($id_persona);
+    
+    if (!$persona) {
+        return response()->json(['error' => 'Persona no encontrada'], 404);
+    }
+    
+    $horario = \App\Models\Horario::where('id_area', $persona->id_area)->first();
+    $horaActual = \Carbon\Carbon::now('America/Lima');
+    
+    $info = [
+        'persona' => [
+            'id' => $persona->id_persona,
+            'nombre' => $persona->nombre_completo,
+            'tipo' => $persona->tipo_persona,
+            'id_area' => $persona->id_area
+        ],
+        'hora_actual' => $horaActual->format('H:i:s'),
+        'horario' => $horario ? [
+            'entrada' => $horario->hora_entrada,
+            'salida' => $horario->hora_salida
+        ] : 'SIN HORARIO'
+    ];
+    
+    if ($horario) {
+        $fechaHoy = $horaActual->toDateString();
+        $horaEntradaProgramada = \Carbon\Carbon::parse($fechaHoy . ' ' . $horario->hora_entrada, 'America/Lima');
+        
+        if ($persona->tipo_persona === 'estudiante') {
+            $ventanaInicio = $horaEntradaProgramada->copy()->subMinutes(60);
+            $ventanaFin = $horaEntradaProgramada->copy()->addMinutes(15);
+        } else {
+            $ventanaInicio = $horaEntradaProgramada->copy()->subMinutes(30);
+            $ventanaFin = $horaEntradaProgramada->copy()->addMinutes(15);
+        }
+        
+        $info['ventana_entrada'] = [
+            'inicio' => $ventanaInicio->format('H:i:s'),
+            'fin' => $ventanaFin->format('H:i:s'),
+            'puede_marcar' => $horaActual->between($ventanaInicio, $ventanaFin) ? 'SI' : 'NO'
+        ];
+    }
+    
+    return response()->json($info, 200, [], JSON_PRETTY_PRINT);
+});
+
 
 // Resumen semanal público o para dashboard
 Route::get('/asistencias-semana', [AsistenciaController::class, 'asistenciasSemana']);
